@@ -4,59 +4,68 @@ STD    := -std=c99
 CFLAGS := -Wall -Werror -Wpedantic -g
 
 # Specify the sources and the headers directory
+BLD_DIR  := build
 HDR_DIR  := hdrs
 SRC_DIR  := srcs
-BIN_DIR  := build
-OBJ_DIR  := $(BIN_DIR)/obj
-LIB_DIR  := $(BIN_DIR)/lib
+TST_DIR  := test
+OBJ_DIR  := $(BLD_DIR)/obj
+LIB_DIR  := $(BLD_DIR)/lib
+BIN_DIR  := $(BLD_DIR)/bin
+BIN_TST_DIR  := $(BIN_DIR)/test
 
 # Specify the sources and headers files
-HEADERS := $(wildcard $(HDR_DIR)/**/*.h)
-SOURCES := $(wildcard $(SRC_DIR)/**/*.c)
-TESTS   := $(wildcard test/**/*.c)
+HEADERS := $(wildcard $(HDR_DIR)/*.h) $(wildcard $(HDR_DIR)/**/*.h)
+SOURCES := $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/**/*.c)
+TESTS   := $(wildcard $(TST_DIR)/**/*.c)
 
-.PHONY: all build test clean help
+.PHONY: all build test run_tests clean help
 
 ##################################### ALL ######################################
 
-all: clean build test
+all: clean build test run_tests
 
 #################################### BUILD #####################################
 
 # Create object file names by replacing .c with .o in SOURCES
-OBJECTS := $(patsubst %.c,$(OBJ_DIR)/%.o,$(notdir $(SOURCES)))
+OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
 
-# Build command
 build: $(LIB_DIR)/libkeepcoding.a
 
 $(LIB_DIR)/libkeepcoding.a: $(OBJECTS)
 	@mkdir -p $(LIB_DIR)
 	ar rcs $@ $^
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/**/%.c $(HEADERS)
-	@mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(STD) -c $< -o $@
+# Rule for generating object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
+	@mkdir -p $(dir $@)
+	$(CC) $(STD) $(CFLAGS) -c $< -o $@
 
 ##################################### TEST #####################################
 
-test: $(LIB_DIR)/libkeepcoding.a $(TESTS)
-	@for test_file in $(TESTS); do \
-		test_name=$$(basename $$test_file .c); \
-		$(CC) $(STD) $(CFLAGS) $$test_file -o $(BIN_DIR)/$$test_name -L$(LIB_DIR) -lkeepcoding; \
-		$(BIN_DIR)/$$test_name; \
-	done
+# Generate corresponding executable names
+TEST_EXECUTABLES := $(patsubst $(TST_DIR)/%.c,$(BIN_TST_DIR)/%,$(TESTS))
+
+test: $(TEST_EXECUTABLES)
+
+$(BIN_TST_DIR)/%: $(TST_DIR)/%.c $(LIB_DIR)/libkeepcoding.a
+	@mkdir -p $(dir $@)
+	$(CC) $(STD) $(CFLAGS) $< -o $@ -L$(LIB_DIR) -lkeepcoding
+
+run_tests: $(TEST_EXECUTABLES)
+	@$(foreach test_executable, $(TEST_EXECUTABLES), $(test_executable);)
 
 #################################### CLEAN #####################################
 
 clean:
-	rm -fr $(BIN_DIR)
+	rm -fr $(BLD_DIR)
 
 ##################################### HELP #####################################
 
 help:
 	@echo "Available targets:"
-	@echo "  all         : Compile the static libraries and run tests"
+	@echo "  all         : Compile the static libraries and all test executables"
 	@echo "  build       : Compile the static libraries"
-	@echo "  test        : Compile and run all test files"
+	@echo "  test        : Compile and run all test executables consecutively"
 	@echo "  clean       : Clean up the object files and build directory"
 	@echo "  help        : Display this help message"
+

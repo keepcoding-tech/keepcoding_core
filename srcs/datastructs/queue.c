@@ -6,8 +6,9 @@
 // Copyright (c) 2023 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-#include "../../hdrs/error.h"
 #include "../../hdrs/datastructs/queue.h"
+#include "../../hdrs/error.h"
+#include "../../hdrs/logger/console_log.h"
 
 #include <stdlib.h>
 

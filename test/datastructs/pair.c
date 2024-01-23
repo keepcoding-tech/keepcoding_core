@@ -20,10 +20,13 @@ int main() {
     {
       char key[] = "dummy";
       int value = 10000000;
+
       struct Pair* pair = pair_constructor(&key,
         strlen(key) + 1, &value, sizeof(int));
+
       ok(strcmp((char*)pair->key, key) == 0);
       ok(*(int*)pair->value == value);
+
       pair_destructor(pair);
     }
 
@@ -36,6 +39,8 @@ int main() {
       // Access the key and value
       ok(*(int*)pair->key == key);
       ok(*(int*)pair->value == value);
+
+      pair_destructor(pair);
     }
 
     subtest("test integer to character")
@@ -48,6 +53,8 @@ int main() {
       // Access the key and value
       ok(*(int*)pair->key == key);
       ok(strcmp((char*)pair->value, value) == 0);
+
+      pair_destructor(pair);
     }
 
     subtest("test character to character")
@@ -60,6 +67,8 @@ int main() {
       // Access the key and value
       ok(strcmp((char*)pair->key, key) == 0);
       ok(strcmp((char*)pair->value, value) == 0);
+
+      pair_destructor(pair);
     }
 
     subtest("test character to integer") {
@@ -71,6 +80,8 @@ int main() {
       // Access the key and value
       ok(strcmp((char*)pair->key, key) == 0);
       ok(*(int*)pair->value == value);
+
+      pair_destructor(pair);
     }
 
     subtest("test primitive int array")
