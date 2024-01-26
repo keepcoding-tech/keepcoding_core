@@ -7,47 +7,59 @@
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/datastructs/list.h"
-#include "../../hdrs/error.h"
+#include "../../hdrs/common.h"
 
 #include <stdlib.h>
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-static void         erase_all_nodes       (struct List* self);
-static void         erase_first_node      (struct List* self);
-static void         erase_last_node       (struct List* self);
-static void         erase_node            (struct List* self, int index);
-static void         erase_nodes_by_value  (struct List* self, void* value, int (*compare)(const void* a, const void* b));
-static struct Node* get_first_node        (struct List* self);
-static struct Node* get_last_node         (struct List* self);
-static struct Node* get_node              (struct List* self, int index);
-static void         insert_new_head       (struct List* self, void* data, size_t size);
-static void         insert_new_node       (struct List* self, int index, void* data, size_t size);
-static void         insert_new_tail       (struct List* self, void* data, size_t size);
-static bool         is_list_empty         (struct List* self);
-static bool         search_node           (struct List* self, void* value, int (*compare)(const void* a, const void* b));
-static struct Node* iterate_ll            (struct List* list, int index);
-static struct Node* iterate_forward_ll    (struct Node* head, int index);
-static struct Node* iterate_reverse_ll    (struct Node* tail, int index);
+static int erase_all_nodes       (struct kc_list_t* self);
+static int erase_first_node      (struct kc_list_t* self);
+static int erase_last_node       (struct kc_list_t* self);
+static int erase_node            (struct kc_list_t* self, int index);
+static int erase_nodes_by_value  (struct kc_list_t* self, void* value, int (*compare)(const void* a, const void* b));
+static int get_first_node        (struct kc_list_t* self, struct kc_node_t* front_node);
+static int get_last_node         (struct kc_list_t* self, struct kc_node_t* back_node);
+static int get_node              (struct kc_list_t* self, int index, struct kc_node_t* node);
+static int insert_new_head       (struct kc_list_t* self, void* data, size_t size);
+static int insert_new_node       (struct kc_list_t* self, int index, void* data, size_t size);
+static int insert_new_tail       (struct kc_list_t* self, void* data, size_t size);
+static int is_list_empty         (struct kc_list_t* self, bool* is_empty);
+static int search_node           (struct kc_list_t* self, void* value, int (*compare)(const void* a, const void* b), bool* exists);
+
+static struct kc_node_t* iterate_ll           (struct kc_list_t* list, int index);
+static struct kc_node_t* iterate_forward_ll   (struct kc_node_t* head, int index);
+static struct kc_node_t* iterate_reverse_ll   (struct kc_node_t* tail, int index);
 
 //---------------------------------------------------------------------------//
 
-struct List* new_list()
+struct kc_list_t* new_list()
 {
-  struct ConsoleLog* logger = new_console_log(err, log_err, __FILE__);
-
   // create a List instance to be returned
-  struct List* new_list = malloc(sizeof(struct List));
+  struct kc_list_t* new_list = malloc(sizeof(struct kc_list_t));
 
   // confirm that there is memory to allocate
   if (new_list == NULL)
   {
-    logger->error(logger, KC_OUT_OF_MEMORY, __LINE__, __func__);
-    destroy_console_log(logger);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
 
-    // free the instance and exit
+    return NULL;
+  }
+
+  // create a console log instance to be used for the list
+  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
+
+  // confirm that there is memory to allocate
+  if (logger == NULL)
+  {
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
+
+    // free the list instance
     free(new_list);
-    exit(1);
+
+    return NULL;
   }
 
   // initialize the structure members fields
@@ -76,15 +88,15 @@ struct List* new_list()
 
 //---------------------------------------------------------------------------//
 
-void destroy_list(struct List* list)
+void destroy_list(struct kc_list_t* list)
 {
-  // if the list reference is NULL, do nothing
+  // if the list reference is NULL, abort the application
   if (list == NULL)
   {
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return;
   }
 
   erase_all_nodes(list);
@@ -93,7 +105,7 @@ void destroy_list(struct List* list)
 
 //---------------------------------------------------------------------------//
 
-void erase_all_nodes(struct List* self)
+int erase_all_nodes(struct kc_list_t* self)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -101,14 +113,14 @@ void erase_all_nodes(struct List* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
   // start iterating from the head
-  struct Node* cursor = self->head;
+  struct kc_node_t* cursor = self->head;
   while (cursor != NULL)
   {
-    struct Node* next = cursor->next;
+    struct kc_node_t* next = cursor->next;
     node_destructor(cursor);
     cursor = next;
   }
@@ -117,11 +129,13 @@ void erase_all_nodes(struct List* self)
   self->head = NULL;
   self->tail = NULL;
   self->length = 0;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void erase_first_node(struct List* self)
+int erase_first_node(struct kc_list_t* self)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -129,10 +143,10 @@ void erase_first_node(struct List* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
-  struct Node* old_head = self->head;
+  struct kc_node_t* old_head = self->head;
 
   // check if this is alos the last node
   if (old_head->next == NULL)
@@ -148,11 +162,13 @@ void erase_first_node(struct List* self)
 
   node_destructor(old_head);
   --self->length;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void erase_last_node(struct List* self)
+int erase_last_node(struct kc_list_t* self)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -160,10 +176,10 @@ void erase_last_node(struct List* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
-  struct Node* old_tail = self->tail;
+  struct kc_node_t* old_tail = self->tail;
 
   // check if this is alos the last node
   if (old_tail->prev == NULL)
@@ -179,11 +195,13 @@ void erase_last_node(struct List* self)
 
   node_destructor(old_tail);
   --self->length;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void erase_node(struct List* self, int index)
+int erase_node(struct kc_list_t* self, int index)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -191,7 +209,7 @@ void erase_node(struct List* self, int index)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
   // confirm the user has specified a valid index
@@ -200,39 +218,39 @@ void erase_node(struct List* self, int index)
     // log the warning to the console
     self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
-    return;
+    return KC_INVALID;
   }
 
   // check if the item being removed is the head
   if (index == 0)
   {
-    erase_first_node(self);
-    return;
+    return erase_first_node(self);
   }
 
   // check if the item being removed is the tail
   if (index == self->length - 1)
   {
-    erase_last_node(self);
-    return;
+    return erase_last_node(self);
   }
 
   // find the node in the list before the one that is going to be removed
-  struct Node* current = iterate_ll(self, index - 1);
+  struct kc_node_t* current = iterate_ll(self, index - 1);
 
   // use the node returned to define the node to be removed
-  struct Node *node_to_remove = current->next;
+  struct kc_node_t *node_to_remove = current->next;
   current->next = node_to_remove->next;
   current->next->prev = current;
 
   node_destructor(node_to_remove);
 
   --self->length;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void erase_nodes_by_value(struct List* self, void* value, int (*compare)(const void* a, const void* b))
+int erase_nodes_by_value(struct kc_list_t* self, void* value, int (*compare)(const void* a, const void* b))
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -240,11 +258,11 @@ void erase_nodes_by_value(struct List* self, void* value, int (*compare)(const v
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
   // start from the head
-  struct Node* cursor = self->head;
+  struct kc_node_t* cursor = self->head;
   size_t index = 0;
 
   // search the node by value
@@ -256,19 +274,30 @@ void erase_nodes_by_value(struct List* self, void* value, int (*compare)(const v
       if (index == 0)
       {
         cursor = cursor->next;
-        erase_first_node(self);
+
+        int rez = erase_first_node(self);
+        if (rez != KC_SUCCESS)
+        {
+          return rez;
+        }
+
         continue;
       }
 
       // erase the tail
       if (index == self->length - 1)
       {
-        erase_last_node(self);
+        int rez = erase_last_node(self);
+        if (rez != KC_SUCCESS)
+        {
+          return rez;
+        }
+
         break;
       }
 
       // use the node cursor to define the node to be removed
-      struct Node *node_to_remove = cursor;
+      struct kc_node_t *node_to_remove = cursor;
       cursor->prev->next = cursor->next;
       cursor->next->prev = cursor->prev;
       cursor = cursor->next;
@@ -282,11 +311,13 @@ void erase_nodes_by_value(struct List* self, void* value, int (*compare)(const v
     cursor = cursor->next;
     ++index;
   }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-struct Node* get_first_node(struct List* self)
+int get_first_node(struct kc_list_t* self, struct kc_node_t* first_node)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -294,15 +325,17 @@ struct Node* get_first_node(struct List* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
-  return self->head;
+  first_node = self->head;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-struct Node* get_last_node(struct List* self)
+int get_last_node(struct kc_list_t* self, struct kc_node_t* last_node)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -310,15 +343,17 @@ struct Node* get_last_node(struct List* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
-  return self->tail;
+  last_node = self->tail;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-struct Node* get_node(struct List* self, int index)
+int get_node(struct kc_list_t* self, int index, struct kc_node_t* node)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -326,7 +361,7 @@ struct Node* get_node(struct List* self, int index)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
   // confirm the user has specified a valid index
@@ -338,12 +373,14 @@ struct Node* get_node(struct List* self, int index)
     return NULL;
   }
 
-  return iterate_ll(self, index);
+  node = iterate_ll(self, index);
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_new_head(struct List* self, void* data, size_t size)
+int insert_new_head(struct kc_list_t* self, void* data, size_t size)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -351,15 +388,15 @@ void insert_new_head(struct List* self, void* data, size_t size)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
-  insert_new_node(self, 0, data, size);
+  return insert_new_node(self, 0, data, size);
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_new_node(struct List* self, int index, void* data, size_t size)
+int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -367,7 +404,7 @@ void insert_new_node(struct List* self, int index, void* data, size_t size)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
   // confirm the user has specified a valid index
@@ -376,16 +413,16 @@ void insert_new_node(struct List* self, int index, void* data, size_t size)
     // log the warning to the console
     self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
-    return;
+    return KC_INVALID;
   }
 
   // create a new node to be inserted
-  struct Node* new_node = node_constructor(data, size);
+  struct kc_node_t* new_node = node_constructor(data, size);
 
   // if the node is NULL, don't make the insertion
   if (new_node == NULL)
   {
-    return /* an error has already been displayed */;
+    return KC_INVALID; /* an error has already been displayed */
   }
 
   // check if this node will be the new head
@@ -401,15 +438,16 @@ void insert_new_node(struct List* self, int index, void* data, size_t size)
     }
 
     ++self->length;
-    return;
+
+    return KC_SUCCESS;
   }
 
   // find the item in the list immediately before the desired index
-  struct Node* cursor = iterate_ll(self, index - 1);
+  struct kc_node_t* cursor = iterate_ll(self, index - 1);
 
   if (cursor == NULL)
   {
-    return /* an error has already been displayed */;
+    return KC_INVALID; /* an error has already been displayed */
   }
 
   new_node->next = cursor->next;
@@ -430,11 +468,13 @@ void insert_new_node(struct List* self, int index, void* data, size_t size)
 
   // increment the list length
   ++self->length;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_new_tail(struct List* self, void* data, size_t size)
+int insert_new_tail(struct kc_list_t* self, void* data, size_t size)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -442,15 +482,15 @@ void insert_new_tail(struct List* self, void* data, size_t size)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
-  insert_new_node(self, (int)self->length, data, size);
+  return insert_new_node(self, (int)self->length, data, size);
 }
 
 //---------------------------------------------------------------------------//
 
-bool is_list_empty(struct List* self)
+int is_list_empty(struct kc_list_t* self, bool* is_empty)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -458,16 +498,18 @@ bool is_list_empty(struct List* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
-  return self->length == 0 && self->head == NULL && self->tail == NULL;
+  is_empty = self->length == 0 && self->head == NULL && self->tail == NULL;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-bool search_node(struct List* self, void* value,
-    int (*compare)(const void* a, const void* b))
+int search_node(struct kc_list_t* self, void* value,
+    int (*compare)(const void* a, const void* b), bool* exists)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -475,11 +517,11 @@ bool search_node(struct List* self, void* value,
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return KC_INVALID;
   }
 
   // create a new node instance
-  struct Node* node = self->head;
+  struct kc_node_t* node = self->head;
 
   // search the node by value
   while (node != NULL && compare(node->data, value) != 0)
@@ -487,12 +529,14 @@ bool search_node(struct List* self, void* value,
     node = node->next;
   }
 
-  return node != NULL;
+  exists = node != NULL;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-struct Node* iterate_ll(struct List* self, int index)
+struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL || self->head == NULL || self->tail == NULL)
@@ -500,7 +544,7 @@ struct Node* iterate_ll(struct List* self, int index)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    exit(1);
+    return NULL;
   }
 
   // confirm the user has specified a valid index
@@ -514,7 +558,7 @@ struct Node* iterate_ll(struct List* self, int index)
 
   // check if the index is over the half of the list length, if the index is
   // smaller, then start from the head, otherwise start from the tail
-  struct Node* node = index <= self->length / 2 ?
+  struct kc_node_t* node = index <= self->length / 2 ?
       iterate_forward_ll(self->head, index) :
       iterate_reverse_ll(self->tail, (int)(self->length - 1) - index);
 
@@ -523,9 +567,9 @@ struct Node* iterate_ll(struct List* self, int index)
 
 //---------------------------------------------------------------------------//
 
-struct Node* iterate_forward_ll(struct Node* head, int index)
+struct kc_node_t* iterate_forward_ll(struct kc_node_t* head, int index)
 {
-  struct Node* cursor = head;
+  struct kc_node_t* cursor = head;
   for (int i = 0; i < index; ++i)
   {
     cursor = cursor->next;
@@ -535,9 +579,9 @@ struct Node* iterate_forward_ll(struct Node* head, int index)
 
 //---------------------------------------------------------------------------//
 
-struct Node* iterate_reverse_ll(struct Node* tail, int index)
+struct kc_node_t* iterate_reverse_ll(struct kc_node_t* tail, int index)
 {
-  struct Node* cursor = tail;
+  struct kc_node_t* cursor = tail;
   for (int i = 0; i < index; ++i)
   {
     cursor = cursor->prev;

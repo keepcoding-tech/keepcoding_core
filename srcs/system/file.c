@@ -8,7 +8,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "../../hdrs/error.h"
+#include "../../hdrs/common.h"
 #include "../../hdrs/logger/console_log.h"
 #include "../../hdrs/system/file.h"
 
@@ -46,7 +46,7 @@ struct File* new_file()
     return NULL;
   }
 
-  struct ConsoleLog* log = new_console_log(err, log_err, __FILE__);
+  struct kc_console_log_t* log = new_console_log(err, log_err, __FILE__);
 
   // assigns the public member fields
   file->log    = log;

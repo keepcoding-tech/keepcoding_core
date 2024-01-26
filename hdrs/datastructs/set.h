@@ -41,7 +41,7 @@ struct Set
 {
   struct Tree* entries;
 
-  struct ConsoleLog* log;
+  struct kc_console_log_t* log;
 
   void  (*insert)  (struct Set* self, void* key, size_t key_size, void* value, size_t value_size);
   void  (*remove)  (struct Set* self, void* key, size_t key_size);

@@ -40,7 +40,7 @@
 
 struct File
 {
-  struct ConsoleLog* log;
+  struct kc_console_log_t* log;
 
   FILE* file;
   char* name;

@@ -22,23 +22,22 @@
  * itself.
  */
 
-#ifndef KC_NODE_H
-#define KC_NODE_H
+#ifndef KC_NODE_T_H
+#define KC_NODE_T_H
 
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-struct Node
+struct kc_node_t
 {
-  struct Node* next;
-  struct Node* prev;
+  struct kc_node_t* next;
+  struct kc_node_t* prev;
 
   void* data;
 };
 
-struct Node* node_constructor  (void* data, size_t size);
-void         node_destructor   (struct Node* node);
+struct kc_node_t* node_constructor  (void* data, size_t size);
+void              node_destructor   (struct kc_node_t* node);
 
-#endif /* KC_NODE_H */
+#endif /* KC_NODE_T_H */

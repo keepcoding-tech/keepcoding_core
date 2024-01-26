@@ -7,48 +7,44 @@
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/datastructs/node.h"
-#include "../../hdrs/logger/console_log.h"
+#include "../../hdrs/common.h"
 
-#include <stddef.h>
 #include <stdlib.h>
-#include <string.h>
 
 //---------------------------------------------------------------------------//
 
-struct Node* node_constructor(void* data, size_t size)
+struct kc_node_t* node_constructor(void* data, size_t size)
 {
   if (size < 1) {
-    log_warning("UNDERFLOW", "The data type's size goes below its "
-        "minimum representable value.", __FILE__, __LINE__, __func__);
+    log_error(err[KC_UNDERFLOW], log_err[KC_UNDERFLOW],
+      __FILE__, __LINE__, __func__);
+
     return NULL;
   }
 
   // create a Node instance to be returned
   // and allocate space for the data
-  struct Node* new_node = malloc(sizeof(struct Node));
+  struct kc_node_t* new_node = malloc(sizeof(struct kc_node_t));
 
   if (new_node == NULL)
   {
-    log_error("OUT_OF_MEMORY", "Failing to allocate memory dynamically "
-        "(e.g. using malloc) due to insufficient memory in the heap.",
-        __FILE__, __LINE__, __func__);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+      __FILE__, __LINE__, __func__);
 
-    // free the instances and exit
-    exit(1);
+    return NULL;
   }
 
   new_node->data = malloc(size);
 
   if (new_node->data == NULL)
   {
-    log_error("OUT_OF_MEMORY", "Failing to allocate memory dynamically "
-        "(e.g. using malloc) due to insufficient memory in the heap.",
-        __FILE__, __LINE__, __func__);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+      __FILE__, __LINE__, __func__);
 
-    // free the instances and exit
-    free(new_node->data);
+    // free the node instances
     free(new_node);
-    exit(1);
+
+    return NULL;
   }
 
   // copy the block of memory
@@ -63,14 +59,14 @@ struct Node* node_constructor(void* data, size_t size)
 
 //---------------------------------------------------------------------------//
 
-void node_destructor(struct Node* node)
+void node_destructor(struct kc_node_t* node)
 {
   // destroy node only if is not dereferenced
   if (node == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
-        __FILE__, __LINE__, __func__);
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
+      __FILE__, __LINE__, __func__);
+
     return;
   }
 

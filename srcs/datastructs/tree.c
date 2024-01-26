@@ -6,7 +6,7 @@
 // Copyright (c) 2023 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-#include "../../hdrs/error.h"
+#include "../../hdrs/common.h"
 #include "../../hdrs/datastructs/tree.h"
 
 #include <stdbool.h>
@@ -17,16 +17,16 @@
 
 static void         insert_new_node_btree   (struct Tree* self, void* data, size_t size);
 static void         remove_node_btree       (struct Tree* self, void* data, size_t size);
-static struct Node* search_node_btree       (struct Tree* self, void* data);
-static struct Node* insert_node_btree       (struct Tree* self, struct Node* node, void* data, size_t size);
-static void         recursive_destroy_tree  (struct Node* node);
-static struct Node* recursive_remove_node   (struct Tree* self, struct Node* root, void* data, size_t size);
+static struct kc_node_t* search_node_btree       (struct Tree* self, void* data);
+static struct kc_node_t* insert_node_btree       (struct Tree* self, struct kc_node_t* node, void* data, size_t size);
+static void         recursive_destroy_tree  (struct kc_node_t* node);
+static struct kc_node_t* recursive_remove_node   (struct Tree* self, struct kc_node_t* root, void* data, size_t size);
 
 //---------------------------------------------------------------------------//
 
 struct Tree* new_tree(int (*compare)(const void* a, const void* b))
 {
-  struct ConsoleLog* logger = new_console_log(err, log_err, __FILE__);
+  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
 
   // create a Tree instance to be returned
   struct Tree* new_tree = malloc(sizeof(struct Tree));
@@ -114,7 +114,7 @@ void remove_node_btree(struct Tree* self, void* data, size_t size)
 
 //---------------------------------------------------------------------------//
 
-struct Node* search_node_btree(struct Tree* self, void* data)
+struct kc_node_t* search_node_btree(struct Tree* self, void* data)
 {
   // if the tree reference is NULL, do nothing
   if (self == NULL)
@@ -127,7 +127,7 @@ struct Node* search_node_btree(struct Tree* self, void* data)
   }
 
   // start searching from the root of the tree
-  struct Node* current = self->root;
+  struct kc_node_t* current = self->root;
 
   while (current != NULL)
   {
@@ -156,8 +156,8 @@ struct Node* search_node_btree(struct Tree* self, void* data)
 
 //---------------------------------------------------------------------------//
 
-struct Node* insert_node_btree(struct Tree* self,
-    struct Node* node, void* data, size_t size)
+struct kc_node_t* insert_node_btree(struct Tree* self,
+    struct kc_node_t* node, void* data, size_t size)
 {
   // check if this is the first node in the tree
   if (!node)
@@ -180,7 +180,7 @@ struct Node* insert_node_btree(struct Tree* self,
 
 //---------------------------------------------------------------------------//
 
-void recursive_destroy_tree(struct Node* node)
+void recursive_destroy_tree(struct kc_node_t* node)
 {
   // chekc the previous node
   if (node->prev != NULL)
@@ -200,7 +200,7 @@ void recursive_destroy_tree(struct Node* node)
 
 //---------------------------------------------------------------------------//
 
-struct Node* recursive_remove_node(struct Tree* self, struct Node* root, void* data, size_t size)
+struct kc_node_t* recursive_remove_node(struct Tree* self, struct kc_node_t* root, void* data, size_t size)
 {
   // base case
   if (root == NULL)
@@ -226,23 +226,23 @@ struct Node* recursive_remove_node(struct Tree* self, struct Node* root, void* d
   // case 1: node has no children or only one child
   if (root->prev == NULL)
   {
-    struct Node* next_node = root->next;
+    struct kc_node_t* next_node = root->next;
     node_destructor(root);
     return next_node;
   }
 
   if (root->next == NULL)
   {
-    struct Node* prev_node = root->prev;
+    struct kc_node_t* prev_node = root->prev;
     node_destructor(root);
     return prev_node;
   }
 
   // case 2: node has two children
-  struct Node* succ_parent = root;
+  struct kc_node_t* succ_parent = root;
 
   // find successor
-  struct Node* successor = root->next;
+  struct kc_node_t* successor = root->next;
   while (successor->prev != NULL)
   {
     succ_parent = successor;

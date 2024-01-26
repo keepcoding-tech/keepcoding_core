@@ -31,7 +31,7 @@ int main() {
   {
     subtest("test_creation_and_destruction")
     {
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
       ok(list->head == NULL);
       ok(list->tail == NULL);
       destroy_list(list);
@@ -40,7 +40,7 @@ int main() {
     subtest("test_back")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // there shouldn't be any nodes
       ok(list->back(list) == NULL);
@@ -50,14 +50,14 @@ int main() {
         list->insert(list, i, &i, sizeof(int));
 
         // check if the last element is returned correctly
-        struct Node* back = list->back(list);
+        struct kc_node_t* back = list->back(list);
         ok(*(int*)back->data == i);
       }
 
       // remove all the nodes
       for (int i = 9; i >= 0; --i) {
         // check if the last element is returned correctly
-        struct Node* back = list->back(list);
+        struct kc_node_t* back = list->back(list);
         ok(*(int*)back->data == i);
 
         list->erase(list, i);
@@ -69,7 +69,7 @@ int main() {
     subtest("test_clear")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // the list should be empty
       ok(list->empty(list));
@@ -95,7 +95,7 @@ int main() {
     subtest("test_empty")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // the list should be empty
       ok(list->empty(list));
@@ -122,7 +122,7 @@ int main() {
     subtest("test_erase")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // insert ten new nodes
       for (int i = 0; i < 10; ++i) {
@@ -133,7 +133,7 @@ int main() {
       list->erase(list, 5);
 
       // check if the node was correctly removed
-      struct Node* cursor = list->head;
+      struct kc_node_t* cursor = list->head;
       for (int i = 0; i < 5; ++i) {
         cursor = cursor->next;
       }
@@ -159,7 +159,7 @@ int main() {
     subtest("test_front")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // there shouldn't be any nodes
       ok(list->front(list) == NULL);
@@ -170,14 +170,14 @@ int main() {
 
         // check if the first element is returned correctly,
         // it should always be zero (the same value)
-        struct Node* front = list->front(list);
+        struct kc_node_t* front = list->front(list);
         ok(*(int*)front->data == 0);
       }
 
       // remove all the nodes
       for (int i = 0; i < 10; ++i) {
         // check if the first element is returned correctly
-        struct Node* front = list->front(list);
+        struct kc_node_t* front = list->front(list);
         ok(*(int*)front->data == i);
 
         // erase only the first node for each iteration
@@ -190,7 +190,7 @@ int main() {
     subtest("test_get")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // insert ten new nodes
       for (int i = 0; i < 10; ++i) {
@@ -198,7 +198,7 @@ int main() {
       }
 
       // check if the node was correctly retrieved
-      struct Node* node = list->get(list, 5);
+      struct kc_node_t* node = list->get(list, 5);
       ok(*(int*)node->data == 5);
 
       // check if the head of the list was correctly retrieved
@@ -215,7 +215,7 @@ int main() {
     subtest("test_insert")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // add ten new nodes of type int
       for (int i = 0; i < 10; ++i) {
@@ -235,7 +235,7 @@ int main() {
       }
 
       for (int i = 0; i < 20; ++i) {
-        struct Node* cursor = list->head;
+        struct kc_node_t* cursor = list->head;
         for (int j = 0; j < i; ++j) {
           cursor = cursor->next;
         }
@@ -254,7 +254,7 @@ int main() {
       list->insert(list, 20, &nums, sizeof(int) * size);
 
       // get the 21st node
-      struct Node* cursor = list->tail;
+      struct kc_node_t* cursor = list->tail;
 
       // check if the node has been inserted correctly
       int* ptr = (int*)cursor->data;
@@ -268,7 +268,7 @@ int main() {
     subtest("test_pop_back")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // insert ten new nodes
       for (int i = 0; i < 10; ++i) {
@@ -293,7 +293,7 @@ int main() {
     subtest("test_pop_front")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // insert ten new nodes
       for (int i = 0; i < 10; ++i) {
@@ -318,7 +318,7 @@ int main() {
     subtest("test_push_back")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // push back ten new nodes
       for (int i = 0; i < 10; ++i) {
@@ -338,7 +338,7 @@ int main() {
     subtest("test_push_front")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // push back ten new nodes
       for (int i = 0; i < 10; ++i) {
@@ -358,7 +358,7 @@ int main() {
     subtest("test_remove")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // use the same data
       int data = 10;
@@ -391,7 +391,7 @@ int main() {
     subtest("test_search")
     {
       // create a new instance of a List
-      struct List* list = new_list();
+      struct kc_list_t* list = new_list();
 
       // insert ten new nodes
       for (int i = 0; i < 10; ++i) {

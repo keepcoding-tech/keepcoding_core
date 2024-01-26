@@ -26,8 +26,8 @@
  * the List object's data and behavior.
  */
 
-#ifndef KC_LIST_H
-#define KC_LIST_H
+#ifndef KC_LIST_T_H
+#define KC_LIST_T_H
 
 #include "../logger/console_log.h"
 #include "node.h"
@@ -36,38 +36,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct List
+struct kc_list_t
 {
-  struct Node* head;
-  struct Node* tail;
+  struct kc_node_t* head;
+  struct kc_node_t* tail;
 
   size_t length;
 
-  struct ConsoleLog* log;
+  struct kc_console_log_t* log;
 
-  struct Node* (*back)        (struct List* self);
-  void         (*clear)       (struct List* self);
-  bool         (*empty)       (struct List* self);
-  void         (*erase)       (struct List* self, int index);
-  struct Node* (*front)       (struct List* self);
-  struct Node* (*get)         (struct List* self, int index);
-  void         (*insert)      (struct List* self, int index, void* data, size_t size);
-  void         (*pop_back)    (struct List* self);
-  void         (*pop_front)   (struct List* self);
-  void         (*push_back)   (struct List* self, void* data, size_t size);
-  void         (*push_front)  (struct List* self, void* data, size_t size);
-  void         (*remove)      (struct List* self, void* value, int (*compare)(const void* a, const void* b));
-  bool         (*search)      (struct List* self, void* value, int (*compare)(const void* a, const void* b));
+  int (*back)        (struct kc_list_t* self, struct kc_node_t* back_node);
+  int (*clear)       (struct kc_list_t* self);
+  int (*empty)       (struct kc_list_t* self, bool* is_empty);
+  int (*erase)       (struct kc_list_t* self, int index);
+  int (*front)       (struct kc_list_t* self, struct kc_node_t* front_node);
+  int (*get)         (struct kc_list_t* self, int index, struct kc_node_t* node);
+  int (*insert)      (struct kc_list_t* self, int index, void* data, size_t size);
+  int (*pop_back)    (struct kc_list_t* self);
+  int (*pop_front)   (struct kc_list_t* self);
+  int (*push_back)   (struct kc_list_t* self, void* data, size_t size);
+  int (*push_front)  (struct kc_list_t* self, void* data, size_t size);
+  int (*remove)      (struct kc_list_t* self, void* value, int (*compare)(const void* a, const void* b));
+  int (*search)      (struct kc_list_t* self, void* value, int (*compare)(const void* a, const void* b), bool* exists);
 };
 
 //---------------------------------------------------------------------------//
 
-struct List* new_list      ();
-void         destroy_list  (struct List *list);
+struct kc_list_t* new_list      ();
+void              destroy_list  (struct kc_list_t *list);
 
 //---------------------------------------------------------------------------//
 
-// use this macro to define any type of primitive data comparison function
 #define COMPARE_LIST(type, function_name)           \
   int function_name(const void* a, const void* b)   \
   {                                                 \
@@ -82,4 +81,4 @@ void         destroy_list  (struct List *list);
     return 0;                                       \
   }
 
-#endif /* KC_LIST_H */
+#endif /* KC_LIST_T_H */

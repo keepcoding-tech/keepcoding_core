@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/datastructs/stack.h"
-#include "../../hdrs/error.h"
+#include "../../hdrs/common.h"
 
 #include <stdlib.h>
 
@@ -22,7 +22,7 @@ static void   remove_top_item_stack    (struct Stack* self);
 
 struct Stack* new_stack()
 {
-  struct ConsoleLog* logger = new_console_log(err, log_err, __FILE__);
+  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
 
   // create a Stack instance to be returned
   struct Stack* new_stack = malloc(sizeof(struct Stack));

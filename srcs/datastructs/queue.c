@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/datastructs/queue.h"
-#include "../../hdrs/error.h"
+#include "../../hdrs/common.h"
 #include "../../hdrs/logger/console_log.h"
 
 #include <stdlib.h>
@@ -23,7 +23,7 @@ static void   remove_next_item_queue  (struct Queue* self);
 
 struct Queue* new_queue()
 {
-  struct ConsoleLog* logger = new_console_log(err, log_err, __FILE__);
+  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
 
   // create a Queue instance to be returned
   struct Queue* new_queue = malloc(sizeof(struct Queue));
@@ -104,7 +104,7 @@ void* get_next_item_queue(struct Queue* self)
     return NULL;
   }
 
-  struct Node* next_item = self->list->front(self->list);
+  struct kc_node_t* next_item = self->list->front(self->list);
 
   // check if the head of the list exists
   if (next_item  != NULL)
