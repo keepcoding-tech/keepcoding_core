@@ -1,3 +1,19 @@
+# This file is part of keepcoding_core
+# ==================================
+#
+# makefile
+#
+# Copyright (c) 2023 Daniel Tanase
+# SPDX-License-Identifier: MIT License
+#
+#                  _         __ _ _
+#                 | |       / _(_) |
+#  _ __ ___   __ _| | _____| |_ _| | ___
+# | '_ ` _ \ / _` | |/ / _ \  _| | |/ _ \
+# | | | | | | (_| |   <  __/ | | | |  __/
+# |_| |_| |_|\__,_|_|\_\___|_| |_|_|\___|
+#
+
 # Specify the compiler and compiler flags
 CC     := gcc
 STD    := -std=c99

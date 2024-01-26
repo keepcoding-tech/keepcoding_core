@@ -38,7 +38,7 @@ struct Stack
 {
   struct Vector* vector;
 
-  struct ConsoleLog* log;
+  struct kc_console_log_t* log;
 
   size_t (*length)  (struct Stack* self);
   void   (*pop)     (struct Stack* self);

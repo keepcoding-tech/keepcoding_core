@@ -33,9 +33,9 @@
 
 struct Queue
 {
-  struct List* list;
+  struct kc_list_t* list;
 
-  struct ConsoleLog* log;
+  struct kc_console_log_t* log;
 
   size_t (*length)  (struct Queue* self);
   void*  (*peek)    (struct Queue* self);

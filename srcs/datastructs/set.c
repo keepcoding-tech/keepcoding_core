@@ -6,7 +6,7 @@
 // Copyright (c) 2023 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-#include "../../hdrs/error.h"
+#include "../../hdrs/common.h"
 #include "../../hdrs/datastructs/set.h"
 
 #include <stdlib.h>
@@ -17,13 +17,13 @@
 static void  insert_new_pair_set    (struct Set* self, void* key, size_t key_size, void* value, size_t value_size);
 static void  remove_pair_set        (struct Set* self, void* key, size_t key_size);
 static void* search_pair_set        (struct Set* self, void* key, size_t key_size);
-static void  recursive_set_destroy  (struct Node* node);
+static void  recursive_set_destroy  (struct kc_node_t* node);
 
 //---------------------------------------------------------------------------//
 
 struct Set* new_set(int (*compare)(const void* a, const void* b))
 {
-  struct ConsoleLog* logger = new_console_log(err, log_err, __FILE__);
+  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
 
   // create a Set instance to be returned
   struct Set* new_set = malloc(sizeof(struct Set));
@@ -147,7 +147,7 @@ void* search_pair_set(struct Set* self, void* key, size_t key_size)
       &dummy_value, sizeof(char));
 
   // use the search function of the Tree to find the desired node
-  struct Node* result_node =
+  struct kc_node_t* result_node =
       self->entries->search(self->entries, searchable);
 
   // free the dummy pair
@@ -171,7 +171,7 @@ void* search_pair_set(struct Set* self, void* key, size_t key_size)
 
 //---------------------------------------------------------------------------//
 
-void recursive_set_destroy(struct Node* node)
+void recursive_set_destroy(struct kc_node_t* node)
 {
   // chekc the previous node
   if (node->prev != NULL)

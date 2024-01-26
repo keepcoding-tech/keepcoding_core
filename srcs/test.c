@@ -6,9 +6,10 @@
 // Copyright (c) 2023 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-#include "../../hdrs/testing/test.h"
+#include "../hdrs/test.h"
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 

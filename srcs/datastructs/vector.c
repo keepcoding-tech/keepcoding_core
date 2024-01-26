@@ -6,7 +6,7 @@
 // Copyright (c) 2023 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-#include "../../hdrs/error.h"
+#include "../../hdrs/common.h"
 #include "../../hdrs/datastructs/vector.h"
 
 #include <stdlib.h>
@@ -37,7 +37,7 @@ static void   resize_vector           (struct Vector* vector, size_t new_capacit
 
 struct Vector* new_vector()
 {
-  struct ConsoleLog* logger = new_console_log(err, log_err, __FILE__);
+  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
 
   // create a Vector instance to be returned
   struct Vector* new_vector = malloc(sizeof(struct Vector));

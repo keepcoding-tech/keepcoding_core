@@ -8,7 +8,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "../../hdrs/error.h"
+#include "../../hdrs/common.h"
 #include "../../hdrs/logger/console_log.h"
 #include "../../hdrs/system/file.h"
 
@@ -46,7 +46,7 @@ struct File* new_file()
     return NULL;
   }
 
-  struct ConsoleLog* log = new_console_log(err, log_err, __FILE__);
+  struct kc_console_log_t* log = new_console_log(err, log_err, __FILE__);
 
   // assigns the public member fields
   file->log    = log;
@@ -399,7 +399,7 @@ int read_file(struct File* self, char** buffer)
   // Error determining file size
   if (file_size == -1)
   {
-    return KC_BUFFER_OVERFLOW;
+    return KC_OVERFLOW;
   }
 
   // Reset file pointer to the beginning
@@ -421,7 +421,7 @@ int read_file(struct File* self, char** buffer)
   {
     free(buffer);
 
-    return KC_BUFFER_OVERFLOW;
+    return KC_OVERFLOW;
   }
 
   // Null-terminate the content

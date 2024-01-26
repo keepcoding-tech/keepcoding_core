@@ -38,14 +38,14 @@
 
 struct Tree
 {
-  struct Node* root;
+  struct kc_node_t* root;
 
-  struct ConsoleLog* log;
+  struct kc_console_log_t* log;
 
   int          (*compare)  (const void* a, const void* b);
   void         (*insert)   (struct Tree* self, void* data, size_t size);
   void         (*remove)   (struct Tree* self, void* data, size_t size);
-  struct Node* (*search)   (struct Tree* self, void* data);
+  struct kc_node_t* (*search)   (struct Tree* self, void* data);
 };
 
 //---------------------------------------------------------------------------//

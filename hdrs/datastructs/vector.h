@@ -41,7 +41,7 @@ struct Vector
   size_t capacity;
   size_t length;
 
-  struct ConsoleLog* log;
+  struct kc_console_log_t* log;
 
   void*  (*at)          (struct Vector* self, int index);
   void*  (*back)        (struct Vector* self);
