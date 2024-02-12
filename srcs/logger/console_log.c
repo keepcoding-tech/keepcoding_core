@@ -87,6 +87,8 @@ int display_debug_message(struct kc_console_log_t* self, const int index, const 
 
   log_debug(self->exceptions[index],
       self->descriptions[index], self->file, line, func);
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//

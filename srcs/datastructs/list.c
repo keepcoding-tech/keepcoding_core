@@ -370,7 +370,7 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t* node)
     // log the warning to the console
     self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
-    return NULL;
+    return KC_INDEX_OUT_OF_BOUNDS;
   }
 
   node = iterate_ll(self, index);
@@ -501,7 +501,14 @@ int is_list_empty(struct kc_list_t* self, bool* is_empty)
     return KC_INVALID;
   }
 
-  is_empty = self->length == 0 && self->head == NULL && self->tail == NULL;
+  if (self->length == 0 && self->head == NULL && self->tail == NULL)
+  {
+    (*is_empty) = true;
+  }
+  else
+  {
+    (*is_empty) = false;
+  }
 
   return KC_SUCCESS;
 }
@@ -529,7 +536,14 @@ int search_node(struct kc_list_t* self, void* value,
     node = node->next;
   }
 
-  exists = node != NULL;
+  if (node != NULL)
+  {
+    (*exists) = true;
+  }
+  else
+  {
+    (*exists) = false;
+  }
 
   return KC_SUCCESS;
 }

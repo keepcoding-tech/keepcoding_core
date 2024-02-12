@@ -1,13 +1,16 @@
 // This file is part of keepcoding_core
 // ==================================
 //
-// list.c
+// datastructs.c
 //
 // Copyright (c) 2023 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-#include "../../hdrs/testing/test.h"
-#include "../../hdrs/datastructs/list.h"
+#include "../hdrs/datastructs/list.h"
+#include "../hdrs/datastructs/node.h"
+
+#include "../hdrs/test.h"
+#include "../hdrs/common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,221 +32,322 @@ COMPARE_LIST(int8_t, compare_int8_t)
 int main() {
   testgroup("Linked List")
   {
-    subtest("test_creation_and_destruction")
+    subtest("test init/desc")
     {
       struct kc_list_t* list = new_list();
+
       ok(list->head == NULL);
       ok(list->tail == NULL);
+
       destroy_list(list);
     }
 
-    subtest("test_back")
+    subtest("test back()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      struct kc_node_t* back = NULL;
+      int rez = KC_INVALID;
+
+      rez = list->back(list, back);
+
       // there shouldn't be any nodes
-      ok(list->back(list) == NULL);
+      ok(rez == KC_SUCCESS);
+      ok(back == NULL);
 
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
 
         // check if the last element is returned correctly
-        struct kc_node_t* back = list->back(list);
+        rez = list->back(list, back);
+
+        ok(rez == KC_SUCCESS);
         ok(*(int*)back->data == i);
       }
 
       // remove all the nodes
-      for (int i = 9; i >= 0; --i) {
+      for (int i = 9; i >= 0; --i)
+      {
         // check if the last element is returned correctly
-        struct kc_node_t* back = list->back(list);
+        rez = list->back(list, back);
+
+        ok(rez == KC_SUCCESS);
         ok(*(int*)back->data == i);
 
-        list->erase(list, i);
+        rez = list->erase(list, i);
+
+        ok(rez == KC_SUCCESS);
       }
 
       destroy_list(list);
     }
 
-    subtest("test_clear")
+    subtest("test clear()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      bool is_empty = false;
+      int rez = KC_INVALID;
+
+      rez = list->empty(list, &is_empty);
+
       // the list should be empty
-      ok(list->empty(list));
+      ok(rez == KC_SUCCESS);
+      ok(is_empty == true);
 
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
       }
 
       // the list should not be empty now
+      rez = list->empty(list, &is_empty);
+
+      ok(rez == KC_SUCCESS);
       ok(list->length == 10);
-      ok(list->empty(list) == false);
+      ok(is_empty == false);
 
       // clear the list
       list->clear(list);
 
       // the list should be empty again
-      ok(list->empty(list));
+      rez = list->empty(list, &is_empty);
+
+      ok(rez == KC_SUCCESS);
+      ok(is_empty == false);
 
       destroy_list(list);
     }
 
-    subtest("test_empty")
+    subtest("test empty()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      bool is_empty = false;
+      int rez = KC_INVALID;
+
+      rez = list->empty(list, &is_empty);
+
       // the list should be empty
-      ok(list->empty(list));
+      ok(rez == KC_SUCCESS);
+      ok(is_empty == true);
 
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 10; ++i)
+      {
         list->insert(list, i, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
       }
 
-      // the list should not be empty
-      ok(!list->empty(list));
+      // the list should not be empty now
+      rez = list->empty(list, &is_empty);
+
+      ok(rez == KC_SUCCESS);
+      ok(is_empty == false);
 
       // remove all nodes
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 10; ++i)
+      {
         list->erase(list, 0);
       }
 
       // the list should be empty again
-      ok(list->empty(list));
+      rez = list->empty(list, &is_empty);
+
+      ok(rez == KC_SUCCESS);
+      ok(is_empty == true);
 
       destroy_list(list);
     }
 
-    subtest("test_erase")
+    subtest("test erase()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      int rez = KC_INVALID;
+
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
       }
 
       // remove the node from position 5
-      list->erase(list, 5);
+      rez = list->erase(list, 5);
+
+      ok(rez == KC_SUCCESS);
 
       // check if the node was correctly removed
       struct kc_node_t* cursor = list->head;
-      for (int i = 0; i < 5; ++i) {
+      for (int i = 0; i < 5; ++i)
+      {
         cursor = cursor->next;
       }
 
       ok(*(int*)cursor->data != 4 || list->length != 10);
 
       // remove the head of the list
-      list->erase(list, 0);
+      rez = list->erase(list, 0);
+
+      ok(rez == KC_SUCCESS);
 
       // check if the head of the list was correctly removed
       cursor = list->head;
       ok(*(int*)cursor->data != 0 || list->length != 9);
 
       // remove the remaining nodes in reverse
-      for (int i = (int)list->length - 1; i >= 0; --i) {
-        list->erase(list, i);
+      for (int i = (int)list->length - 1; i >= 0; --i)
+      {
+        rez = list->erase(list, i);
+
+        ok(rez == KC_SUCCESS);
         ok(list->length == i);
       }
 
       destroy_list(list);
     }
 
-    subtest("test_front")
+    subtest("test front()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      struct kc_node_t* front = NULL;
+      int rez = KC_INVALID;
+
       // there shouldn't be any nodes
-      ok(list->front(list) == NULL);
+      rez = list->front(list, front);
+
+      ok(rez == KC_SUCCESS);
+      ok(front == NULL);
 
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
 
         // check if the first element is returned correctly,
         // it should always be zero (the same value)
-        struct kc_node_t* front = list->front(list);
+        rez = list->front(list, front);
+
+        ok(rez == KC_SUCCESS);
         ok(*(int*)front->data == 0);
       }
 
       // remove all the nodes
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 10; ++i)
+      {
         // check if the first element is returned correctly
-        struct kc_node_t* front = list->front(list);
+        rez = list->front(list, front);
+
+        ok(rez == KC_SUCCESS);
         ok(*(int*)front->data == i);
 
         // erase only the first node for each iteration
-        list->erase(list, 0);
+        rez = list->erase(list, 0);
+        ok(rez == KC_SUCCESS);
       }
 
       destroy_list(list);
     }
 
-    subtest("test_get")
+    subtest("test get()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      struct kc_node_t* node = NULL;
+      int rez = KC_INVALID;
+
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
       }
 
       // check if the node was correctly retrieved
-      struct kc_node_t* node = list->get(list, 5);
+      rez = list->get(list, 5, node);
+
+      ok(rez == KC_SUCCESS);
       ok(*(int*)node->data == 5);
 
       // check if the head of the list was correctly retrieved
-      node = list->get(list, 0);
+      rez = list->get(list, 0, node);
+
+      ok(rez == KC_SUCCESS);
       ok(*(int*)node->data == 0);
 
       // check if the tail of the list was correctly retrieved
-      node = list->get(list, (int)list->length - 1);
+      rez = list->get(list, (int)list->length - 1, node);
+
+      ok(rez == KC_SUCCESS);
       ok(*(int*)node->data == 9);
 
       destroy_list(list);
     }
 
-    subtest("test_insert")
+    subtest("test insert()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      struct kc_node_t* node = NULL;
+      int rez = KC_INVALID;
+
       // add ten new nodes of type int
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
 
         // check the length of the list
+        ok(rez == KC_SUCCESS);
         ok(list->length == i + 1);
       }
 
       // add ten new nodes of type char
-      for (int i = 10; i < 20; ++i) {
+      for (int i = 10; i < 20; ++i)
+      {
         char c = 'a' + i;
-        list->insert(list, i, &c, sizeof(char));
+        rez = list->insert(list, i, &c, sizeof(char));
 
         // check the length of the list
+        ok(rez == KC_SUCCESS);
         ok(list->length == i + 1);
       }
 
-      for (int i = 0; i < 20; ++i) {
+      for (int i = 0; i < 20; ++i)
+      {
         struct kc_node_t* cursor = list->head;
-        for (int j = 0; j < i; ++j) {
+        for (int j = 0; j < i; ++j)
+        {
           cursor = cursor->next;
         }
 
         // check if the nodes have been inserted correctly
-        if (i < 10) {
+        if (i < 10)
+        {
           ok(*(int*)cursor->data == i);
-        } else {
+        }
+        else
+        {
           ok(*(char*)cursor->data == 'a' + i);
         }
       }
@@ -251,81 +355,103 @@ int main() {
       // add a new node of type int[] (array)
       int nums[] = {1, 2, 3, 4, 5};
       size_t size = sizeof(nums) / sizeof(nums[0]);
-      list->insert(list, 20, &nums, sizeof(int) * size);
+      rez = list->insert(list, 20, &nums, sizeof(int) * size);
+
+      ok(rez == KC_SUCCESS);
 
       // get the 21st node
       struct kc_node_t* cursor = list->tail;
 
       // check if the node has been inserted correctly
       int* ptr = (int*)cursor->data;
-      for (int i = 0; i < size; ++i) {
+      for (int i = 0; i < size; ++i)
+      {
         ok(ptr[i] == nums[i]);
       }
 
       destroy_list(list);
     }
 
-    subtest("test_pop_back")
+    subtest("test pop_back()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      int rez = KC_INVALID;
+
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
       }
 
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 10; ++i)
+      {
         // the length should be reduced only after the pop
         ok(*(int*)list->tail->data == 10 - (i + 1));
         ok(list->length == 10 - i);
 
-        list->pop_back(list);
-
         // check if the last node was deleted correctly
+        rez = list->pop_back(list);
+
+        ok(rez == KC_SUCCESS);
         ok(list->length == 10 - (i + 1));
       }
 
       destroy_list(list);
     }
 
-    subtest("test_pop_front")
+    subtest("test pop_front()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      int rez = KC_INVALID;
+
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
       }
 
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 10; ++i)
+      {
         // the length should be reduced only after the pop
         ok(*(int*)list->head->data == i);
         ok(list->length == 10 - i);
 
-        list->pop_front(list);
+        rez = list->pop_front(list);
 
         // check if the last node was deleted correctly
+        ok(rez == KC_SUCCESS);
         ok(list->length == 10 - (i + 1));
       }
 
       destroy_list(list);
     }
 
-    subtest("test_push_back")
+    subtest("test push_back()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      int rez = KC_INVALID;
+
       // push back ten new nodes
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 10; ++i)
+      {
         // the length should be incremented only after push
         ok(list->length == i);
 
-        list->push_back(list, &i, sizeof(int));
+        rez = list->push_back(list, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
 
         // check if the node was inserted correctly
         ok(*(int*)list->tail->data == i);
@@ -335,17 +461,22 @@ int main() {
       destroy_list(list);
     }
 
-    subtest("test_push_front")
+    subtest("test push_front()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      int rez = KC_INVALID;
+
       // push back ten new nodes
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 10; ++i)
+      {
         // the length should be incremented only after push
         ok(list->length == i);
 
-        list->push_front(list, &i, sizeof(int));
+        rez = list->push_front(list, &i, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
 
         // check if the node was inserted correctly
         ok(*(int*)list->head->data == i);
@@ -355,63 +486,94 @@ int main() {
       destroy_list(list);
     }
 
-    subtest("test_remove")
+    subtest("test remove()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
+
+      int rez = KC_INVALID;
+      bool is_empty = false;
 
       // use the same data
       int data = 10;
 
       // add 5 new nodes
-      for (int i = 0; i < 5; ++i) {
-        list->insert(list, i, &data, sizeof(int));
+      for (int i = 0; i < 5; ++i)
+      {
+        rez = list->insert(list, i, &data, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
       }
 
       data = 20;
 
       // add 5 new nodes
-      for (int i = 5; i < 10; ++i) {
-        list->insert(list, i, &data, sizeof(int));
+      for (int i = 5; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &data, sizeof(int));
+
+        ok(rez == KC_SUCCESS);
       }
 
       // should remove only 5 nodes
-      list->remove(list, &data, compare);
+      rez = list->remove(list, &data, compare);
+
+      ok(rez == KC_SUCCESS);
       ok(list->length == 5);
 
       data = 10;
 
       // should remove all 5 nodes
-      list->remove(list, &data, compare);
-      ok(list->empty(list));
+      rez = list->remove(list, &data, compare);
+      ok(rez == KC_SUCCESS);
+
+      rez = list->empty(list, &is_empty);
+      ok(rez == KC_SUCCESS);
+
+      ok(is_empty == true);
 
       destroy_list(list);
     }
 
-    subtest("test_search")
+    subtest("test search()")
     {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
+      int rez = KC_INVALID;
+
       // insert ten new nodes
-      for (int i = 0; i < 10; ++i) {
-        list->insert(list, i, &i, sizeof(int));
+      for (int i = 0; i < 10; ++i)
+      {
+        rez = list->insert(list, i, &i, sizeof(int));
       }
 
       // check if the values are in the list
-      for (int i = 9; i > 0; --i) {
-        ok(list->search(list, &i, compare));
+      for (int i = 9; i > 0; --i)
+      {
+        bool exists = false;
+
+        rez = list->search(list, &i, compare, &exists);
+
+        ok(rez == KC_SUCCESS);
+        ok(exists == true);
       }
 
       // check if the values are not in the list
-      for (int i = 30; i > 20; --i) {
-        ok(!list->search(list, &i, compare));
+      for (int i = 30; i > 20; --i)
+      {
+        bool exists = true;
+
+        rez = list->search(list, &i, compare, &exists);
+
+        ok(rez == KC_SUCCESS);
+        ok(exists == false);
       }
 
       destroy_list(list);
     }
 
-    subtest("test_compare")
+    subtest("test COMPARE_LIST")
     {
       int a_int = 1, b_int = 2;
       ok(compare_int(&a_int, &b_int) < 0);

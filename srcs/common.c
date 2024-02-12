@@ -6,7 +6,11 @@
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
+<<<<<<< HEAD
 extern const char* err[] =
+=======
+const char* err[] =
+>>>>>>> 0422b773e1f38af6f0852304f4944123a9fb1f5d
 {
   "PENDING",
   "ABORT",
@@ -43,7 +47,11 @@ extern const char* err[] =
   "UNKNOWN_ERROR"
 };
 
+<<<<<<< HEAD
 extern const char* log_err[] =
+=======
+const char* log_err[] =
+>>>>>>> 0422b773e1f38af6f0852304f4944123a9fb1f5d
 {
   "Operation is in progress.",
   "Operation aborted by the user.",

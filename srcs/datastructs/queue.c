@@ -104,10 +104,11 @@ void* get_next_item_queue(struct Queue* self)
     return NULL;
   }
 
-  struct kc_node_t* next_item = self->list->front(self->list);
+  struct kc_node_t* next_item = NULL;
+  int rez = self->list->front(self->list, next_item);
 
   // check if the head of the list exists
-  if (next_item  != NULL)
+  if (next_item != NULL || rez != KC_SUCCESS)
   {
     return next_item->data;
   }

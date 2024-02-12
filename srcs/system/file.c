@@ -399,7 +399,7 @@ int read_file(struct File* self, char** buffer)
   // Error determining file size
   if (file_size == -1)
   {
-    return KC_BUFFER_OVERFLOW;
+    return KC_OVERFLOW;
   }
 
   // Reset file pointer to the beginning
@@ -421,7 +421,7 @@ int read_file(struct File* self, char** buffer)
   {
     free(buffer);
 
-    return KC_BUFFER_OVERFLOW;
+    return KC_OVERFLOW;
   }
 
   // Null-terminate the content

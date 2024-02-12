@@ -25,9 +25,7 @@
 #ifndef KC_NODE_T_H
 #define KC_NODE_T_H
 
-#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 struct kc_node_t
 {

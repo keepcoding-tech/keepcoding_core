@@ -13,7 +13,7 @@
  * execution. Developers can use this framework to handle and report errors in
  * a structured manner.
  *
- * The enumeration lists common exception types, and the err and log_err 
+ * The enumeration lists common exception types, and the err and log_err
  * arrays provide string representations and detailed descriptions
  * for each exception type, aiding in better error reporting and debugging.
  */

@@ -8,6 +8,7 @@
 
 #include "../../hdrs/datastructs/node.h"
 #include "../../hdrs/common.h"
+#include "../../hdrs/logger/console_log.h"
 
 #include <stdlib.h>
 
