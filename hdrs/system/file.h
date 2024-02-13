@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 //---------------------------------------------------------------------------//
 
@@ -35,12 +36,9 @@
 
 //---------------------------------------------------------------------------//
 
-#define KC_FILE_SUCCESS                                              0x00000000
-#define KC_FILE_INVALID                                             -0x00000001
-
-struct File
+struct kc_file_t
 {
-  struct kc_console_log_t* log;
+  struct kc_logger_t* log;
 
   FILE* file;
   char* name;
@@ -48,24 +46,23 @@ struct File
   int   mode;
   bool  opened;
 
-  int (*close)        (struct File* self);
-  int (*create_path)  (struct File* self, char* path);
-  int (*delete)       (struct File* self);
-  int (*delete_path)  (struct File* self, char* path);
-  int (*get_mode)     (struct File* self, int* mode);
-  int (*get_name)     (struct File* self, char** name);
-  int (*get_path)     (struct File* self, char** path);
-  int (*is_open)      (struct File* self, bool* is_open);
-  int (*move)         (struct File* self, char* from, char* to);
-  int (*open)         (struct File* self, char* name, unsigned int mode);
-  int (*read)         (struct File* self, char** buffer);
-  int (*write)        (struct File* self, char* buffer);
+  int (*close)        (struct kc_file_t* self);
+  int (*create_path)  (struct kc_file_t* self, char* path);
+  int (*delete)       (struct kc_file_t* self);
+  int (*delete_path)  (struct kc_file_t* self, char* path);
+  int (*get_mode)     (struct kc_file_t* self, int* mode);
+  int (*get_name)     (struct kc_file_t* self, char** name);
+  int (*get_path)     (struct kc_file_t* self, char** path);
+  int (*is_open)      (struct kc_file_t* self, bool* is_open);
+  int (*move)         (struct kc_file_t* self, char* from, char* to);
+  int (*open)         (struct kc_file_t* self, char* name, unsigned int mode);
+  int (*read)         (struct kc_file_t* self, char** buffer);
+  int (*write)        (struct kc_file_t* self, char* buffer);
 };
 
-// the constructor should be used to create new files
-struct File* new_file();
+struct kc_file_t* new_file      ();
+void              destroy_file  (struct kc_file_t* file);
 
-// the destructor should be used to destroy files
-void destroy_file(struct File* file);
+//---------------------------------------------------------------------------//
 
 #endif /* KC_FILE_H */

@@ -9,34 +9,34 @@
 #include "../../hdrs/datastructs/pair.h"
 #include "../../hdrs/logger/console_log.h"
 
+#include "../../hdrs/common.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 //---------------------------------------------------------------------------//
 
-struct Pair* pair_constructor(void* key, size_t key_size, void* value, size_t value_size)
+struct kc_pair_t* pair_constructor(void* key, size_t key_size, void* value, size_t value_size)
 {
   // confirm the size of the data is at least one
   if (key_size < 1 || value_size < 1)
   {
-    log_error("UNDERFLOW", "The data type's size goes below its "
-        "minimum representable value.", __FILE__, __LINE__, __func__);
+    log_error(err[KC_UNDERFLOW], log_err[KC_UNDERFLOW],
+      __FILE__, __LINE__, __func__);
+
     return NULL;
   }
 
   // create a Pair instance to be returned
-  struct Pair* new_pair = malloc(sizeof(struct Pair));
+  struct kc_pair_t* new_pair = malloc(sizeof(struct kc_pair_t));
 
   // confirm that there is memory to allocate
   if (new_pair == NULL)
   {
-    log_error("OUT_OF_MEMORY", "Failing to allocate memory dynamically "
-        "(e.g. using malloc) due to insufficient memory in the heap.",
-        __FILE__, __LINE__, __func__);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+      __FILE__, __LINE__, __func__);
 
-    // free the instance and exit
-    free(new_pair);
-    exit(1);
+    return NULL;
   }
 
   // allocate space on the heap for the key and value
@@ -46,15 +46,13 @@ struct Pair* pair_constructor(void* key, size_t key_size, void* value, size_t va
   // confirm that there is memory to allocate
   if (new_pair->key == NULL || new_pair->value == NULL)
   {
-    log_error("OUT_OF_MEMORY", "Failing to allocate memory dynamically "
-        "(e.g. using malloc) due to insufficient memory in the heap.",
-        __FILE__, __LINE__, __func__);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+      __FILE__, __LINE__, __func__);
 
-    // free the instances and exit
-    free(new_pair->key);
-    free(new_pair->value);
+    // free the instances
     free(new_pair);
-    exit(1);
+
+    return NULL;
   }
 
   // copy the data parameters into the new object
@@ -66,14 +64,14 @@ struct Pair* pair_constructor(void* key, size_t key_size, void* value, size_t va
 
 //---------------------------------------------------------------------------//
 
-void pair_destructor(struct Pair* pair)
+void pair_destructor(struct kc_pair_t* pair)
 {
   // destroy pair only if is not dereferenced
   if (pair == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
-        __FILE__, __LINE__, __func__);
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
+      __FILE__, __LINE__, __func__);
+
     return;
   }
 

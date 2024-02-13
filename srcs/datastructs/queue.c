@@ -14,34 +14,54 @@
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
-static size_t get_list_length_queue   (struct Queue* self);
-static void*  get_next_item_queue     (struct Queue* self);
-static void   insert_next_item_queue  (struct Queue* self, void* data, size_t size);
-static void   remove_next_item_queue  (struct Queue* self);
+static int get_list_length_queue   (struct kc_queue_t* self, size_t* length);
+static int get_next_item_queue     (struct kc_queue_t* self, void* peek);
+static int insert_next_item_queue  (struct kc_queue_t* self, void* data, size_t size);
+static int remove_next_item_queue  (struct kc_queue_t* self);
 
 //---------------------------------------------------------------------------//
 
-struct Queue* new_queue()
+struct kc_queue_t* new_queue()
 {
-  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
-
   // create a Queue instance to be returned
-  struct Queue* new_queue = malloc(sizeof(struct Queue));
+  struct kc_queue_t* new_queue = malloc(sizeof(struct kc_queue_t));
 
   // confirm that there is memory to allocate
   if (new_queue == NULL)
   {
-    logger->error(logger, KC_OUT_OF_MEMORY, __LINE__, __func__);
-    destroy_console_log(logger);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
 
-    // free the instance and exit
-    free(new_queue);
-    exit(1);
+    return NULL;
   }
 
   // instantiate the queue's List via the constructor
   new_queue->list = new_list();
-  new_queue->log  = logger;
+
+  if (new_queue->list == NULL)
+  {
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
+
+    // free the set instance
+    free(new_queue);
+
+    return NULL;
+  }
+
+  new_queue->log = new_console_log(err, log_err, __FILE__);
+
+  if (new_queue->log == NULL)
+  {
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
+
+    // free the set instances
+    destroy_list(new_queue->list);
+    free(new_queue);
+
+    return NULL;
+  }
 
   // assigns the public member methods
   new_queue->length = get_list_length_queue;
@@ -54,103 +74,102 @@ struct Queue* new_queue()
 
 //---------------------------------------------------------------------------//
 
-void destroy_queue(struct Queue* queue)
+void destroy_queue(struct kc_queue_t* queue)
 {
   // if the list reference is NULL, do nothing
   if (queue == NULL)
   {
     // log the warning to the console
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
     return;
   }
 
+  destroy_console_log(queue->log);
   destroy_list(queue->list);
   free(queue);
 }
 
 //---------------------------------------------------------------------------//
 
-size_t get_list_length_queue(struct Queue* self)
+int get_list_length_queue(struct kc_queue_t* self, size_t* length)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    // log the warning to the console
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return 1;
+    return KC_NULL_REFERENCE;
   }
 
-  return self->list->length;
+  (*length) = self->list->length;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void* get_next_item_queue(struct Queue* self)
+int get_next_item_queue(struct kc_queue_t* self, void* peek)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    // log the warning to the console
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return NULL;
+    return KC_NULL_REFERENCE;
   }
 
   struct kc_node_t* next_item = NULL;
   int rez = self->list->front(self->list, next_item);
 
   // check if the head of the list exists
-  if (next_item != NULL || rez != KC_SUCCESS)
+  if (next_item != NULL && next_item->data != NULL && rez == KC_SUCCESS)
   {
-    return next_item->data;
+    peek = next_item->data;
+
+    return KC_SUCCESS;
   }
 
-  // return null if non-existing
-  return NULL;
+  return KC_EMPTY_STRUCTURE;
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_next_item_queue(struct Queue *self, void *data, size_t size)
+int insert_next_item_queue(struct kc_queue_t *self, void *data, size_t size)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    // log the warning to the console
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   self->list->push_back(self->list, data, size);
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void remove_next_item_queue(struct Queue *self)
+int remove_next_item_queue(struct kc_queue_t *self)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    // log the warning to the console
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   self->list->pop_front(self->list);
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//

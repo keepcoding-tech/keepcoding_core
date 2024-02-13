@@ -6,11 +6,7 @@
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-<<<<<<< HEAD
-extern const char* err[] =
-=======
 const char* err[] =
->>>>>>> 0422b773e1f38af6f0852304f4944123a9fb1f5d
 {
   "PENDING",
   "ABORT",
@@ -23,6 +19,7 @@ const char* err[] =
   "INDEX_OUT_OF_BOUNDS",
   "INVALID_ARGUMENT",
   "FILE_NOT_FOUND",
+  "KC_CANNOT_OPEN_FILE",
   "IO_ERROR",
   "FORMAT_ERROR",
   "PARSE_ERROR",
@@ -47,11 +44,7 @@ const char* err[] =
   "UNKNOWN_ERROR"
 };
 
-<<<<<<< HEAD
-extern const char* log_err[] =
-=======
 const char* log_err[] =
->>>>>>> 0422b773e1f38af6f0852304f4944123a9fb1f5d
 {
   "Operation is in progress.",
   "Operation aborted by the user.",
@@ -64,6 +57,7 @@ const char* log_err[] =
   "Access of an invalid index.",
   "Does not meet the constraints.",
   "The specified file was not found.",
+  "Failed to open the specified file.",
   "Input/output operation failed.",
   "Input does not conform to the expected format.",
   "Error encountered while parsing.",

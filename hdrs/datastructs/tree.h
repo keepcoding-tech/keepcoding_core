@@ -28,34 +28,31 @@
  * the Tree object's data and behavior.
  */
 
-#ifndef KC_TREE_H
-#define KC_TREE_H
+#ifndef KC_TREE_T_H
+#define KC_TREE_T_H
 
-#include "../logger/console_log.h"
+#include "../logger/logger.h"
+
 #include "node.h"
 
 #include <stdio.h>
 
-struct Tree
+//---------------------------------------------------------------------------//
+
+struct kc_tree_t
 {
   struct kc_node_t* root;
+  struct kc_logger_t* log;
 
-  struct kc_console_log_t* log;
-
-  int          (*compare)  (const void* a, const void* b);
-  void         (*insert)   (struct Tree* self, void* data, size_t size);
-  void         (*remove)   (struct Tree* self, void* data, size_t size);
-  struct kc_node_t* (*search)   (struct Tree* self, void* data);
+  int (*compare)  (const void* a, const void* b);
+  int (*insert)   (struct kc_tree_t* self, void* data, size_t size);
+  int (*remove)   (struct kc_tree_t* self, void* data, size_t size);
+  int (*search)   (struct kc_tree_t* self, void* data, struct kc_node_t* node);
 };
 
-//---------------------------------------------------------------------------//
+struct kc_tree_t* new_tree      (int (*compare)(const void* a, const void* b));
+void              destroy_tree  (struct kc_tree_t* tree);
 
-struct Tree* new_tree      (int (*compare)(const void* a, const void* b));
-void         destroy_tree  (struct Tree* tree);
-
-//---------------------------------------------------------------------------//
-
-// use this macro to define any type of primitive data comparison function
 #define COMPARE_TREE(type, function_name)           \
   int function_name(const void* a, const void* b)   \
   {                                                 \
@@ -70,4 +67,6 @@ void         destroy_tree  (struct Tree* tree);
     return 0;                                       \
   }
 
-#endif /* KC_TREE_H */
+//---------------------------------------------------------------------------//
+
+#endif /* KC_TREE_T_H */

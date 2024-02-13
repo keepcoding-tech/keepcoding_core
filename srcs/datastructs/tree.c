@@ -13,38 +13,50 @@
 #include <stdlib.h>
 #include <string.h>
 
+//--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
+
+static int insert_new_node_btree  (struct kc_tree_t* self, void* data, size_t size);
+static int remove_node_btree      (struct kc_tree_t* self, void* data, size_t size);
+static int search_node_btree      (struct kc_tree_t* self, void* data, struct kc_node_t* node);
+
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static void         insert_new_node_btree   (struct Tree* self, void* data, size_t size);
-static void         remove_node_btree       (struct Tree* self, void* data, size_t size);
-static struct kc_node_t* search_node_btree       (struct Tree* self, void* data);
-static struct kc_node_t* insert_node_btree       (struct Tree* self, struct kc_node_t* node, void* data, size_t size);
-static void         recursive_destroy_tree  (struct kc_node_t* node);
-static struct kc_node_t* recursive_remove_node   (struct Tree* self, struct kc_node_t* root, void* data, size_t size);
+static struct kc_node_t* insert_node_btree       (struct kc_tree_t* self, struct kc_node_t* node, void* data, size_t size);
+static void              recursive_destroy_tree  (struct kc_node_t* node);
+static struct kc_node_t* recursive_remove_node   (struct kc_tree_t* self, struct kc_node_t* root, void* data, size_t size);
 
 //---------------------------------------------------------------------------//
 
-struct Tree* new_tree(int (*compare)(const void* a, const void* b))
+struct kc_tree_t* new_tree(int (*compare)(const void* a, const void* b))
 {
-  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
-
   // create a Tree instance to be returned
-  struct Tree* new_tree = malloc(sizeof(struct Tree));
+  struct kc_tree_t* new_tree = malloc(sizeof(struct kc_tree_t));
 
   // confirm that there is memory to allocate
   if (new_tree == NULL)
   {
-    logger->error(logger, KC_OUT_OF_MEMORY, __LINE__, __func__);
-    destroy_console_log(logger);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
 
-    // free the instance and exit
+    return NULL;
+  }
+
+  new_tree->log = new_console_log(err, log_err, __FILE__);
+
+  // confirm that there is memory to allocate
+  if (new_tree->log == NULL)
+  {
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
+
+    // free the instance
     free(new_tree);
-    exit(1);
+
+    return NULL;
   }
 
   // initialize the structure members fields
   new_tree->root = NULL;
-  new_tree->log  = logger;
 
   // assigns the public member methods
   new_tree->compare = compare;
@@ -57,13 +69,12 @@ struct Tree* new_tree(int (*compare)(const void* a, const void* b))
 
 //---------------------------------------------------------------------------//
 
-void destroy_tree(struct Tree* tree)
+void destroy_tree(struct kc_tree_t* tree)
 {
   // if the tree reference is NULL, do nothing
   if (tree == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
     return;
@@ -74,56 +85,59 @@ void destroy_tree(struct Tree* tree)
     recursive_destroy_tree(tree->root);
   }
 
+  destroy_console_log(tree->log);
+
   // free the binary tree too
   free(tree);
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_new_node_btree(struct Tree* self, void* data, size_t size)
+int insert_new_node_btree(struct kc_tree_t* self, void* data, size_t size)
 {
   // if the tree reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   self->root = insert_node_btree(self, self->root, data, size);
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void remove_node_btree(struct Tree* self, void* data, size_t size)
+int remove_node_btree(struct kc_tree_t* self, void* data, size_t size)
 {
   // if the tree reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   self->root = recursive_remove_node(self, self->root, data, size);
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-struct kc_node_t* search_node_btree(struct Tree* self, void* data)
+int search_node_btree(struct kc_tree_t* self, void* data, struct kc_node_t* node)
 {
   // if the tree reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return NULL;
+    return KC_NULL_REFERENCE;
   }
 
   // start searching from the root of the tree
@@ -146,17 +160,19 @@ struct kc_node_t* search_node_btree(struct Tree* self, void* data)
     }
     else
     {
-      return current;
+      node = current;
     }
   }
 
   // if the node was not found, return NULL
-  return NULL;
+  node = NULL;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-struct kc_node_t* insert_node_btree(struct Tree* self,
+struct kc_node_t* insert_node_btree(struct kc_tree_t* self,
     struct kc_node_t* node, void* data, size_t size)
 {
   // check if this is the first node in the tree
@@ -200,7 +216,7 @@ void recursive_destroy_tree(struct kc_node_t* node)
 
 //---------------------------------------------------------------------------//
 
-struct kc_node_t* recursive_remove_node(struct Tree* self, struct kc_node_t* root, void* data, size_t size)
+struct kc_node_t* recursive_remove_node(struct kc_tree_t* self, struct kc_node_t* root, void* data, size_t size)
 {
   // base case
   if (root == NULL)

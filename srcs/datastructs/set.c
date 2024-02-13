@@ -12,36 +12,60 @@
 #include <stdlib.h>
 #include <string.h>
 
+//--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
+
+static int insert_new_pair_set  (struct kc_set_t* self, void* key, size_t key_size, void* value, size_t value_size);
+static int remove_pair_set      (struct kc_set_t* self, void* key, size_t key_size);
+static int search_pair_set      (struct kc_set_t* self, void* key, size_t key_size, void* data);
+
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static void  insert_new_pair_set    (struct Set* self, void* key, size_t key_size, void* value, size_t value_size);
-static void  remove_pair_set        (struct Set* self, void* key, size_t key_size);
-static void* search_pair_set        (struct Set* self, void* key, size_t key_size);
-static void  recursive_set_destroy  (struct kc_node_t* node);
+static void recursive_set_destroy  (struct kc_node_t* node);
 
 //---------------------------------------------------------------------------//
 
-struct Set* new_set(int (*compare)(const void* a, const void* b))
+struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
 {
-  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
-
   // create a Set instance to be returned
-  struct Set* new_set = malloc(sizeof(struct Set));
+  struct kc_set_t* new_set = malloc(sizeof(struct kc_set_t));
 
   // confirm that there is memory to allocate
   if (new_set == NULL)
   {
-    logger->error(logger, KC_OUT_OF_MEMORY, __LINE__, __func__);
-    destroy_console_log(logger);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
 
-    // free the instance and exit
-    free(new_set);
-    exit(1);
+    return NULL;
   }
 
-  // instantiate the set's Tree via the constructor
+  // create a console log instance to be used for the set
+  new_set->log = new_console_log(err, log_err, __FILE__);
+
+  if (new_set->log == NULL)
+  {
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
+
+    // free the set instance
+    free(new_set);
+
+    return NULL;
+  }
+
+  // instantiate the set's kc_tree_t via the constructor
   new_set->entries = new_tree(compare);
-  new_set->log     = logger;
+
+  if (new_set->entries == NULL)
+  {
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
+
+    // free the set instances
+    destroy_console_log(new_set->log);
+    free(new_set);
+
+    return NULL;
+  }
 
   // assigns the public member methods
   new_set->insert = insert_new_pair_set;
@@ -53,13 +77,12 @@ struct Set* new_set(int (*compare)(const void* a, const void* b))
 
 //---------------------------------------------------------------------------//
 
-void destroy_set(struct Set* set)
+void destroy_set(struct kc_set_t* set)
 {
   // if the set reference is NULL, do nothing
   if (set == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
     return;
@@ -71,84 +94,115 @@ void destroy_set(struct Set* set)
     recursive_set_destroy(set->entries->root);
   }
 
+  destroy_console_log(set->log);
+
   // free the instance too
   free(set);
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_new_pair_set(struct Set* self, void* key,
+int insert_new_pair_set(struct kc_set_t* self, void* key,
     size_t key_size, void* value, size_t value_size)
 {
   // if the set reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   // check if the pair already exists in the set
-  if (search_pair_set(self, key, key_size) != NULL)
+  struct kc_node_t* node = NULL;
+  search_pair_set(self, key, key_size, node);
+  if (node != NULL)
   {
-    return;
+    return KC_SUCCESS;
   }
 
   // create a new Pair
-  struct Pair* pair = pair_constructor(key, key_size, value, value_size);
+  struct kc_pair_t* pair = pair_constructor(key, key_size, value, value_size);
 
   // insert that pair into the tree
-  self->entries->insert(self->entries, pair, sizeof(struct Pair));
+  int rez = self->entries->insert(self->entries, pair, sizeof(struct kc_pair_t));
+
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void remove_pair_set(struct Set* self, void* key, size_t key_size)
+int remove_pair_set(struct kc_set_t* self, void* key, size_t key_size)
 {
   // if the set reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   // create a new pair by using a dummy value
   char dummy_value = 'a';
-  struct Pair* pair_to_remove = pair_constructor(key, key_size,
+  struct kc_pair_t* pair_to_remove = pair_constructor(key, key_size,
       &dummy_value, sizeof(char));
+
+  if (pair_to_remove == NULL)
+  {
+    return KC_INVALID;
+  }
 
   // call the remove function of the Tree structure
-  self->entries->remove(self->entries, pair_to_remove, sizeof(struct Pair));
+  int rez = self->entries->remove(self->entries, pair_to_remove, sizeof(struct kc_pair_t));
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
+
   pair_destructor(pair_to_remove);
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void* search_pair_set(struct Set* self, void* key, size_t key_size)
+int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void* value)
 {
   // if the set reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return NULL;
+    return KC_NULL_REFERENCE;
   }
+
+  value = NULL;
 
   // create a new pair by using a dummy value
   char dummy_value = 'a';
-  struct Pair* searchable = pair_constructor(key, key_size,
+  struct kc_pair_t* searchable = pair_constructor(key, key_size,
       &dummy_value, sizeof(char));
 
-  // use the search function of the Tree to find the desired node
-  struct kc_node_t* result_node =
-      self->entries->search(self->entries, searchable);
+  if (searchable == NULL)
+  {
+    return KC_INVALID;
+  }
+
+  // use the search function of the kc_tree_t to find the desired node
+  struct kc_node_t* result_node = NULL;
+  int rez = self->entries->search(self->entries, searchable, result_node);
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
 
   // free the dummy pair
   pair_destructor(searchable);
@@ -157,16 +211,18 @@ void* search_pair_set(struct Set* self, void* key, size_t key_size)
   if (result_node != NULL)
   {
     // get the pair from the node
-    struct Pair* result_pair = (struct Pair*)result_node->data;
+    struct kc_pair_t* result_pair = (struct kc_pair_t*)result_node->data;
 
     // return either the value for that key or NULL if not found
-    if (result_pair != NULL)
+    if (result_pair != NULL && result_pair->value != NULL)
     {
-      return result_pair->value;
+      value = result_pair->value;
+
+      return KC_SUCCESS;
     }
   }
 
-  return NULL;
+  return KC_INVALID;
 }
 
 //---------------------------------------------------------------------------//

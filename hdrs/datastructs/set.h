@@ -26,10 +26,11 @@
  * the Set object's data and behavior.
  */
 
-#ifndef KC_SET_H
-#define KC_SET_H
+#ifndef KC_SET_T_H
+#define KC_SET_T_H
 
-#include "../logger/console_log.h"
+#include "../logger/logger.h"
+
 #include "tree.h"
 #include "pair.h"
 
@@ -37,37 +38,35 @@
 #include <string.h>
 #include <stdio.h>
 
-struct Set
+//---------------------------------------------------------------------------//
+
+struct kc_set_t
 {
-  struct Tree* entries;
+  struct kc_tree_t* entries;
+  struct kc_logger_t* log;
 
-  struct kc_console_log_t* log;
-
-  void  (*insert)  (struct Set* self, void* key, size_t key_size, void* value, size_t value_size);
-  void  (*remove)  (struct Set* self, void* key, size_t key_size);
-  void* (*search)  (struct Set* self, void* key, size_t key_size);
+  int (*insert)  (struct kc_set_t* self, void* key, size_t key_size, void* value, size_t value_size);
+  int (*remove)  (struct kc_set_t* self, void* key, size_t key_size);
+  int (*search)  (struct kc_set_t* self, void* key, size_t key_size, void* value);
 };
 
-//---------------------------------------------------------------------------//
+struct kc_set_t* new_set      (int (*compare)(const void* a, const void* b));
+void             destroy_set  (struct kc_set_t* set);
 
-struct Set* new_set      (int (*compare)(const void* a, const void* b));
-void        destroy_set  (struct Set* set);
-
-//---------------------------------------------------------------------------//
-
-// use this macro to define any type of primitive data comparison function
-#define COMPARE_SET(type, function_name)                                     \
-  int function_name(const void* a, const void* b)                            \
-  {                                                                          \
-    if (*(type*)((struct Pair*)a)->key < *(type*)((struct Pair*)b)->key)     \
-    {                                                                        \
-      return -1;                                                             \
-    }                                                                        \
-    if (*(type*)((struct Pair*)a)->key > *(type*)((struct Pair*)b)->key)     \
-    {                                                                        \
-      return 1;                                                              \
-    }                                                                        \
-    return 0;                                                                \
+#define COMPARE_SET(type, function_name)                                               \
+  int function_name(const void* a, const void* b)                                      \
+  {                                                                                    \
+    if (*(type*)((struct kc_pair_t*)a)->key < *(type*)((struct kc_pair_t*)b)->key)     \
+    {                                                                                  \
+      return -1;                                                                       \
+    }                                                                                  \
+    if (*(type*)((struct kc_pair_t*)a)->key > *(type*)((struct kc_pair_t*)b)->key)     \
+    {                                                                                  \
+      return 1;                                                                        \
+    }                                                                                  \
+    return 0;                                                                          \
   }
 
-#endif /* KC_SET_H */
+//---------------------------------------------------------------------------//
+
+#endif /* KC_SET_T_H */

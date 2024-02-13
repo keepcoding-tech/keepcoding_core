@@ -21,12 +21,12 @@
 #ifndef KC_COMMON_H
 #define KC_COMMON_H
 
-// -------------------------------------------------------------------------- //
+//---------------------------------------------------------------------------//
 
 #define KC_INVALID                                                   -1
 #define KC_SUCCESS                                                    0
 
-// -------------------------------------------------------------------------- //
+//---------------------------------------------------------------------------//
 
 enum
 {
@@ -45,6 +45,7 @@ enum
   KC_INVALID_ARGUMENT,      // Invalid Argument: does not meet the constraints
 
   KC_FILE_NOT_FOUND,        // File not found: the specified file was not found
+  KC_CANNOT_OPEN_FILE,      // Cannot open file: failed to open the specified file
   KC_IO_ERROR,              // I/O error: input/output operation failed
   KC_FORMAT_ERROR,          // Format error: input does not conform to the expected format
   KC_PARSE_ERROR,           // Parse error: while parsing, an error was encountered
@@ -83,6 +84,6 @@ enum
 extern const char* err[];
 extern const char* log_err[];
 
-// -------------------------------------------------------------------------- //
+//---------------------------------------------------------------------------//
 
 #endif /* KC_COMMON_H */

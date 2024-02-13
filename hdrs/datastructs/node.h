@@ -27,6 +27,8 @@
 
 #include <stdio.h>
 
+//---------------------------------------------------------------------------//
+
 struct kc_node_t
 {
   struct kc_node_t* next;
@@ -37,5 +39,7 @@ struct kc_node_t
 
 struct kc_node_t* node_constructor  (void* data, size_t size);
 void              node_destructor   (struct kc_node_t* node);
+
+//---------------------------------------------------------------------------//
 
 #endif /* KC_NODE_T_H */

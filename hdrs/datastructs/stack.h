@@ -26,27 +26,31 @@
  * the Stack object's data and behavior.
  */
 
-#ifndef KC_STACK_H
-#define KC_STACK_H
+#ifndef KC_STACK_T_H
+#define KC_STACK_T_H
 
-#include "../logger/console_log.h"
+#include "../logger/logger.h"
+
 #include "vector.h"
 
 #include <stdio.h>
 
-struct Stack
+//---------------------------------------------------------------------------//
+
+struct kc_stack_t
 {
-  struct Vector* vector;
+  struct kc_vector_t* vector;
+  struct kc_logger_t* log;
 
-  struct kc_console_log_t* log;
-
-  size_t (*length)  (struct Stack* self);
-  void   (*pop)     (struct Stack* self);
-  void   (*push)    (struct Stack* self, void* data, size_t size);
-  void*  (*top)     (struct Stack* self);
+  int (*length)  (struct kc_stack_t* self, size_t* length);
+  int (*pop)     (struct kc_stack_t* self);
+  int (*push)    (struct kc_stack_t* self, void* data, size_t size);
+  int (*top)     (struct kc_stack_t* self, void* top);
 };
 
-struct Stack* new_stack      ();
-void          destroy_stack  (struct Stack* stack);
+struct kc_stack_t* new_stack      ();
+void               destroy_stack  (struct kc_stack_t* stack);
 
-#endif /* KC_STACK_H */
+//---------------------------------------------------------------------------//
+
+#endif /* KC_STACK_T_H */

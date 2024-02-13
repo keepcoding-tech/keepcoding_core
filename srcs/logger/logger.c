@@ -1,21 +1,23 @@
 // This file is part of keepcoding_core
 // ==================================
 //
-// console_log.c
+// logger.c
 //
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-#include "../../hdrs/logger/console_log.h"
+#include "../../hdrs/logger/logger.h"
 #include "../../hdrs/common.h"
+
+#include <time.h>
 
 //--- MARK: PRIVATE MEMBER METHODS PROTOTYPES -------------------------------//
 
-static int display_debug_message    (struct kc_console_log_t* self, const int index, const int line, const char* func);
-static int display_error_message    (struct kc_console_log_t* self, const int index, const int line, const char* func);
-static int display_fatal_message    (struct kc_console_log_t* self, const int index, const int line, const char* func);
-static int display_info_message     (struct kc_console_log_t* self, const int index, const int line, const char* func);
-static int display_warning_message  (struct kc_console_log_t* self, const int index, const int line, const char* func);
+static int display_debug_message    (struct kc_logger_t* self, const int index, const int line, const char* func);
+static int display_error_message    (struct kc_logger_t* self, const int index, const int line, const char* func);
+static int display_fatal_message    (struct kc_logger_t* self, const int index, const int line, const char* func);
+static int display_info_message     (struct kc_logger_t* self, const int index, const int line, const char* func);
+static int display_warning_message  (struct kc_logger_t* self, const int index, const int line, const char* func);
 
 //--- MARK: PUBLIC MEMBER METHODS PROTOTYPES --------------------------------//
 
@@ -24,13 +26,14 @@ void log_error    (const char* exception, const char* description, const char* f
 void log_fatal    (const char* exception, const char* description, const char* file, const int line, const char* func);
 void log_info     (const char* title, const char* description, const char* file, const int line, const char* func);
 void log_warning  (const char* warning, const char* description, const char* file, const int line, const char* func);
+int  log_to_file  (const char* filename, const char* log, const char* message, const char* file, const int line, const char* func);
 
 //---------------------------------------------------------------------------//
 
-struct kc_console_log_t* new_console_log(const char** exceptions, const char** descriptions, const char* file)
+struct kc_logger_t* new_logger(const char** exceptions, const char** descriptions, const char* file)
 {
   // create a ConsoleLog instance to be returned
-  struct kc_console_log_t* new_log = malloc(sizeof(struct kc_console_log_t));
+  struct kc_logger_t* new_log = malloc(sizeof(struct kc_logger_t));
 
   // confirm that there is memory to allocate
   if (new_log == NULL)
@@ -58,7 +61,7 @@ struct kc_console_log_t* new_console_log(const char** exceptions, const char** d
 
 //---------------------------------------------------------------------------//
 
-void destroy_console_log(struct kc_console_log_t* log)
+void destroy_logger(struct kc_logger_t* log)
 {
   // free the memory only if the log is not null reference
   if (log == NULL)
@@ -74,7 +77,8 @@ void destroy_console_log(struct kc_console_log_t* log)
 
 //---------------------------------------------------------------------------//
 
-int display_debug_message(struct kc_console_log_t* self, const int index, const int line, const char* func)
+int display_debug_message(struct kc_logger_t* self, const int index,
+   const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
   if (self == NULL)
@@ -93,7 +97,8 @@ int display_debug_message(struct kc_console_log_t* self, const int index, const 
 
 //---------------------------------------------------------------------------//
 
-int display_error_message(struct kc_console_log_t* self, const int index, const int line, const char* func)
+int display_error_message(struct kc_logger_t* self, const int index, 
+   const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
   if (self == NULL)
@@ -112,7 +117,8 @@ int display_error_message(struct kc_console_log_t* self, const int index, const 
 
 //---------------------------------------------------------------------------//
 
-int display_fatal_message(struct kc_console_log_t* self, const int index, const int line, const char* func)
+int display_fatal_message(struct kc_logger_t* self, const int index, 
+   const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
   if (self == NULL)
@@ -131,7 +137,8 @@ int display_fatal_message(struct kc_console_log_t* self, const int index, const 
 
 //---------------------------------------------------------------------------//
 
-int display_info_message(struct kc_console_log_t* self, const int index, const int line, const char* func)
+int display_info_message(struct kc_logger_t* self, const int index, 
+   const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
   if (self == NULL)
@@ -150,7 +157,8 @@ int display_info_message(struct kc_console_log_t* self, const int index, const i
 
 //---------------------------------------------------------------------------//
 
-int display_warning_message(struct kc_console_log_t* self, const int index, const int line, const char* func)
+int display_warning_message(struct kc_logger_t* self, const int index, 
+   const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
   if (self == NULL)
@@ -169,7 +177,8 @@ int display_warning_message(struct kc_console_log_t* self, const int index, cons
 
 //---------------------------------------------------------------------------//
 
-void log_debug(const char* title, const char* description, const char* file, const int line, const char* func)
+void log_debug(const char* title, const char* description, const char* file, 
+   const int line, const char* func)
 {
   printf("\n");
   printf("[DEBUG] %s:%d in function ‘%s’ \n", file, line, func);
@@ -179,7 +188,8 @@ void log_debug(const char* title, const char* description, const char* file, con
 
 //---------------------------------------------------------------------------//
 
-void log_error(const char* exception, const char* description, const char* file, const int line, const char* func)
+void log_error(const char* exception, const char* description, const char* file,
+   const int line, const char* func)
 {
   // use the \033[31m ANSI escape code for red color
   printf("\n");
@@ -190,7 +200,8 @@ void log_error(const char* exception, const char* description, const char* file,
 
 //---------------------------------------------------------------------------//
 
-void log_fatal(const char* exception, const char* description, const char* file, const int line, const char* func)
+void log_fatal(const char* exception, const char* description, const char* file,
+   const int line, const char* func)
 {
   // use the \033[31m ANSI escape code for red color
   printf("\n");
@@ -202,7 +213,8 @@ void log_fatal(const char* exception, const char* description, const char* file,
 
 //---------------------------------------------------------------------------//
 
-void log_info(const char* title, const char* description, const char* file, const int line, const char* func)
+void log_info(const char* title, const char* description, const char* file, 
+   const int line, const char* func)
 {
   printf("\n");
   printf("[INFO] %s:%d in function ‘%s’ \n", file, line, func);
@@ -212,7 +224,8 @@ void log_info(const char* title, const char* description, const char* file, cons
 
 //---------------------------------------------------------------------------//
 
-void log_warning(const char* warning, const char* description, const char* file, const int line, const char* func)
+void log_warning(const char* warning, const char* description, const char* file,
+   const int line, const char* func)
 {
   // use the \033[33m ANSI escape code for yellow color
   printf("\n");
@@ -223,3 +236,42 @@ void log_warning(const char* warning, const char* description, const char* file,
 
 //---------------------------------------------------------------------------//
 
+int log_to_file(const char* filename, const char* log, const char* message,
+    const char* file, const int line, const char* func)
+{
+  // open the file in append mode (creates a new file if it doesn't exist)
+  FILE *write_file = fopen(filename, "a");
+
+  // print an error and exit the program
+  if (write_file == NULL)
+  {
+    log_error(err[KC_CANNOT_OPEN_FILE], log_err[KC_CANNOT_OPEN_FILE],
+        __FILE__, __LINE__, __func__);
+
+    return KC_CANNOT_OPEN_FILE;
+  }
+
+  // get the current timestamp
+  time_t now;
+  struct tm *tm_info;
+  char time_buffer[30];
+  time(&now);
+
+  // convert the timestamp to a human-readable string
+  tm_info = localtime(&now);
+  strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+
+  // writing data the log to the file
+  fprintf(write_file, "\n");
+  fprintf(write_file, "[%s]\n", time_buffer);
+  fprintf(write_file, "%s: in function ‘%s’\n", file, func);
+  fprintf(write_file, "%s:%d message: %s\n", file, line, log);
+  fprintf(write_file, "  %s\n", message);
+
+  // close the file
+  fclose(write_file);
+
+  return KC_SUCCESS;
+}
+
+//---------------------------------------------------------------------------//

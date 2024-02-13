@@ -29,12 +29,14 @@
 #ifndef KC_LIST_T_H
 #define KC_LIST_T_H
 
-#include "../logger/console_log.h"
+#include "../logger/logger.h"
 #include "node.h"
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+//---------------------------------------------------------------------------//
 
 struct kc_list_t
 {
@@ -43,7 +45,7 @@ struct kc_list_t
 
   size_t length;
 
-  struct kc_console_log_t* log;
+  struct kc_logger_t* log;
 
   int (*back)        (struct kc_list_t* self, struct kc_node_t* back_node);
   int (*clear)       (struct kc_list_t* self);
@@ -60,12 +62,8 @@ struct kc_list_t
   int (*search)      (struct kc_list_t* self, void* value, int (*compare)(const void* a, const void* b), bool* exists);
 };
 
-//---------------------------------------------------------------------------//
-
 struct kc_list_t* new_list      ();
 void              destroy_list  (struct kc_list_t *list);
-
-//---------------------------------------------------------------------------//
 
 #define COMPARE_LIST(type, function_name)           \
   int function_name(const void* a, const void* b)   \
@@ -80,5 +78,7 @@ void              destroy_list  (struct kc_list_t *list);
     }                                               \
     return 0;                                       \
   }
+
+//---------------------------------------------------------------------------//
 
 #endif /* KC_LIST_T_H */

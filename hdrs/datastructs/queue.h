@@ -23,27 +23,31 @@
  * the Queue object's data and behavior.
  */
 
-#ifndef KC_QUEUE_H
-#define KC_QUEUE_H
+#ifndef KC_QUEUE_T_H
+#define KC_QUEUE_T_H
 
-#include "../logger/console_log.h"
+#include "../logger/logger.h"
+
 #include "list.h"
 
 #include <stdio.h>
 
-struct Queue
+//---------------------------------------------------------------------------//
+
+struct kc_queue_t
 {
   struct kc_list_t* list;
+  struct kc_logger_t* log;
 
-  struct kc_console_log_t* log;
-
-  size_t (*length)  (struct Queue* self);
-  void*  (*peek)    (struct Queue* self);
-  void   (*pop)     (struct Queue* self);
-  void   (*push)    (struct Queue* self, void* data, size_t size);
+  int (*length)  (struct kc_queue_t* self, size_t* length);
+  int (*peek)    (struct kc_queue_t* self, void* peek);
+  int (*pop)     (struct kc_queue_t* self);
+  int (*push)    (struct kc_queue_t* self, void* data, size_t size);
 };
 
-struct Queue* new_queue      ();
-void          destroy_queue  (struct Queue* queue);
+struct kc_queue_t* new_queue      ();
+void               destroy_queue  (struct kc_queue_t* queue);
 
-#endif /* KC_QUEUE_H */
+//---------------------------------------------------------------------------//
+
+#endif /* KC_QUEUE_T_H */

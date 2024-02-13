@@ -16,18 +16,22 @@
  * itself.
  */
 
-#ifndef KC_PAIR_H
-#define KC_PAIR_H
+#ifndef KC_PAIR_T_H
+#define KC_PAIR_T_H
 
 #include <stdio.h>
 
-struct Pair
+//---------------------------------------------------------------------------//
+
+struct kc_pair_t
 {
   void* key;
   void* value;
 };
 
-struct Pair* pair_constructor  (void* key, size_t key_size, void* value, size_t value_size);
-void         pair_destructor   (struct Pair* pair);
+struct kc_pair_t* pair_constructor  (void* key, size_t key_size, void* value, size_t value_size);
+void              pair_destructor   (struct kc_pair_t* pair);
 
-#endif /* KC_PAIR_H */
+//---------------------------------------------------------------------------//
+
+#endif /* KC_PAIR_T_H */

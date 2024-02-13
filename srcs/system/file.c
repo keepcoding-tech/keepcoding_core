@@ -9,7 +9,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "../../hdrs/common.h"
-#include "../../hdrs/logger/console_log.h"
+#include "../../hdrs/logger/logger.h"
 #include "../../hdrs/system/file.h"
 
 #include <errno.h>
@@ -19,24 +19,24 @@
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static int close_file     (struct File* self);
-static int create_path    (struct File* self, char* path);
-static int delete_file    (struct File* self);
-static int delete_path    (struct File* self, char* path);
-static int get_file_mode  (struct File* self, int* mode);
-static int get_file_name  (struct File* self, char** name);
-static int get_file_path  (struct File* self, char** path);
-static int get_opened     (struct File* self, bool* is_open);
-static int open_file      (struct File* self, char* name, unsigned int mode);
-static int read_file      (struct File* self, char** buffer);
-static int write_file     (struct File* self, char* buffer);
+static int close_file     (struct kc_file_t* self);
+static int create_path    (struct kc_file_t* self, char* path);
+static int delete_file    (struct kc_file_t* self);
+static int delete_path    (struct kc_file_t* self, char* path);
+static int get_file_mode  (struct kc_file_t* self, int* mode);
+static int get_file_name  (struct kc_file_t* self, char** name);
+static int get_file_path  (struct kc_file_t* self, char** path);
+static int get_opened     (struct kc_file_t* self, bool* is_open);
+static int open_file      (struct kc_file_t* self, char* name, unsigned int mode);
+static int read_file      (struct kc_file_t* self, char** buffer);
+static int write_file     (struct kc_file_t* self, char* buffer);
 
 //---------------------------------------------------------------------------//
 
-struct File* new_file()
+struct kc_file_t* new_file()
 {
   // create a file instance to be returned
-  struct File* file = malloc(sizeof(struct File));
+  struct kc_file_t* file = malloc(sizeof(struct kc_file_t));
 
   if (file == NULL)
   {
@@ -46,14 +46,14 @@ struct File* new_file()
     return NULL;
   }
 
-  struct kc_console_log_t* log = new_console_log(err, log_err, __FILE__);
+  struct kc_logger_t* log = new_logger(err, log_err, __FILE__);
 
   // assigns the public member fields
   file->log    = log;
   file->file   = NULL;
   file->name   = NULL;
   file->path   = NULL;
-  file->mode   = KC_FILE_INVALID;
+  file->mode   = KC_FILE_NOT_FOUND;
   file->opened = false;
 
   // assigns the public member methods
@@ -75,7 +75,7 @@ struct File* new_file()
 
 //---------------------------------------------------------------------------//
 
-void destroy_file(struct File* file)
+void destroy_file(struct kc_file_t* file)
 {
   if (file == NULL)
   {
@@ -85,7 +85,7 @@ void destroy_file(struct File* file)
     return;
   }
 
-  destroy_console_log(file->log);
+  destroy_logger(file->log);
 
   // close the file if still open
   file->close(file);
@@ -96,7 +96,7 @@ void destroy_file(struct File* file)
 
 //---------------------------------------------------------------------------//
 
-int close_file(struct File* self)
+int close_file(struct kc_file_t* self)
 {
   if (self == NULL)
   {
@@ -111,16 +111,16 @@ int close_file(struct File* self)
     fclose(self->file);
 
     self->file   = NULL;
-    self->mode   = KC_FILE_INVALID;
+    self->mode   = KC_FILE_NOT_FOUND;
     self->opened = false;
   }
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int create_path(struct File* self, char* path)
+int create_path(struct kc_file_t* self, char* path)
 {
   if (self == NULL)
   {
@@ -138,7 +138,7 @@ int create_path(struct File* self, char* path)
 
   if (mkdir(path, 0777) != 0)
   {
-    return KC_FILE_INVALID;
+    return KC_INVALID;
   }
 
   self->path = (char*)malloc(sizeof(char) * (strlen(path) + 1));
@@ -150,12 +150,12 @@ int create_path(struct File* self, char* path)
   // Save the path
   strcpy(self->path, path);
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int delete_file(struct File* self)
+int delete_file(struct kc_file_t* self)
 {
   if (self == NULL)
   {
@@ -172,18 +172,18 @@ int delete_file(struct File* self)
   {
     self->log->warning(self->log, KC_FILE_NOT_FOUND, __LINE__, __func__);
 
-    return KC_FILE_INVALID;
+    return KC_FILE_NOT_FOUND;
   }
 
   free(self->name);
   self->name = NULL;
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int delete_path(struct File* self, char* path)
+int delete_path(struct kc_file_t* self, char* path)
 {
   if (self == NULL)
   {
@@ -193,12 +193,12 @@ int delete_path(struct File* self, char* path)
     return KC_NULL_REFERENCE;
   }
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int get_file_mode(struct File* self, int* mode)
+int get_file_mode(struct kc_file_t* self, int* mode)
 {
   if (self == NULL)
   {
@@ -217,12 +217,12 @@ int get_file_mode(struct File* self, int* mode)
   // only if the file is open
   (*mode) = self->mode;
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int get_file_name(struct File* self, char** name)
+int get_file_name(struct kc_file_t* self, char** name)
 {
   if (self == NULL)
   {
@@ -241,12 +241,12 @@ int get_file_name(struct File* self, char** name)
   // only if the file is open
   (*name) = self->name;
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int get_file_path(struct File* self, char** path)
+int get_file_path(struct kc_file_t* self, char** path)
 {
   if (self == NULL)
   {
@@ -259,12 +259,12 @@ int get_file_path(struct File* self, char** path)
   // only if the file is open
   (*path) = self->path;
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int get_opened(struct File* self, bool* is_open)
+int get_opened(struct kc_file_t* self, bool* is_open)
 {
   if (self == NULL)
   {
@@ -276,12 +276,12 @@ int get_opened(struct File* self, bool* is_open)
 
   (*is_open) = self->opened;
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int open_file(struct File* self, char* name, unsigned int mode)
+int open_file(struct kc_file_t* self, char* name, unsigned int mode)
 {
   if (self == NULL)
   {
@@ -293,54 +293,54 @@ int open_file(struct File* self, char* name, unsigned int mode)
 
   const char* tmp_mode = NULL;
 
-  // Create new file, fail if exists
+  // create new file, fail if exists
   if (mode & KC_FILE_CREATE_NEW)
   {
     tmp_mode   = "wx";
     self->mode = KC_FILE_CREATE_NEW;
   }
 
-  // Create new file, overwrite if exists
+  // create new file, overwrite if exists
   if (mode & KC_FILE_CREATE_ALWAYS)
   {
     tmp_mode   = "w";
     self->mode = KC_FILE_CREATE_ALWAYS;
   }
 
-  // Open existing file, fail if not exists
+  // open existing file, fail if not exists
   if (mode & KC_FILE_OPEN_EXISTING)
   {
     tmp_mode   = "r";
     self->mode = KC_FILE_OPEN_EXISTING;
   }
 
-  // Open existing file or create new
+  // open existing file or create new
   if (mode & KC_FILE_OPEN_ALWAYS)
   {
     tmp_mode   = "a+";
     self->mode = KC_FILE_OPEN_ALWAYS;
   }
 
-  // Open existing file for read ony
+  // open existing file for read ony
   if (mode & KC_FILE_READ)
   {
     tmp_mode   = "r";
     self->mode = KC_FILE_READ;
   }
 
-  // Open existing file for write only
+  // open existing file for write only
   if (mode & KC_FILE_WRITE)
   {
     tmp_mode   = "w";
     self->mode = KC_FILE_WRITE;
   }
 
-  if (self->mode == KC_FILE_INVALID || tmp_mode == NULL)
+  if (self->mode == KC_FILE_NOT_FOUND || tmp_mode == NULL)
   {
-    // Invalid mode provided
+    // invalid mode provided
     self->log->error(self->log, KC_INVALID_ARGUMENT, __LINE__, __func__);
 
-    return KC_FILE_INVALID;
+    return KC_INVALID_ARGUMENT;
   }
 
   // if a file was already opened, close it first
@@ -353,13 +353,13 @@ int open_file(struct File* self, char* name, unsigned int mode)
 
   if (self->file == NULL)
   {
-    // File opening failed
+    // file opening failed
     self->log->error(self->log, KC_FILE_NOT_FOUND, __LINE__, __func__);
 
-    return KC_FILE_INVALID;
+    return KC_INVALID_ARGUMENT;
   }
 
-  // Save the file name
+  // save the file name
   self->name = (char*)malloc(sizeof(char) * (strlen(name) + 1));
   if (self->name == NULL)
   {
@@ -369,14 +369,14 @@ int open_file(struct File* self, char* name, unsigned int mode)
   strcpy(self->name, name);
   self->opened = true; // file is open
 
-  return KC_FILE_SUCCESS; // Return success status
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int read_file(struct File* self, char** buffer)
+int read_file(struct kc_file_t* self, char** buffer)
 {
-  int ret = KC_FILE_INVALID;
+  int ret = KC_FILE_NOT_FOUND;
 
   if (self == NULL)
   {
@@ -388,7 +388,7 @@ int read_file(struct File* self, char** buffer)
 
   // open the file in "read" mode
   ret = open_file(self, self->name, KC_FILE_READ);
-  if (ret == KC_FILE_INVALID)
+  if (ret != KC_SUCCESS)
   {
     return ret;
   }
@@ -427,12 +427,12 @@ int read_file(struct File* self, char** buffer)
   // Null-terminate the content
   (*buffer)[file_size] = '\0';
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int write_file(struct File* self, char* buffer)
+int write_file(struct kc_file_t* self, char* buffer)
 {
   if (self == NULL || buffer == NULL)
   {
@@ -447,10 +447,10 @@ int write_file(struct File* self, char* buffer)
   // Error writing content to file
   if (bytes_written != strlen(buffer))
   {
-    return KC_FILE_INVALID;
+    return KC_IO_ERROR;
   }
 
-  return KC_FILE_SUCCESS;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//

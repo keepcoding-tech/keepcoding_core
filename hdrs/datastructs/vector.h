@@ -27,47 +27,44 @@
  * the Vector object's data and behavior.
  */
 
-#ifndef KC_VECTOR_H
-#define KC_VECTOR_H
+#ifndef KC_VECTOR_T_H
+#define KC_VECTOR_T_H
 
-#include "../logger/console_log.h"
+#include "../logger/logger.h"
 
 #include <stdbool.h>
 #include <stdio.h>
 
-struct Vector
+//---------------------------------------------------------------------------//
+
+struct kc_vector_t
 {
   void** data;
   size_t capacity;
   size_t length;
 
-  struct kc_console_log_t* log;
+  struct kc_logger_t* log;
 
-  void*  (*at)          (struct Vector* self, int index);
-  void*  (*back)        (struct Vector* self);
-  void   (*clear)       (struct Vector* self);
-  bool   (*empty)       (struct Vector* self);
-  void   (*erase)       (struct Vector* self, int index);
-  void*  (*front)       (struct Vector* self);
-  void   (*insert)      (struct Vector* self, int index, void* data, size_t size);
-  size_t (*max_size)    (struct Vector* self);
-  void   (*pop_back)    (struct Vector* self);
-  void   (*pop_front)   (struct Vector* self);
-  void   (*push_back)   (struct Vector* self, void* data, size_t size);
-  void   (*push_front)  (struct Vector* self, void* data, size_t size);
-  void   (*remove)      (struct Vector* self, void* value, int (*compare)(const void* a, const void* b));
-  void   (*resize)      (struct Vector* self, size_t new_capacity);
-  bool   (*search)      (struct Vector* self, void* value, int (*compare)(const void* a, const void* b));
+  int (*at)          (struct kc_vector_t* self, int index, void* at);
+  int (*back)        (struct kc_vector_t* self, void* back);
+  int (*clear)       (struct kc_vector_t* self);
+  int (*empty)       (struct kc_vector_t* self, bool* empty);
+  int (*erase)       (struct kc_vector_t* self, int index);
+  int (*front)       (struct kc_vector_t* self, void* front);
+  int (*insert)      (struct kc_vector_t* self, int index, void* data, size_t size);
+  int (*max_size)    (struct kc_vector_t* self, size_t* max_size);
+  int (*pop_back)    (struct kc_vector_t* self);
+  int (*pop_front)   (struct kc_vector_t* self);
+  int (*push_back)   (struct kc_vector_t* self, void* data, size_t size);
+  int (*push_front)  (struct kc_vector_t* self, void* data, size_t size);
+  int (*remove)      (struct kc_vector_t* self, void* value, int (*compare)(const void* a, const void* b));
+  int (*resize)      (struct kc_vector_t* self, size_t new_capacity);
+  int (*search)      (struct kc_vector_t* self, void* value, int (*compare)(const void* a, const void* b), bool* exists);
 };
 
-//---------------------------------------------------------------------------//
+struct kc_vector_t* new_vector      ();
+void                destroy_vector  (struct kc_vector_t* vector);
 
-struct Vector* new_vector      ();
-void           destroy_vector  (struct Vector* vector);
-
-//---------------------------------------------------------------------------//
-
-// use this macro to define any type of primitive data comparison function
 #define COMPARE_VECTOR(type, function_name)         \
   int function_name(const void* a, const void* b)   \
   {                                                 \
@@ -82,4 +79,6 @@ void           destroy_vector  (struct Vector* vector);
     return 0;                                       \
   }
 
-#endif /* VECTOR_H */
+//---------------------------------------------------------------------------//
+
+#endif /* VECTOR_T_H */

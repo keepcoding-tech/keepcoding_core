@@ -12,63 +12,75 @@
 #include <stdlib.h>
 #include <string.h>
 
+//--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
+
+static int erase_all_elems         (struct kc_vector_t* self);
+static int erase_elem              (struct kc_vector_t* self, int index);
+static int erase_elems_by_value    (struct kc_vector_t* self, void* value, int (*compare)(const void* a, const void* b));
+static int erase_first_elem        (struct kc_vector_t* self);
+static int erase_last_elem         (struct kc_vector_t* self);
+static int get_elem                (struct kc_vector_t* self, int index, void* at);
+static int get_first_elem          (struct kc_vector_t* self, void* front);
+static int get_last_elem           (struct kc_vector_t* self, void* back);
+static int get_vector_capacity     (struct kc_vector_t* self, size_t* max_size);
+static int insert_at_beginning     (struct kc_vector_t* self, void* data, size_t size);
+static int insert_at_end           (struct kc_vector_t* self, void* data, size_t size);
+static int is_vector_empty         (struct kc_vector_t* self, bool* empty);
+static int insert_new_elem         (struct kc_vector_t* self, int index, void* data, size_t size);
+static int resize_vector_capacity  (struct kc_vector_t* self, size_t new_capacity);
+static int search_elem             (struct kc_vector_t* self, void* value, int (*compare)(const void* a, const void* b), bool* exists);
+
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static void   erase_all_elems         (struct Vector* self);
-static void   erase_elem              (struct Vector* self, int index);
-static void   erase_elems_by_value    (struct Vector* self, void* value, int (*compare)(const void* a, const void* b));
-static void   erase_first_elem        (struct Vector* self);
-static void   erase_last_elem         (struct Vector* self);
-static void*  get_elem                (struct Vector* self, int index);
-static void*  get_first_elem          (struct Vector* self);
-static void*  get_last_elem           (struct Vector* self);
-static size_t get_vector_capacity     (struct Vector* self);
-static void   insert_at_beginning     (struct Vector* self, void* data, size_t size);
-static void   insert_at_end           (struct Vector* self, void* data, size_t size);
-static bool   is_vector_empty         (struct Vector* self);
-static void   insert_new_elem         (struct Vector* self, int index, void* data, size_t size);
-static void   resize_vector_capacity  (struct Vector* self, size_t new_capacity);
-static bool   search_elem             (struct Vector* self, void* value, int (*compare)(const void* a, const void* b));
-static void   permute_to_left         (struct Vector* vector, int start, int end);
-static void   permute_to_right        (struct Vector* vector, int start, int end);
-static void   resize_vector           (struct Vector* vector, size_t new_capacity);
+static void permute_to_left         (struct kc_vector_t* vector, int start, int end);
+static void permute_to_right        (struct kc_vector_t* vector, int start, int end);
+static void resize_vector           (struct kc_vector_t* vector, size_t new_capacity);
 
 //---------------------------------------------------------------------------//
 
-struct Vector* new_vector()
+struct kc_vector_t* new_vector()
 {
-  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
-
   // create a Vector instance to be returned
-  struct Vector* new_vector = malloc(sizeof(struct Vector));
+  struct kc_vector_t* new_vector = malloc(sizeof(struct kc_vector_t));
 
   // confirm that there is memory to allocate
   if (new_vector == NULL)
   {
-    logger->error(logger, KC_OUT_OF_MEMORY, __LINE__, __func__);
-    destroy_console_log(logger);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
 
-    // free the instance and exit
+    return NULL;
+  }
+
+  new_vector->log = new_console_log(err, log_err, __FILE__);
+
+  if (new_vector == NULL)
+  {
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
+
     free(new_vector);
-    exit(1);
+
+    return NULL;
   }
 
   // initialize the structure members fields
   new_vector->capacity = 16;
   new_vector->length   = 0;
   new_vector->data     = malloc(16 * sizeof(void*));
-  new_vector->log      = logger;
 
   // confirm that there is memory to allocate
   if (new_vector->data == NULL)
   {
-    logger->error(logger, KC_OUT_OF_MEMORY, __LINE__, __func__);
-    destroy_console_log(logger);
+    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
+        __FILE__, __LINE__, __func__);
 
     // free the instances and exit
+    free(new_vector->log);
     free(new_vector->data);
     free(new_vector);
-    exit(1);
+
+    return NULL;
   }
 
   // assigns the public member methods
@@ -93,24 +105,28 @@ struct Vector* new_vector()
 
 //---------------------------------------------------------------------------//
 
-void destroy_vector(struct Vector* vector)
+void destroy_vector(struct kc_vector_t* vector)
 {
   // if the vector reference is NULL, do nothing
   if (vector == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
     return;
   }
 
+  destroy_console_log(vector->log);
+
   // free the memory for each element and the array itself
-  for (int i = 0; i < vector->length; ++i)
+  if (vector->data != NULL)
   {
-    if (vector->data[i] != NULL)
+    for (int i = 0; i < vector->length; ++i)
     {
-      free(vector->data[i]);
+      if (vector->data[i] != NULL)
+      {
+        free(vector->data[i]);
+      }
     }
   }
 
@@ -120,24 +136,26 @@ void destroy_vector(struct Vector* vector)
 
 //---------------------------------------------------------------------------//
 
-void erase_all_elems(struct Vector* self)
+int erase_all_elems(struct kc_vector_t* self)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   // free the memory for each element
-  for (int i = 0; i < self->length; ++i)
+  if (self->data != NULL)
   {
-    if (self->data[i] != NULL)
+    for (int i = 0; i < self->length; ++i)
     {
-      free(self->data[i]);
+      if (self->data[i] != NULL)
+      {
+        free(self->data[i]);
+      }
     }
   }
 
@@ -149,20 +167,21 @@ void erase_all_elems(struct Vector* self)
 
   // reset the length
   self->length = 0;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void erase_elem(struct Vector* self, int index)
+int erase_elem(struct kc_vector_t* self, int index)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   // make sure the list is not empty
@@ -170,7 +189,7 @@ void erase_elem(struct Vector* self, int index)
   {
     self->log->error(self->log, KC_EMPTY_STRUCTURE, __LINE__, __func__);
 
-    return;
+    return KC_EMPTY_STRUCTURE;
   }
 
   // confirm the user has specified a valid index
@@ -178,7 +197,7 @@ void erase_elem(struct Vector* self, int index)
   {
     self->log->error(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
-    return;
+    return KC_INDEX_OUT_OF_BOUNDS;
   }
 
   // free the memory from the desired position
@@ -190,21 +209,22 @@ void erase_elem(struct Vector* self, int index)
   {
     resize_vector(self, self->capacity / 2);
   }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void erase_elems_by_value(struct Vector* self, void* value,
+int erase_elems_by_value(struct kc_vector_t* self, void* value,
     int (*compare)(const void* a, const void* b))
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   // go through the array and check each element
@@ -213,67 +233,85 @@ void erase_elems_by_value(struct Vector* self, void* value,
   {
     if (compare(self->data[index], value) == 0)
     {
-      erase_elem(self, index);
+      int rez = erase_elem(self, index);
+      if (rez != KC_SUCCESS)
+      {
+        return rez;
+      }
+
       continue;
     }
     ++index;
   }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void erase_first_elem(struct Vector* self)
+int erase_first_elem(struct kc_vector_t* self)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
-  erase_elem(self, 0);
+  int rez = erase_elem(self, 0);
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void erase_last_elem(struct Vector* self)
+int erase_last_elem(struct kc_vector_t* self)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
-  erase_elem(self, self->length - 1);
+  int rez = erase_elem(self, self->length - 1);
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void* get_elem(struct Vector* self, int index)
+int get_elem(struct kc_vector_t* self, int index, void* at)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return NULL;
+    return KC_NULL_REFERENCE;
   }
+
+  at = NULL;
 
   // make sure the list is not empty
   if (self->length == 0)
   {
     self->log->error(self->log, KC_EMPTY_STRUCTURE, __LINE__, __func__);
 
-    return NULL;
+    return KC_EMPTY_STRUCTURE;
   }
 
   // confirm the user has specified a valid index
@@ -281,124 +319,154 @@ void* get_elem(struct Vector* self, int index)
   {
     self->log->error(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
-    return NULL;
+    return KC_INDEX_OUT_OF_BOUNDS;
   }
 
-  return self->data[index];
+  at = self->data[index];
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void* get_first_elem(struct Vector* self)
+int get_first_elem(struct kc_vector_t* self, void* first)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return NULL;
+    return KC_NULL_REFERENCE;
   }
 
-  return get_elem(self, 0);
+  int rez = get_elem(self, 0, first);
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void* get_last_elem(struct Vector* self)
+int get_last_elem(struct kc_vector_t* self, void* back)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return NULL;
+    return KC_NULL_REFERENCE;
   }
 
-  return get_elem(self, self->length - 1);
+  int rez = get_elem(self, self->length - 1, back);
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-size_t get_vector_capacity(struct Vector* self)
+int get_vector_capacity(struct kc_vector_t* self, size_t* max_size)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return 1;
+    return KC_NULL_REFERENCE;
   }
 
-  return self->capacity;
+  (*max_size) = self->capacity;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_at_beginning(struct Vector* self, void* data, size_t size) {
+int insert_at_beginning(struct kc_vector_t* self, void* data, size_t size) {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
-  insert_new_elem(self, 0, data, size);
+  int rez = insert_new_elem(self, 0, data, size);
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_at_end(struct Vector* self, void* data, size_t size)
+int insert_at_end(struct kc_vector_t* self, void* data, size_t size)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
-  insert_new_elem(self, self->length, data, size);
+  int rez = insert_new_elem(self, self->length, data, size);
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-bool is_vector_empty(struct Vector* self) {
+int is_vector_empty(struct kc_vector_t* self, bool* empty) {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return false;
+    return KC_NULL_REFERENCE;
   }
 
-  return self->length == 0;
+  if (self->length == 0)
+  {
+    (*empty) = true;
+  }
+  else
+  {
+    (*empty) = false;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void insert_new_elem(struct Vector* self, int index, void* data, size_t size)
+int insert_new_elem(struct kc_vector_t* self, int index, void* data, size_t size)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   // confirm the user has specified a valid index
@@ -406,7 +474,7 @@ void insert_new_elem(struct Vector* self, int index, void* data, size_t size)
   {
     self->log->error(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
-    return;
+    return KC_INDEX_OUT_OF_BOUNDS;
   }
 
   // reallocate more memory if the capacity is full
@@ -423,7 +491,7 @@ void insert_new_elem(struct Vector* self, int index, void* data, size_t size)
   {
     self->log->error(self->log, KC_OUT_OF_MEMORY, __LINE__, __func__);
 
-    return;
+    return KC_OUT_OF_MEMORY;
   }
 
   // insert the value at the specified location
@@ -431,38 +499,40 @@ void insert_new_elem(struct Vector* self, int index, void* data, size_t size)
   permute_to_right(self, index, self->length);
   self->data[index] = new_elem;
   ++self->length;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void resize_vector_capacity(struct Vector* self, size_t new_capacity)
+int resize_vector_capacity(struct kc_vector_t* self, size_t new_capacity)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return;
+    return KC_NULL_REFERENCE;
   }
 
   resize_vector(self, new_capacity);
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-bool search_elem(struct Vector* self, void* value,
-    int (*compare)(const void* a, const void* b))
+int search_elem(struct kc_vector_t* self, void* value,
+    int (*compare)(const void* a, const void* b), bool* exists)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
   {
-    log_warning("NULL_REFERENCE", "You are attempting to use a reference "
-        "or pointer that points to null or is uninitialized.",
+    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return false;
+    return KC_NULL_REFERENCE;
   }
 
   // go through the array and return true if found
@@ -470,16 +540,20 @@ bool search_elem(struct Vector* self, void* value,
   {
     if (compare(self->data[i], value) == 0)
     {
-      return true;
+      (*exists) = true;
+
+      return KC_SUCCESS;
     }
   }
 
-  return false;
+  (*exists) = false;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void permute_to_left(struct Vector* vector, int start, int end)
+void permute_to_left(struct kc_vector_t* vector, int start, int end)
 {
   for (int i = start; i < end && i < vector->length; ++i)
   {
@@ -489,7 +563,7 @@ void permute_to_left(struct Vector* vector, int start, int end)
 
 //---------------------------------------------------------------------------//
 
-void permute_to_right(struct Vector* vector, int start, int end)
+void permute_to_right(struct kc_vector_t* vector, int start, int end)
 {
   for (int i = end; i >= start && i > 0; --i)
   {
@@ -499,7 +573,7 @@ void permute_to_right(struct Vector* vector, int start, int end)
 
 //---------------------------------------------------------------------------//
 
-void resize_vector(struct Vector* vector, size_t new_capacity)
+void resize_vector(struct kc_vector_t* vector, size_t new_capacity)
 {
   // make sure the user specific a valid capacity size
   if (new_capacity < 1)

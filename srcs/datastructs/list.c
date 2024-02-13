@@ -27,9 +27,12 @@ static int insert_new_tail       (struct kc_list_t* self, void* data, size_t siz
 static int is_list_empty         (struct kc_list_t* self, bool* is_empty);
 static int search_node           (struct kc_list_t* self, void* value, int (*compare)(const void* a, const void* b), bool* exists);
 
-static struct kc_node_t* iterate_ll           (struct kc_list_t* list, int index);
-static struct kc_node_t* iterate_forward_ll   (struct kc_node_t* head, int index);
-static struct kc_node_t* iterate_reverse_ll   (struct kc_node_t* tail, int index);
+
+//--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
+
+static struct kc_node_t* iterate_ll          (struct kc_list_t* list, int index);
+static struct kc_node_t* iterate_forward_ll  (struct kc_node_t* head, int index);
+static struct kc_node_t* iterate_reverse_ll  (struct kc_node_t* tail, int index);
 
 //---------------------------------------------------------------------------//
 
@@ -48,7 +51,7 @@ struct kc_list_t* new_list()
   }
 
   // create a console log instance to be used for the list
-  struct kc_console_log_t* logger = new_console_log(err, log_err, __FILE__);
+  struct kc_logger_t* logger = new_logger(err, log_err, __FILE__);
 
   // confirm that there is memory to allocate
   if (logger == NULL)
@@ -99,6 +102,8 @@ void destroy_list(struct kc_list_t* list)
     return;
   }
 
+  destroy_logger(list->log);
+
   erase_all_nodes(list);
   free(list);
 }
@@ -113,7 +118,7 @@ int erase_all_nodes(struct kc_list_t* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   // start iterating from the head
@@ -143,7 +148,7 @@ int erase_first_node(struct kc_list_t* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   struct kc_node_t* old_head = self->head;
@@ -176,7 +181,7 @@ int erase_last_node(struct kc_list_t* self)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   struct kc_node_t* old_tail = self->tail;
@@ -209,7 +214,7 @@ int erase_node(struct kc_list_t* self, int index)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   // confirm the user has specified a valid index
@@ -218,7 +223,7 @@ int erase_node(struct kc_list_t* self, int index)
     // log the warning to the console
     self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_INDEX_OUT_OF_BOUNDS;
   }
 
   // check if the item being removed is the head
@@ -258,7 +263,7 @@ int erase_nodes_by_value(struct kc_list_t* self, void* value, int (*compare)(con
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   // start from the head
@@ -325,7 +330,7 @@ int get_first_node(struct kc_list_t* self, struct kc_node_t* first_node)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   first_node = self->head;
@@ -343,7 +348,7 @@ int get_last_node(struct kc_list_t* self, struct kc_node_t* last_node)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   last_node = self->tail;
@@ -361,7 +366,7 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t* node)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   // confirm the user has specified a valid index
@@ -388,7 +393,7 @@ int insert_new_head(struct kc_list_t* self, void* data, size_t size)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   return insert_new_node(self, 0, data, size);
@@ -404,7 +409,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   // confirm the user has specified a valid index
@@ -413,7 +418,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
     // log the warning to the console
     self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_INDEX_OUT_OF_BOUNDS;
   }
 
   // create a new node to be inserted
@@ -447,7 +452,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
 
   if (cursor == NULL)
   {
-    return KC_INVALID; /* an error has already been displayed */
+    return KC_NULL_REFERENCE; /* an error has already been displayed */
   }
 
   new_node->next = cursor->next;
@@ -482,7 +487,7 @@ int insert_new_tail(struct kc_list_t* self, void* data, size_t size)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   return insert_new_node(self, (int)self->length, data, size);
@@ -498,7 +503,7 @@ int is_list_empty(struct kc_list_t* self, bool* is_empty)
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   if (self->length == 0 && self->head == NULL && self->tail == NULL)
@@ -524,7 +529,7 @@ int search_node(struct kc_list_t* self, void* value,
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_NULL_REFERENCE;
   }
 
   // create a new node instance
