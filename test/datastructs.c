@@ -25,8 +25,8 @@
 #include <stdint.h>
 #include <string.h>
 
-// Test case for the search() and remove() method.
-int compare(const void* data_one, const void* data_two)
+// Test case for the search() and remove() method of kc_list_t.
+int test_list_compare(const void* data_one, const void* data_two)
 {
   return (*(int*)data_one - *(int*)data_two);
 }
@@ -41,15 +41,15 @@ COMPARE_SET(char, set_compare_str)
 COMPARE_TREE(int, btree_compare_int)
 COMPARE_TREE(char, btree_compare_str)
 
-// Use this function for testing a custom compare function
-int compare(const void* a, const void* b)
+// Test case for kc_tree_t.
+int test_tree_compare(const void* a, const void* b)
 {
   return (*(int*)(((struct kc_pair_t*)a)->key) -
     *(int*)(((struct kc_pair_t*)b)->key));
 }
 
-// Test case for the remove() method.
-int compare(const void* a, const void* b)
+// Test case for the search() and remove() method of kc_vector_t.
+int test_vector_compare(const void* a, const void* b)
 {
   return (*(int*)a - *(int*)b);
 }
@@ -75,7 +75,7 @@ int main() {
       struct kc_node_t* back = NULL;
       int rez = KC_INVALID;
 
-      rez = list->back(list, back);
+      rez = list->back(list, &back);
 
       // there shouldn't be any nodes
       ok(rez == KC_SUCCESS);
@@ -89,7 +89,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         // check if the last element is returned correctly
-        rez = list->back(list, back);
+        rez = list->back(list, &back);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)back->data == i);
@@ -99,7 +99,7 @@ int main() {
       for (int i = 9; i >= 0; --i)
       {
         // check if the last element is returned correctly
-        rez = list->back(list, back);
+        rez = list->back(list, &back);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)back->data == i);
@@ -148,7 +148,7 @@ int main() {
       rez = list->empty(list, &is_empty);
 
       ok(rez == KC_SUCCESS);
-      ok(is_empty == false);
+      ok(is_empty == true);
 
       destroy_list(list);
     }
@@ -255,7 +255,7 @@ int main() {
       int rez = KC_INVALID;
 
       // there shouldn't be any nodes
-      rez = list->front(list, front);
+      rez = list->front(list, &front);
 
       ok(rez == KC_SUCCESS);
       ok(front == NULL);
@@ -269,7 +269,7 @@ int main() {
 
         // check if the first element is returned correctly,
         // it should always be zero (the same value)
-        rez = list->front(list, front);
+        rez = list->front(list, &front);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)front->data == 0);
@@ -279,7 +279,7 @@ int main() {
       for (int i = 0; i < 10; ++i)
       {
         // check if the first element is returned correctly
-        rez = list->front(list, front);
+        rez = list->front(list, &front);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)front->data == i);
@@ -309,19 +309,19 @@ int main() {
       }
 
       // check if the node was correctly retrieved
-      rez = list->get(list, 5, node);
+      rez = list->get(list, 5, &node);
 
       ok(rez == KC_SUCCESS);
       ok(*(int*)node->data == 5);
 
       // check if the head of the list was correctly retrieved
-      rez = list->get(list, 0, node);
+      rez = list->get(list, 0, &node);
 
       ok(rez == KC_SUCCESS);
       ok(*(int*)node->data == 0);
 
       // check if the tail of the list was correctly retrieved
-      rez = list->get(list, (int)list->length - 1, node);
+      rez = list->get(list, (int)list->length - 1, &node);
 
       ok(rez == KC_SUCCESS);
       ok(*(int*)node->data == 9);
@@ -334,7 +334,6 @@ int main() {
       // create a new instance of a List
       struct kc_list_t* list = new_list();
 
-      struct kc_node_t* node = NULL;
       int rez = KC_INVALID;
 
       // add ten new nodes of type int
@@ -541,7 +540,7 @@ int main() {
       }
 
       // should remove only 5 nodes
-      rez = list->remove(list, &data, compare);
+      rez = list->remove(list, &data, test_list_compare);
 
       ok(rez == KC_SUCCESS);
       ok(list->length == 5);
@@ -549,7 +548,7 @@ int main() {
       data = 10;
 
       // should remove all 5 nodes
-      rez = list->remove(list, &data, compare);
+      rez = list->remove(list, &data, test_list_compare);
       ok(rez == KC_SUCCESS);
 
       rez = list->empty(list, &is_empty);
@@ -578,7 +577,7 @@ int main() {
       {
         bool exists = false;
 
-        rez = list->search(list, &i, compare, &exists);
+        rez = list->search(list, &i, test_list_compare, &exists);
 
         ok(rez == KC_SUCCESS);
         ok(exists == true);
@@ -589,7 +588,7 @@ int main() {
       {
         bool exists = true;
 
-        rez = list->search(list, &i, compare, &exists);
+        rez = list->search(list, &i, test_list_compare, &exists);
 
         ok(rez == KC_SUCCESS);
         ok(exists == false);
@@ -1022,7 +1021,7 @@ int main() {
       for (int i = 0; i < 10; ++i)
       {
         // check if the nodes have been peeked correctly
-        rez = queue->peek(queue, data);
+        rez = queue->peek(queue, &data);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)data == i);
@@ -1182,12 +1181,11 @@ int main() {
         ok(rez == KC_SUCCESS);
       }
 
-
       // search for the newlly created entries
       for (int i = 0; i < 10; ++i)
       {
-        void* searchable = 0;
-        rez = set->search(set, &i, sizeof(int), searchable);
+        void* searchable = NULL;
+        rez = set->search(set, &i, sizeof(int), &searchable);
 
         // check the data inserted
         ok(rez == KC_SUCCESS);
@@ -1197,8 +1195,8 @@ int main() {
       // search again, but in reverse
       for (int i = 9; i >= 0; --i)
       {
-        void* searchable = 0;
-        rez = set->search(set, &i, sizeof(int), searchable);
+        void* searchable = NULL;
+        rez = set->search(set, &i, sizeof(int), &searchable);
 
         // check the data inserted
         ok(rez == KC_SUCCESS);
@@ -1273,15 +1271,15 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       void* found = NULL;
-      rez = set->search(set, &key1, strlen(key1) + 1, found);
+      rez = set->search(set, &key1, strlen(key1) + 1, &found);
       ok(rez == KC_SUCCESS);
       ok(strcmp((char*)found, val1) == 0);
 
-      rez = set->search(set, &key2, strlen(key2) + 1, found);
+      rez = set->search(set, &key2, strlen(key2) + 1, &found);
       ok(rez == KC_SUCCESS);
       ok(strcmp((char*)found, val2) == 0);
 
-      rez = set->search(set, &key3, strlen(key3) + 1, found);
+      rez = set->search(set, &key3, strlen(key3) + 1, &found);
       ok(rez == KC_SUCCESS);
       ok(strcmp((char*)found, val3) == 0);
 
@@ -1320,7 +1318,7 @@ int main() {
       for (int data = 0; data < 30; ++data)
       {
         struct kc_node_t* found_node = NULL;
-        rez = tree->search(tree, &data, found_node);
+        rez = tree->search(tree, &data, &found_node);
 
         ok(rez == KC_SUCCESS);
 
@@ -1333,7 +1331,7 @@ int main() {
       for (int data = 29; data >= 0; --data)
       {
         struct kc_node_t* found_node = NULL;
-        rez = tree->search(tree, &data, found_node);
+        rez = tree->search(tree, &data, &found_node);
 
         ok(rez == KC_SUCCESS);
 
@@ -1423,13 +1421,13 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       struct kc_node_t* found_node1 = NULL;
-      rez = tree->search(tree, data1, found_node1);
+      rez = tree->search(tree, data1, &found_node1);
 
       struct kc_node_t* found_node2 = NULL;
-      rez = tree->search(tree, data2, found_node2);
+      rez = tree->search(tree, data2, &found_node2);
 
       struct kc_node_t* found_node3 = NULL;
-      rez = tree->search(tree, data3, found_node3);
+      rez = tree->search(tree, data3, &found_node3);
 
       ok(found_node1 != NULL);
       ok(strcmp(found_node1->data, data1) == 0);
@@ -1445,7 +1443,7 @@ int main() {
 
     subtest("test custom compare")
     {
-      struct kc_tree_t* tree = new_tree(compare);
+      struct kc_tree_t* tree = new_tree(test_tree_compare);
 
       // create a new Pair
       int key = 10, val = 100;
@@ -1455,10 +1453,12 @@ int main() {
 
       // insert the new pair
       rez = tree->insert(tree, pair, sizeof(struct kc_pair_t));
+      ok(rez == KC_SUCCESS);
 
       // check if the pair was inserted and found corectlly
       struct kc_node_t* found_node = NULL;
-      rez = tree->search(tree, pair, found_node);
+      rez = tree->search(tree, pair, &found_node);
+      ok(rez == KC_SUCCESS);
 
       struct kc_pair_t* found_pair = (struct kc_pair_t*)found_node->data;
 
@@ -1467,7 +1467,8 @@ int main() {
       ok(*(int*)found_pair->value == val);
 
       // check the remove function
-      tree->remove(tree, pair, sizeof(struct kc_pair_t));
+      rez = tree->remove(tree, pair, sizeof(struct kc_pair_t));
+      ok(rez == KC_SUCCESS);
       ok(tree->root == NULL);
 
       pair_destructor(pair);
@@ -1521,7 +1522,7 @@ int main() {
       rez = stack->length(stack, &length);
 
       ok(rez == KC_SUCCESS);
-      ok(length == 10);
+      ok(length == 0);
 
       destroy_stack(stack);
     }
@@ -1590,7 +1591,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         void* top = NULL;
-        rez = stack->top(stack, top);
+        rez = stack->top(stack, &top);
 
         // check each new item
         ok(*(int*)top == i);
@@ -1636,7 +1637,7 @@ int main() {
       for (int i = 0; i < 10; ++i)
       {
         void* at = NULL;
-        rez = vector->at(vector, i, at);
+        rez = vector->at(vector, i, &at);
         ok(rez == KC_SUCCESS);
 
         // check the values of the vector
@@ -1660,7 +1661,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         void* back = NULL;
-        rez = vector->back(vector, back);
+        rez = vector->back(vector, &back);
         ok(rez == KC_SUCCESS);
         ok(*(int*)back == i);
       }
@@ -1814,7 +1815,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         void* front = NULL;
-        rez = vector->front(vector, front);
+        rez = vector->front(vector, &front);
 
         ok(*(int*)front == i);
       }
@@ -1937,7 +1938,7 @@ int main() {
         ok(vector->length == 15 - i);
 
         void* back = NULL;
-        rez = vector->back(vector, back);
+        rez = vector->back(vector, &back);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)back == 14 - i);
@@ -1972,7 +1973,7 @@ int main() {
         ok(vector->length == 15 - i);
 
         void* front = NULL;
-        rez = vector->front(vector, front);
+        rez = vector->front(vector, &front);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)front == i);
@@ -2002,7 +2003,7 @@ int main() {
         ok(vector->length == i + 1);
 
         void* at = NULL;
-        rez = vector->at(vector, vector->length - 1, at);
+        rez = vector->at(vector, vector->length - 1, &at);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)at == i);
@@ -2027,7 +2028,7 @@ int main() {
         ok(vector->length == i + 1);
 
         void* at = NULL;
-        rez = vector->at(vector, 0, at);
+        rez = vector->at(vector, 0, &at);
 
         ok(rez == KC_SUCCESS);
         ok(*(int*)at == i);
@@ -2062,14 +2063,14 @@ int main() {
       }
 
       // should remove only 5 elements
-      rez = vector->remove(vector, &data, compare);
+      rez = vector->remove(vector, &data, test_vector_compare);
       ok(rez == KC_SUCCESS);
       ok(vector->length == 5);
 
       data = 10;
 
       // should remove all 5 elements
-      rez = vector->remove(vector, &data, compare);
+      rez = vector->remove(vector, &data, test_vector_compare);
       ok(rez == KC_SUCCESS);
 
       bool empty = false;
@@ -2137,19 +2138,19 @@ int main() {
       // should return true
       int search_data = 3;
       bool exists = false;
-      rez = vector->search(vector, &search_data, compare, &exists);
+      rez = vector->search(vector, &search_data, test_vector_compare, &exists);
       ok(rez == KC_SUCCESS);
       ok(exists == true);
 
       // should return true
       search_data = 8;
-      rez = vector->search(vector, &search_data, compare, &exists);
+      rez = vector->search(vector, &search_data, test_vector_compare, &exists);
       ok(rez == KC_SUCCESS);
       ok(exists == true);
 
       // should return false
       search_data = 12;
-      rez = vector->search(vector, &search_data, compare, &exists);
+      rez = vector->search(vector, &search_data, test_vector_compare, &exists);
       ok(rez == KC_SUCCESS);
       ok(exists == false);
 
@@ -2165,25 +2166,25 @@ int main() {
       // test integer (int)
       int intValue = 42;
       rez = vector->insert(vector, vector->length, &intValue, sizeof(int));
-      ok(rez = KC_SUCCESS);
+      ok(rez == KC_SUCCESS);
       ok(*(int*)vector->data[0] == 42);
 
       // test real (double)
       double doubleValue = 3.14;
       rez = vector->insert(vector, vector->length, &doubleValue, sizeof(double));
-      ok(rez = KC_SUCCESS);
+      ok(rez == KC_SUCCESS);
       ok(*(double*)vector->data[1] == 3.14);
 
       // test character (char)
       char stringValue[] = "Hello, World!";
       rez = vector->insert(vector, vector->length, stringValue, sizeof(stringValue));
-      ok(rez = KC_SUCCESS);
+      ok(rez == KC_SUCCESS);
       ok(strcmp((char*)vector->data[2], "Hello, World!") == 0);
 
       // test custom data (struct)
       struct Test { int key; char* val; } test = { 10, "test" };
       rez = vector->insert(vector, vector->length, &test, sizeof(struct Test));
-      ok(rez = KC_SUCCESS);
+      ok(rez == KC_SUCCESS);
 
       struct Test* ptr = (struct Test*)vector->data[3];
       ok(strcmp(ptr->val, test.val) == 0);

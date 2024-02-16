@@ -3,7 +3,7 @@
 //
 // list.c
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/datastructs/list.h"
@@ -18,9 +18,9 @@ static int erase_first_node      (struct kc_list_t* self);
 static int erase_last_node       (struct kc_list_t* self);
 static int erase_node            (struct kc_list_t* self, int index);
 static int erase_nodes_by_value  (struct kc_list_t* self, void* value, int (*compare)(const void* a, const void* b));
-static int get_first_node        (struct kc_list_t* self, struct kc_node_t* front_node);
-static int get_last_node         (struct kc_list_t* self, struct kc_node_t* back_node);
-static int get_node              (struct kc_list_t* self, int index, struct kc_node_t* node);
+static int get_first_node        (struct kc_list_t* self, struct kc_node_t** front_node);
+static int get_last_node         (struct kc_list_t* self, struct kc_node_t** back_node);
+static int get_node              (struct kc_list_t* self, int index, struct kc_node_t** node);
 static int insert_new_head       (struct kc_list_t* self, void* data, size_t size);
 static int insert_new_node       (struct kc_list_t* self, int index, void* data, size_t size);
 static int insert_new_tail       (struct kc_list_t* self, void* data, size_t size);
@@ -322,7 +322,7 @@ int erase_nodes_by_value(struct kc_list_t* self, void* value, int (*compare)(con
 
 //---------------------------------------------------------------------------//
 
-int get_first_node(struct kc_list_t* self, struct kc_node_t* first_node)
+int get_first_node(struct kc_list_t* self, struct kc_node_t** first_node)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -333,14 +333,14 @@ int get_first_node(struct kc_list_t* self, struct kc_node_t* first_node)
     return KC_NULL_REFERENCE;
   }
 
-  first_node = self->head;
+  (*first_node) = self->head;
 
   return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int get_last_node(struct kc_list_t* self, struct kc_node_t* last_node)
+int get_last_node(struct kc_list_t* self, struct kc_node_t** last_node)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -351,14 +351,22 @@ int get_last_node(struct kc_list_t* self, struct kc_node_t* last_node)
     return KC_NULL_REFERENCE;
   }
 
-  last_node = self->tail;
+  // if length is less than 1 then head is also tail
+  if (self->length == 0)
+  {
+    (*last_node) = self->head;
+  }
+  else
+  {
+    (*last_node) = self->tail;
+  }
 
   return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int get_node(struct kc_list_t* self, int index, struct kc_node_t* node)
+int get_node(struct kc_list_t* self, int index, struct kc_node_t** node)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -378,7 +386,7 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t* node)
     return KC_INDEX_OUT_OF_BOUNDS;
   }
 
-  node = iterate_ll(self, index);
+  (*node) = iterate_ll(self, index);
 
   return KC_SUCCESS;
 }

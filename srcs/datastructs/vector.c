@@ -3,7 +3,7 @@
 //
 // vector.c
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/common.h"
@@ -19,9 +19,9 @@ static int erase_elem              (struct kc_vector_t* self, int index);
 static int erase_elems_by_value    (struct kc_vector_t* self, void* value, int (*compare)(const void* a, const void* b));
 static int erase_first_elem        (struct kc_vector_t* self);
 static int erase_last_elem         (struct kc_vector_t* self);
-static int get_elem                (struct kc_vector_t* self, int index, void* at);
-static int get_first_elem          (struct kc_vector_t* self, void* front);
-static int get_last_elem           (struct kc_vector_t* self, void* back);
+static int get_elem                (struct kc_vector_t* self, int index, void** at);
+static int get_first_elem          (struct kc_vector_t* self, void** front);
+static int get_last_elem           (struct kc_vector_t* self, void** back);
 static int get_vector_capacity     (struct kc_vector_t* self, size_t* max_size);
 static int insert_at_beginning     (struct kc_vector_t* self, void* data, size_t size);
 static int insert_at_end           (struct kc_vector_t* self, void* data, size_t size);
@@ -52,7 +52,7 @@ struct kc_vector_t* new_vector()
     return NULL;
   }
 
-  new_vector->log = new_console_log(err, log_err, __FILE__);
+  new_vector->log = new_logger(err, log_err, __FILE__);
 
   if (new_vector == NULL)
   {
@@ -116,7 +116,7 @@ void destroy_vector(struct kc_vector_t* vector)
     return;
   }
 
-  destroy_console_log(vector->log);
+  destroy_logger(vector->log);
 
   // free the memory for each element and the array itself
   if (vector->data != NULL)
@@ -293,7 +293,7 @@ int erase_last_elem(struct kc_vector_t* self)
 
 //---------------------------------------------------------------------------//
 
-int get_elem(struct kc_vector_t* self, int index, void* at)
+int get_elem(struct kc_vector_t* self, int index, void** at)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
@@ -303,8 +303,6 @@ int get_elem(struct kc_vector_t* self, int index, void* at)
 
     return KC_NULL_REFERENCE;
   }
-
-  at = NULL;
 
   // make sure the list is not empty
   if (self->length == 0)
@@ -322,14 +320,14 @@ int get_elem(struct kc_vector_t* self, int index, void* at)
     return KC_INDEX_OUT_OF_BOUNDS;
   }
 
-  at = self->data[index];
+  (*at) = self->data[index];
 
   return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int get_first_elem(struct kc_vector_t* self, void* first)
+int get_first_elem(struct kc_vector_t* self, void** first)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)
@@ -351,7 +349,7 @@ int get_first_elem(struct kc_vector_t* self, void* first)
 
 //---------------------------------------------------------------------------//
 
-int get_last_elem(struct kc_vector_t* self, void* back)
+int get_last_elem(struct kc_vector_t* self, void** back)
 {
   // if the vector reference is NULL, do nothing
   if (self == NULL)

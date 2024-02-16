@@ -3,7 +3,7 @@
 //
 // stack.c
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/datastructs/stack.h"
@@ -13,7 +13,7 @@
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-static int get_top_item_stack       (struct kc_stack_t* self, void* top);
+static int get_top_item_stack       (struct kc_stack_t* self, void** top);
 static int get_vector_length_stack  (struct kc_stack_t* self, size_t* length);
 static int insert_top_item_stack    (struct kc_stack_t* self, void* data, size_t size);
 static int remove_top_item_stack    (struct kc_stack_t* self);
@@ -47,7 +47,7 @@ struct kc_stack_t* new_stack()
     return NULL;
   }
 
-  new_stack->log = new_console_log(err, log_err, __FILE__);
+  new_stack->log = new_logger(err, log_err, __FILE__);
 
   if (new_stack->log == NULL)
   {
@@ -82,14 +82,14 @@ void destroy_stack(struct kc_stack_t* stack)
     return;
   }
 
-  destroy_console_log(stack->log);
+  destroy_logger(stack->log);
   destroy_vector(stack->vector);
   free(stack);
 }
 
 //---------------------------------------------------------------------------//
 
-int get_top_item_stack(struct kc_stack_t* self, void* top)
+int get_top_item_stack(struct kc_stack_t* self, void** top)
 {
   // if the stack reference is NULL, do nothing
   if (self == NULL)
@@ -100,7 +100,11 @@ int get_top_item_stack(struct kc_stack_t* self, void* top)
     return KC_NULL_REFERENCE;
   }
 
-  top = self->vector->back(self->vector);
+  int rez = self->vector->back(self->vector, top);
+  if (rez != KC_SUCCESS)
+  {
+    return rez;
+  }
 
   return KC_SUCCESS;
 }

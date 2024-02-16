@@ -3,19 +3,18 @@
 //
 // queue.c
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/datastructs/queue.h"
 #include "../../hdrs/common.h"
-#include "../../hdrs/logger/console_log.h"
 
 #include <stdlib.h>
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
 static int get_list_length_queue   (struct kc_queue_t* self, size_t* length);
-static int get_next_item_queue     (struct kc_queue_t* self, void* peek);
+static int get_next_item_queue     (struct kc_queue_t* self, void** peek);
 static int insert_next_item_queue  (struct kc_queue_t* self, void* data, size_t size);
 static int remove_next_item_queue  (struct kc_queue_t* self);
 
@@ -49,7 +48,7 @@ struct kc_queue_t* new_queue()
     return NULL;
   }
 
-  new_queue->log = new_console_log(err, log_err, __FILE__);
+  new_queue->log = new_logger(err, log_err, __FILE__);
 
   if (new_queue->log == NULL)
   {
@@ -86,7 +85,7 @@ void destroy_queue(struct kc_queue_t* queue)
     return;
   }
 
-  destroy_console_log(queue->log);
+  destroy_logger(queue->log);
   destroy_list(queue->list);
   free(queue);
 }
@@ -111,7 +110,7 @@ int get_list_length_queue(struct kc_queue_t* self, size_t* length)
 
 //---------------------------------------------------------------------------//
 
-int get_next_item_queue(struct kc_queue_t* self, void* peek)
+int get_next_item_queue(struct kc_queue_t* self, void** peek)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL)
@@ -123,12 +122,12 @@ int get_next_item_queue(struct kc_queue_t* self, void* peek)
   }
 
   struct kc_node_t* next_item = NULL;
-  int rez = self->list->front(self->list, next_item);
+  int rez = self->list->front(self->list, &next_item);
 
   // check if the head of the list exists
   if (next_item != NULL && next_item->data != NULL && rez == KC_SUCCESS)
   {
-    peek = next_item->data;
+    (*peek) = next_item->data;
 
     return KC_SUCCESS;
   }

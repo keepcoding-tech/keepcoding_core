@@ -3,12 +3,10 @@
 //
 // pair.c
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/datastructs/pair.h"
-#include "../../hdrs/logger/console_log.h"
-
 #include "../../hdrs/common.h"
 
 #include <stdlib.h>

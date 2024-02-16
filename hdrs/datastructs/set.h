@@ -3,7 +3,7 @@
 //
 // set.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 /*
@@ -47,7 +47,7 @@ struct kc_set_t
 
   int (*insert)  (struct kc_set_t* self, void* key, size_t key_size, void* value, size_t value_size);
   int (*remove)  (struct kc_set_t* self, void* key, size_t key_size);
-  int (*search)  (struct kc_set_t* self, void* key, size_t key_size, void* value);
+  int (*search)  (struct kc_set_t* self, void* key, size_t key_size, void** value);
 };
 
 struct kc_set_t* new_set      (int (*compare)(const void* a, const void* b));

@@ -3,7 +3,7 @@
 //
 // queue.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 /*
@@ -40,7 +40,7 @@ struct kc_queue_t
   struct kc_logger_t* log;
 
   int (*length)  (struct kc_queue_t* self, size_t* length);
-  int (*peek)    (struct kc_queue_t* self, void* peek);
+  int (*peek)    (struct kc_queue_t* self, void** peek);
   int (*pop)     (struct kc_queue_t* self);
   int (*push)    (struct kc_queue_t* self, void* data, size_t size);
 };

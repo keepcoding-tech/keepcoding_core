@@ -3,7 +3,7 @@
 //
 // tree.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 /*
@@ -47,7 +47,7 @@ struct kc_tree_t
   int (*compare)  (const void* a, const void* b);
   int (*insert)   (struct kc_tree_t* self, void* data, size_t size);
   int (*remove)   (struct kc_tree_t* self, void* data, size_t size);
-  int (*search)   (struct kc_tree_t* self, void* data, struct kc_node_t* node);
+  int (*search)   (struct kc_tree_t* self, void* data, struct kc_node_t** node);
 };
 
 struct kc_tree_t* new_tree      (int (*compare)(const void* a, const void* b));

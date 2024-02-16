@@ -3,7 +3,7 @@
 //
 // set.c
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/common.h"
@@ -16,7 +16,7 @@
 
 static int insert_new_pair_set  (struct kc_set_t* self, void* key, size_t key_size, void* value, size_t value_size);
 static int remove_pair_set      (struct kc_set_t* self, void* key, size_t key_size);
-static int search_pair_set      (struct kc_set_t* self, void* key, size_t key_size, void* data);
+static int search_pair_set      (struct kc_set_t* self, void* key, size_t key_size, void** data);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
@@ -39,7 +39,7 @@ struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
   }
 
   // create a console log instance to be used for the set
-  new_set->log = new_console_log(err, log_err, __FILE__);
+  new_set->log = new_logger(err, log_err, __FILE__);
 
   if (new_set->log == NULL)
   {
@@ -61,7 +61,7 @@ struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
         __FILE__, __LINE__, __func__);
 
     // free the set instances
-    destroy_console_log(new_set->log);
+    destroy_logger(new_set->log);
     free(new_set);
 
     return NULL;
@@ -94,7 +94,7 @@ void destroy_set(struct kc_set_t* set)
     recursive_set_destroy(set->entries->root);
   }
 
-  destroy_console_log(set->log);
+  destroy_logger(set->log);
 
   // free the instance too
   free(set);
@@ -116,7 +116,7 @@ int insert_new_pair_set(struct kc_set_t* self, void* key,
 
   // check if the pair already exists in the set
   struct kc_node_t* node = NULL;
-  search_pair_set(self, key, key_size, node);
+  search_pair_set(self, key, key_size, &node->data);
   if (node != NULL)
   {
     return KC_SUCCESS;
@@ -173,7 +173,7 @@ int remove_pair_set(struct kc_set_t* self, void* key, size_t key_size)
 
 //---------------------------------------------------------------------------//
 
-int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void* value)
+int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** value)
 {
   // if the set reference is NULL, do nothing
   if (self == NULL)
@@ -183,8 +183,6 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void* val
 
     return KC_NULL_REFERENCE;
   }
-
-  value = NULL;
 
   // create a new pair by using a dummy value
   char dummy_value = 'a';
@@ -198,7 +196,7 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void* val
 
   // use the search function of the kc_tree_t to find the desired node
   struct kc_node_t* result_node = NULL;
-  int rez = self->entries->search(self->entries, searchable, result_node);
+  int rez = self->entries->search(self->entries, searchable, &result_node);
   if (rez != KC_SUCCESS)
   {
     return rez;
@@ -216,7 +214,7 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void* val
     // return either the value for that key or NULL if not found
     if (result_pair != NULL && result_pair->value != NULL)
     {
-      value = result_pair->value;
+      (*value) = result_pair->value;
 
       return KC_SUCCESS;
     }

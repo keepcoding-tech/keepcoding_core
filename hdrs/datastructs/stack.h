@@ -3,7 +3,7 @@
 //
 // stack.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 /*
@@ -45,7 +45,7 @@ struct kc_stack_t
   int (*length)  (struct kc_stack_t* self, size_t* length);
   int (*pop)     (struct kc_stack_t* self);
   int (*push)    (struct kc_stack_t* self, void* data, size_t size);
-  int (*top)     (struct kc_stack_t* self, void* top);
+  int (*top)     (struct kc_stack_t* self, void** top);
 };
 
 struct kc_stack_t* new_stack      ();

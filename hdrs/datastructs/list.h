@@ -3,7 +3,7 @@
 //
 // list.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 /*
@@ -47,12 +47,12 @@ struct kc_list_t
 
   struct kc_logger_t* log;
 
-  int (*back)        (struct kc_list_t* self, struct kc_node_t* back_node);
+  int (*back)        (struct kc_list_t* self, struct kc_node_t** back_node);
   int (*clear)       (struct kc_list_t* self);
   int (*empty)       (struct kc_list_t* self, bool* is_empty);
   int (*erase)       (struct kc_list_t* self, int index);
-  int (*front)       (struct kc_list_t* self, struct kc_node_t* front_node);
-  int (*get)         (struct kc_list_t* self, int index, struct kc_node_t* node);
+  int (*front)       (struct kc_list_t* self, struct kc_node_t** front_node);
+  int (*get)         (struct kc_list_t* self, int index, struct kc_node_t** node);
   int (*insert)      (struct kc_list_t* self, int index, void* data, size_t size);
   int (*pop_back)    (struct kc_list_t* self);
   int (*pop_front)   (struct kc_list_t* self);

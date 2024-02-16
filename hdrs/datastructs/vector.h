@@ -3,7 +3,7 @@
 //
 // vector.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 /*
@@ -45,12 +45,12 @@ struct kc_vector_t
 
   struct kc_logger_t* log;
 
-  int (*at)          (struct kc_vector_t* self, int index, void* at);
-  int (*back)        (struct kc_vector_t* self, void* back);
+  int (*at)          (struct kc_vector_t* self, int index, void** at);
+  int (*back)        (struct kc_vector_t* self, void** back);
   int (*clear)       (struct kc_vector_t* self);
   int (*empty)       (struct kc_vector_t* self, bool* empty);
   int (*erase)       (struct kc_vector_t* self, int index);
-  int (*front)       (struct kc_vector_t* self, void* front);
+  int (*front)       (struct kc_vector_t* self, void** front);
   int (*insert)      (struct kc_vector_t* self, int index, void* data, size_t size);
   int (*max_size)    (struct kc_vector_t* self, size_t* max_size);
   int (*pop_back)    (struct kc_vector_t* self);

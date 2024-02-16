@@ -3,7 +3,7 @@
 //
 // test.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 #ifndef KC_TEST_H
@@ -18,11 +18,11 @@ void check_skip(bool condition);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-extern int passed;
-extern int failed;
-extern int skiped;
+int passed;
+int failed;
+int skiped;
 
-extern bool skiping;
+bool skiping;
 
 //---------------------------------------------------------------------------//
 

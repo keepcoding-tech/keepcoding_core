@@ -97,7 +97,7 @@ int display_debug_message(struct kc_logger_t* self, const int index,
 
 //---------------------------------------------------------------------------//
 
-int display_error_message(struct kc_logger_t* self, const int index, 
+int display_error_message(struct kc_logger_t* self, const int index,
    const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
@@ -117,7 +117,7 @@ int display_error_message(struct kc_logger_t* self, const int index,
 
 //---------------------------------------------------------------------------//
 
-int display_fatal_message(struct kc_logger_t* self, const int index, 
+int display_fatal_message(struct kc_logger_t* self, const int index,
    const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
@@ -137,7 +137,7 @@ int display_fatal_message(struct kc_logger_t* self, const int index,
 
 //---------------------------------------------------------------------------//
 
-int display_info_message(struct kc_logger_t* self, const int index, 
+int display_info_message(struct kc_logger_t* self, const int index,
    const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
@@ -157,7 +157,7 @@ int display_info_message(struct kc_logger_t* self, const int index,
 
 //---------------------------------------------------------------------------//
 
-int display_warning_message(struct kc_logger_t* self, const int index, 
+int display_warning_message(struct kc_logger_t* self, const int index,
    const int line, const char* func)
 {
   // if the list reference is NULL, abort the application
@@ -177,7 +177,7 @@ int display_warning_message(struct kc_logger_t* self, const int index,
 
 //---------------------------------------------------------------------------//
 
-void log_debug(const char* title, const char* description, const char* file, 
+void log_debug(const char* title, const char* description, const char* file,
    const int line, const char* func)
 {
   printf("\n");
@@ -213,7 +213,7 @@ void log_fatal(const char* exception, const char* description, const char* file,
 
 //---------------------------------------------------------------------------//
 
-void log_info(const char* title, const char* description, const char* file, 
+void log_info(const char* title, const char* description, const char* file,
    const int line, const char* func)
 {
   printf("\n");

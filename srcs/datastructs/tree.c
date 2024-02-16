@@ -3,7 +3,7 @@
 //
 // tree.c
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/common.h"
@@ -17,7 +17,7 @@
 
 static int insert_new_node_btree  (struct kc_tree_t* self, void* data, size_t size);
 static int remove_node_btree      (struct kc_tree_t* self, void* data, size_t size);
-static int search_node_btree      (struct kc_tree_t* self, void* data, struct kc_node_t* node);
+static int search_node_btree      (struct kc_tree_t* self, void* data, struct kc_node_t** node);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
@@ -41,7 +41,7 @@ struct kc_tree_t* new_tree(int (*compare)(const void* a, const void* b))
     return NULL;
   }
 
-  new_tree->log = new_console_log(err, log_err, __FILE__);
+  new_tree->log = new_logger(err, log_err, __FILE__);
 
   // confirm that there is memory to allocate
   if (new_tree->log == NULL)
@@ -85,7 +85,7 @@ void destroy_tree(struct kc_tree_t* tree)
     recursive_destroy_tree(tree->root);
   }
 
-  destroy_console_log(tree->log);
+  destroy_logger(tree->log);
 
   // free the binary tree too
   free(tree);
@@ -129,7 +129,7 @@ int remove_node_btree(struct kc_tree_t* self, void* data, size_t size)
 
 //---------------------------------------------------------------------------//
 
-int search_node_btree(struct kc_tree_t* self, void* data, struct kc_node_t* node)
+int search_node_btree(struct kc_tree_t* self, void* data, struct kc_node_t** node)
 {
   // if the tree reference is NULL, do nothing
   if (self == NULL)
@@ -160,12 +160,14 @@ int search_node_btree(struct kc_tree_t* self, void* data, struct kc_node_t* node
     }
     else
     {
-      node = current;
+      (*node) = current;
+
+      return KC_SUCCESS;
     }
   }
 
   // if the node was not found, return NULL
-  node = NULL;
+  (*node) = NULL;
 
   return KC_SUCCESS;
 }

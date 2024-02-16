@@ -3,7 +3,7 @@
 //
 // node.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 /*
@@ -24,6 +24,8 @@
 
 #ifndef KC_NODE_T_H
 #define KC_NODE_T_H
+
+#include "../logger/logger.h"
 
 #include <stdio.h>
 

@@ -3,7 +3,7 @@
 #
 # makefile
 #
-# Copyright (c) 2023 Daniel Tanase
+# Copyright (c) 2024 Daniel Tanase
 # SPDX-License-Identifier: MIT License
 #
 #                  _         __ _ _
@@ -17,7 +17,7 @@
 # Specify the compiler and compiler flags
 CC     := gcc
 STD    := -std=c99
-CFLAGS := -Wall -Werror -Wpedantic -g
+CFLAGS := -Wall -Werror -Wpedantic -g -pthread
 
 # Specify the sources and the headers directory
 BLD_DIR  := build
@@ -32,7 +32,7 @@ BIN_TST_DIR  := $(BIN_DIR)/test
 # Specify the sources and headers files
 HEADERS := $(wildcard $(HDR_DIR)/*.h) $(wildcard $(HDR_DIR)/**/*.h)
 SOURCES := $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/**/*.c)
-TESTS   := $(wildcard $(TST_DIR)/**/*.c)
+TESTS   := $(wildcard $(TST_DIR)/*.c)
 
 .PHONY: all build test run_tests clean help
 

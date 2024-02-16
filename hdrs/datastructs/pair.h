@@ -3,7 +3,7 @@
 //
 // pair.h
 //
-// Copyright (c) 2023 Daniel Tanase
+// Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
 /*
@@ -18,6 +18,8 @@
 
 #ifndef KC_PAIR_T_H
 #define KC_PAIR_T_H
+
+#include "../logger/logger.h"
 
 #include <stdio.h>
 
