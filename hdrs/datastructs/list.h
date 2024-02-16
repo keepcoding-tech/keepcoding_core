@@ -40,12 +40,11 @@
 
 struct kc_list_t
 {
-  struct kc_node_t* head;
-  struct kc_node_t* tail;
+  struct kc_node_t*   _head;
+  struct kc_node_t*   _tail;
+  struct kc_logger_t* _log;
 
   size_t length;
-
-  struct kc_logger_t* log;
 
   int (*back)        (struct kc_list_t* self, struct kc_node_t** back_node);
   int (*clear)       (struct kc_list_t* self);

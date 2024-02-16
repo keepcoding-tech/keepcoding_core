@@ -38,7 +38,7 @@
 
 struct kc_file_t
 {
-  struct kc_logger_t* log;
+  struct kc_logger_t* _log;
 
   FILE* file;
   char* name;

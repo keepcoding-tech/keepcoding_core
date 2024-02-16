@@ -26,9 +26,9 @@
 
 struct kc_logger_t
 {
-  const char** exceptions;
-  const char** descriptions;
-  const char* file;
+  const char** _exceptions;
+  const char** _descriptions;
+  const char*  _file;
 
   int (*debug)    (struct kc_logger_t* self, const int index, const int line, const char* func);
   int (*error)    (struct kc_logger_t* self, const int index, const int line, const char* func);

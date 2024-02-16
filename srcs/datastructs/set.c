@@ -39,9 +39,9 @@ struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
   }
 
   // create a console log instance to be used for the set
-  new_set->log = new_logger(err, log_err, __FILE__);
+  new_set->_log = new_logger(err, log_err, __FILE__);
 
-  if (new_set->log == NULL)
+  if (new_set->_log == NULL)
   {
     log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
         __FILE__, __LINE__, __func__);
@@ -53,15 +53,15 @@ struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
   }
 
   // instantiate the set's kc_tree_t via the constructor
-  new_set->entries = new_tree(compare);
+  new_set->_entries = new_tree(compare);
 
-  if (new_set->entries == NULL)
+  if (new_set->_entries == NULL)
   {
     log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
         __FILE__, __LINE__, __func__);
 
     // free the set instances
-    destroy_logger(new_set->log);
+    destroy_logger(new_set->_log);
     free(new_set);
 
     return NULL;
@@ -89,12 +89,12 @@ void destroy_set(struct kc_set_t* set)
   }
 
   // free the binary tree memory
-  if (set->entries->root != NULL)
+  if (set->_entries->root != NULL)
   {
-    recursive_set_destroy(set->entries->root);
+    recursive_set_destroy(set->_entries->root);
   }
 
-  destroy_logger(set->log);
+  destroy_logger(set->_log);
 
   // free the instance too
   free(set);
@@ -126,7 +126,7 @@ int insert_new_pair_set(struct kc_set_t* self, void* key,
   struct kc_pair_t* pair = pair_constructor(key, key_size, value, value_size);
 
   // insert that pair into the tree
-  int rez = self->entries->insert(self->entries, pair, sizeof(struct kc_pair_t));
+  int rez = self->_entries->insert(self->_entries, pair, sizeof(struct kc_pair_t));
 
   if (rez != KC_SUCCESS)
   {
@@ -160,7 +160,7 @@ int remove_pair_set(struct kc_set_t* self, void* key, size_t key_size)
   }
 
   // call the remove function of the Tree structure
-  int rez = self->entries->remove(self->entries, pair_to_remove, sizeof(struct kc_pair_t));
+  int rez = self->_entries->remove(self->_entries, pair_to_remove, sizeof(struct kc_pair_t));
   if (rez != KC_SUCCESS)
   {
     return rez;
@@ -196,7 +196,7 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
 
   // use the search function of the kc_tree_t to find the desired node
   struct kc_node_t* result_node = NULL;
-  int rez = self->entries->search(self->entries, searchable, &result_node);
+  int rez = self->_entries->search(self->_entries, searchable, &result_node);
   if (rez != KC_SUCCESS)
   {
     return rez;

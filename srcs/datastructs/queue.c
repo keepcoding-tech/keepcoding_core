@@ -35,9 +35,9 @@ struct kc_queue_t* new_queue()
   }
 
   // instantiate the queue's List via the constructor
-  new_queue->list = new_list();
+  new_queue->_list = new_list();
 
-  if (new_queue->list == NULL)
+  if (new_queue->_list == NULL)
   {
     log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
         __FILE__, __LINE__, __func__);
@@ -48,15 +48,15 @@ struct kc_queue_t* new_queue()
     return NULL;
   }
 
-  new_queue->log = new_logger(err, log_err, __FILE__);
+  new_queue->_log = new_logger(err, log_err, __FILE__);
 
-  if (new_queue->log == NULL)
+  if (new_queue->_log == NULL)
   {
     log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
         __FILE__, __LINE__, __func__);
 
     // free the set instances
-    destroy_list(new_queue->list);
+    destroy_list(new_queue->_list);
     free(new_queue);
 
     return NULL;
@@ -85,8 +85,8 @@ void destroy_queue(struct kc_queue_t* queue)
     return;
   }
 
-  destroy_logger(queue->log);
-  destroy_list(queue->list);
+  destroy_logger(queue->_log);
+  destroy_list(queue->_list);
   free(queue);
 }
 
@@ -103,7 +103,7 @@ int get_list_length_queue(struct kc_queue_t* self, size_t* length)
     return KC_NULL_REFERENCE;
   }
 
-  (*length) = self->list->length;
+  (*length) = self->_list->length;
 
   return KC_SUCCESS;
 }
@@ -122,7 +122,7 @@ int get_next_item_queue(struct kc_queue_t* self, void** peek)
   }
 
   struct kc_node_t* next_item = NULL;
-  int rez = self->list->front(self->list, &next_item);
+  int rez = self->_list->front(self->_list, &next_item);
 
   // check if the head of the list exists
   if (next_item != NULL && next_item->data != NULL && rez == KC_SUCCESS)
@@ -148,7 +148,7 @@ int insert_next_item_queue(struct kc_queue_t *self, void *data, size_t size)
     return KC_NULL_REFERENCE;
   }
 
-  self->list->push_back(self->list, data, size);
+  self->_list->push_back(self->_list, data, size);
 
   return KC_SUCCESS;
 }
@@ -166,7 +166,7 @@ int remove_next_item_queue(struct kc_queue_t *self)
     return KC_NULL_REFERENCE;
   }
 
-  self->list->pop_front(self->list);
+  self->_list->pop_front(self->_list);
 
   return KC_SUCCESS;
 }

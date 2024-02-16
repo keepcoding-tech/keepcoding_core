@@ -42,8 +42,8 @@
 
 struct kc_set_t
 {
-  struct kc_tree_t* entries;
-  struct kc_logger_t* log;
+  struct kc_tree_t*   _entries;
+  struct kc_logger_t* _log;
 
   int (*insert)  (struct kc_set_t* self, void* key, size_t key_size, void* value, size_t value_size);
   int (*remove)  (struct kc_set_t* self, void* key, size_t key_size);

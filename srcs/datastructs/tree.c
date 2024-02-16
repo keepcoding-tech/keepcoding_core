@@ -41,10 +41,10 @@ struct kc_tree_t* new_tree(int (*compare)(const void* a, const void* b))
     return NULL;
   }
 
-  new_tree->log = new_logger(err, log_err, __FILE__);
+  new_tree->_log = new_logger(err, log_err, __FILE__);
 
   // confirm that there is memory to allocate
-  if (new_tree->log == NULL)
+  if (new_tree->_log == NULL)
   {
     log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
         __FILE__, __LINE__, __func__);
@@ -85,7 +85,7 @@ void destroy_tree(struct kc_tree_t* tree)
     recursive_destroy_tree(tree->root);
   }
 
-  destroy_logger(tree->log);
+  destroy_logger(tree->_log);
 
   // free the binary tree too
   free(tree);

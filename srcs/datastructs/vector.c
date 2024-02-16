@@ -52,7 +52,7 @@ struct kc_vector_t* new_vector()
     return NULL;
   }
 
-  new_vector->log = new_logger(err, log_err, __FILE__);
+  new_vector->_log = new_logger(err, log_err, __FILE__);
 
   if (new_vector == NULL)
   {
@@ -65,7 +65,7 @@ struct kc_vector_t* new_vector()
   }
 
   // initialize the structure members fields
-  new_vector->capacity = 16;
+  new_vector->_capacity = 16;
   new_vector->length   = 0;
   new_vector->data     = malloc(16 * sizeof(void*));
 
@@ -76,7 +76,7 @@ struct kc_vector_t* new_vector()
         __FILE__, __LINE__, __func__);
 
     // free the instances and exit
-    free(new_vector->log);
+    free(new_vector->_log);
     free(new_vector->data);
     free(new_vector);
 
@@ -116,7 +116,7 @@ void destroy_vector(struct kc_vector_t* vector)
     return;
   }
 
-  destroy_logger(vector->log);
+  destroy_logger(vector->_log);
 
   // free the memory for each element and the array itself
   if (vector->data != NULL)
@@ -160,7 +160,7 @@ int erase_all_elems(struct kc_vector_t* self)
   }
 
   // reallocate the default capacity
-  if (self->capacity > 16)
+  if (self->_capacity > 16)
   {
     resize_vector(self, 16);
   }
@@ -187,7 +187,7 @@ int erase_elem(struct kc_vector_t* self, int index)
   // make sure the list is not empty
   if (self->length == 0)
   {
-    self->log->error(self->log, KC_EMPTY_STRUCTURE, __LINE__, __func__);
+    self->_log->error(self->_log, KC_EMPTY_STRUCTURE, __LINE__, __func__);
 
     return KC_EMPTY_STRUCTURE;
   }
@@ -195,7 +195,7 @@ int erase_elem(struct kc_vector_t* self, int index)
   // confirm the user has specified a valid index
   if (index < 0 || index >= self->length)
   {
-    self->log->error(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->error(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
@@ -205,9 +205,9 @@ int erase_elem(struct kc_vector_t* self, int index)
   --self->length;
 
   // resize if the length of the vector is less than half
-  if (self->length < self->capacity / 2 && self->capacity > 16)
+  if (self->length < self->_capacity / 2 && self->_capacity > 16)
   {
-    resize_vector(self, self->capacity / 2);
+    resize_vector(self, self->_capacity / 2);
   }
 
   return KC_SUCCESS;
@@ -307,7 +307,7 @@ int get_elem(struct kc_vector_t* self, int index, void** at)
   // make sure the list is not empty
   if (self->length == 0)
   {
-    self->log->error(self->log, KC_EMPTY_STRUCTURE, __LINE__, __func__);
+    self->_log->error(self->_log, KC_EMPTY_STRUCTURE, __LINE__, __func__);
 
     return KC_EMPTY_STRUCTURE;
   }
@@ -315,7 +315,7 @@ int get_elem(struct kc_vector_t* self, int index, void** at)
   // confirm the user has specified a valid index
   if (index < 0 || index >= self->length)
   {
-    self->log->error(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->error(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
@@ -382,7 +382,7 @@ int get_vector_capacity(struct kc_vector_t* self, size_t* max_size)
     return KC_NULL_REFERENCE;
   }
 
-  (*max_size) = self->capacity;
+  (*max_size) = self->_capacity;
 
   return KC_SUCCESS;
 }
@@ -470,15 +470,15 @@ int insert_new_elem(struct kc_vector_t* self, int index, void* data, size_t size
   // confirm the user has specified a valid index
   if (index < 0 || index > self->length)
   {
-    self->log->error(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->error(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
 
   // reallocate more memory if the capacity is full
-  if (self->length + 1 >= self->capacity)
+  if (self->length + 1 >= self->_capacity)
   {
-    resize_vector(self, self->capacity * 2);
+    resize_vector(self, self->_capacity * 2);
   }
 
   // alocate space in memory
@@ -487,7 +487,7 @@ int insert_new_elem(struct kc_vector_t* self, int index, void* data, size_t size
   // check if the memory allocation was succesfull
   if (new_elem == NULL)
   {
-    self->log->error(self->log, KC_OUT_OF_MEMORY, __LINE__, __func__);
+    self->_log->error(self->_log, KC_OUT_OF_MEMORY, __LINE__, __func__);
 
     return KC_OUT_OF_MEMORY;
   }
@@ -576,7 +576,7 @@ void resize_vector(struct kc_vector_t* vector, size_t new_capacity)
   // make sure the user specific a valid capacity size
   if (new_capacity < 1)
   {
-    vector->log->error(vector->log, KC_UNDERFLOW, __LINE__, __func__);
+    vector->_log->error(vector->_log, KC_UNDERFLOW, __LINE__, __func__);
     return;
   }
 
@@ -586,12 +586,12 @@ void resize_vector(struct kc_vector_t* vector, size_t new_capacity)
   // check if the memory reallocation was succesfull
   if (new_data == NULL)
   {
-    vector->log->error(vector->log, KC_OUT_OF_MEMORY, __LINE__, __func__);
+    vector->_log->error(vector->_log, KC_OUT_OF_MEMORY, __LINE__, __func__);
     return;
   }
 
   vector->data = new_data;
-  vector->capacity = new_capacity;
+  vector->_capacity = new_capacity;
 }
 
 //---------------------------------------------------------------------------//

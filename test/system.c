@@ -29,7 +29,7 @@ int main()
       struct kc_file_t* file = new_file();
 
       ok(file != NULL);
-      ok(file->log != NULL);
+      ok(file->_log != NULL);
       ok(file->file == NULL);
       ok(file->name == NULL);
       ok(file->mode == KC_FILE_NOT_FOUND);

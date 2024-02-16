@@ -66,10 +66,10 @@ struct kc_list_t* new_list()
   }
 
   // initialize the structure members fields
-  new_list->head   = NULL;
-  new_list->tail   = NULL;
+  new_list->_head   = NULL;
+  new_list->_tail   = NULL;
   new_list->length = 0;
-  new_list->log    = logger;
+  new_list->_log    = logger;
 
   // assigns the public member methods
   new_list->back       = get_last_node;
@@ -102,7 +102,7 @@ void destroy_list(struct kc_list_t* list)
     return;
   }
 
-  destroy_logger(list->log);
+  destroy_logger(list->_log);
 
   erase_all_nodes(list);
   free(list);
@@ -122,7 +122,7 @@ int erase_all_nodes(struct kc_list_t* self)
   }
 
   // start iterating from the head
-  struct kc_node_t* cursor = self->head;
+  struct kc_node_t* cursor = self->_head;
   while (cursor != NULL)
   {
     struct kc_node_t* next = cursor->next;
@@ -131,8 +131,8 @@ int erase_all_nodes(struct kc_list_t* self)
   }
 
   // reset the head, tail and size
-  self->head = NULL;
-  self->tail = NULL;
+  self->_head = NULL;
+  self->_tail = NULL;
   self->length = 0;
 
   return KC_SUCCESS;
@@ -151,18 +151,18 @@ int erase_first_node(struct kc_list_t* self)
     return KC_NULL_REFERENCE;
   }
 
-  struct kc_node_t* old_head = self->head;
+  struct kc_node_t* old_head = self->_head;
 
   // check if this is alos the last node
   if (old_head->next == NULL)
   {
-    self->head = NULL;
-    self->tail = NULL;
+    self->_head = NULL;
+    self->_tail = NULL;
   }
   else
   {
-    self->head = old_head->next;
-    self->head->prev = NULL;
+    self->_head = old_head->next;
+    self->_head->prev = NULL;
   }
 
   node_destructor(old_head);
@@ -184,18 +184,18 @@ int erase_last_node(struct kc_list_t* self)
     return KC_NULL_REFERENCE;
   }
 
-  struct kc_node_t* old_tail = self->tail;
+  struct kc_node_t* old_tail = self->_tail;
 
   // check if this is alos the last node
   if (old_tail->prev == NULL)
   {
-    self->tail = NULL;
-    self->head = NULL;
+    self->_tail = NULL;
+    self->_head = NULL;
   }
   else
   {
-    self->tail = old_tail->prev;
-    self->tail->next = NULL;
+    self->_tail = old_tail->prev;
+    self->_tail->next = NULL;
   }
 
   node_destructor(old_tail);
@@ -221,7 +221,7 @@ int erase_node(struct kc_list_t* self, int index)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->warning(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
@@ -267,7 +267,7 @@ int erase_nodes_by_value(struct kc_list_t* self, void* value, int (*compare)(con
   }
 
   // start from the head
-  struct kc_node_t* cursor = self->head;
+  struct kc_node_t* cursor = self->_head;
   size_t index = 0;
 
   // search the node by value
@@ -333,7 +333,7 @@ int get_first_node(struct kc_list_t* self, struct kc_node_t** first_node)
     return KC_NULL_REFERENCE;
   }
 
-  (*first_node) = self->head;
+  (*first_node) = self->_head;
 
   return KC_SUCCESS;
 }
@@ -354,11 +354,11 @@ int get_last_node(struct kc_list_t* self, struct kc_node_t** last_node)
   // if length is less than 1 then head is also tail
   if (self->length == 0)
   {
-    (*last_node) = self->head;
+    (*last_node) = self->_head;
   }
   else
   {
-    (*last_node) = self->tail;
+    (*last_node) = self->_tail;
   }
 
   return KC_SUCCESS;
@@ -381,7 +381,7 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t** node)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->warning(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
@@ -424,7 +424,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   if (index < 0 || index > self->length)
   {
     // log the warning to the console
-    self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->warning(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
@@ -441,13 +441,13 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   // check if this node will be the new head
   if (index == 0)
   {
-    new_node->next = self->head;
-    self->head = new_node;
+    new_node->next = self->_head;
+    self->_head = new_node;
 
     // if length is less than 1 then head is also tail
     if (self->length == 0)
     {
-      self->tail = new_node;
+      self->_tail = new_node;
     }
 
     ++self->length;
@@ -476,7 +476,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   // check if this node will be the new tail
   if (index == self->length)
   {
-    self->tail = new_node;
+    self->_tail = new_node;
   }
 
   // increment the list length
@@ -514,7 +514,7 @@ int is_list_empty(struct kc_list_t* self, bool* is_empty)
     return KC_NULL_REFERENCE;
   }
 
-  if (self->length == 0 && self->head == NULL && self->tail == NULL)
+  if (self->length == 0 && self->_head == NULL && self->_tail == NULL)
   {
     (*is_empty) = true;
   }
@@ -541,7 +541,7 @@ int search_node(struct kc_list_t* self, void* value,
   }
 
   // create a new node instance
-  struct kc_node_t* node = self->head;
+  struct kc_node_t* node = self->_head;
 
   // search the node by value
   while (node != NULL && compare(node->data, value) != 0)
@@ -566,7 +566,7 @@ int search_node(struct kc_list_t* self, void* value,
 struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
 {
   // if the list reference is NULL, do nothing
-  if (self == NULL || self->head == NULL || self->tail == NULL)
+  if (self == NULL || self->_head == NULL || self->_tail == NULL)
   {
     log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
         __FILE__, __LINE__, __func__);
@@ -578,7 +578,7 @@ struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->log->warning(self->log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->warning(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
 
     return NULL;
   }
@@ -586,8 +586,8 @@ struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
   // check if the index is over the half of the list length, if the index is
   // smaller, then start from the head, otherwise start from the tail
   struct kc_node_t* node = index <= self->length / 2 ?
-      iterate_forward_ll(self->head, index) :
-      iterate_reverse_ll(self->tail, (int)(self->length - 1) - index);
+      iterate_forward_ll(self->_head, index) :
+      iterate_reverse_ll(self->_tail, (int)(self->length - 1) - index);
 
   return node;
 }

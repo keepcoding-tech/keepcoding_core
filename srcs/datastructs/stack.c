@@ -35,9 +35,9 @@ struct kc_stack_t* new_stack()
   }
 
   // instantiate the stack's Vector via the constructor
-  new_stack->vector = new_vector();
+  new_stack->_vector = new_vector();
 
-  if (new_stack->vector == NULL)
+  if (new_stack->_vector == NULL)
   {
     log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
         __FILE__, __LINE__, __func__);
@@ -47,14 +47,14 @@ struct kc_stack_t* new_stack()
     return NULL;
   }
 
-  new_stack->log = new_logger(err, log_err, __FILE__);
+  new_stack->_log = new_logger(err, log_err, __FILE__);
 
-  if (new_stack->log == NULL)
+  if (new_stack->_log == NULL)
   {
     log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
         __FILE__, __LINE__, __func__);
 
-    free(new_stack->vector);
+    free(new_stack->_vector);
     free(new_stack);
 
     return NULL;
@@ -82,8 +82,8 @@ void destroy_stack(struct kc_stack_t* stack)
     return;
   }
 
-  destroy_logger(stack->log);
-  destroy_vector(stack->vector);
+  destroy_logger(stack->_log);
+  destroy_vector(stack->_vector);
   free(stack);
 }
 
@@ -100,7 +100,7 @@ int get_top_item_stack(struct kc_stack_t* self, void** top)
     return KC_NULL_REFERENCE;
   }
 
-  int rez = self->vector->back(self->vector, top);
+  int rez = self->_vector->back(self->_vector, top);
   if (rez != KC_SUCCESS)
   {
     return rez;
@@ -122,7 +122,7 @@ int get_vector_length_stack(struct kc_stack_t* self, size_t* length)
     return KC_NULL_REFERENCE;
   }
 
-  (*length) = self->vector->length;
+  (*length) = self->_vector->length;
 
   return KC_SUCCESS;
 }
@@ -141,7 +141,7 @@ int insert_top_item_stack(struct kc_stack_t* self, void* data, size_t size)
   }
 
   // utilize the push_back from Vector with enforced parameters
-  int rez = self->vector->push_back(self->vector, data, size);
+  int rez = self->_vector->push_back(self->_vector, data, size);
   if (rez != KC_SUCCESS)
   {
     return rez;
@@ -164,7 +164,7 @@ int remove_top_item_stack(struct kc_stack_t* self)
   }
 
   // utilize the erase from Vector with enforced parameters
-  int rez = self->vector->pop_back(self->vector);
+  int rez = self->_vector->pop_back(self->_vector);
   if (rez != KC_SUCCESS)
   {
     return rez;

@@ -49,7 +49,7 @@ struct kc_file_t* new_file()
   struct kc_logger_t* log = new_logger(err, log_err, __FILE__);
 
   // assigns the public member fields
-  file->log    = log;
+  file->_log    = log;
   file->file   = NULL;
   file->name   = NULL;
   file->path   = NULL;
@@ -85,7 +85,7 @@ void destroy_file(struct kc_file_t* file)
     return;
   }
 
-  destroy_logger(file->log);
+  destroy_logger(file->_log);
 
   // close the file if still open
   file->close(file);
@@ -170,7 +170,7 @@ int delete_file(struct kc_file_t* self)
 
   if (remove(self->name) != 0)
   {
-    self->log->warning(self->log, KC_FILE_NOT_FOUND, __LINE__, __func__);
+    self->_log->warning(self->_log, KC_FILE_NOT_FOUND, __LINE__, __func__);
 
     return KC_FILE_NOT_FOUND;
   }
@@ -338,7 +338,7 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   if (self->mode == KC_FILE_NOT_FOUND || tmp_mode == NULL)
   {
     // invalid mode provided
-    self->log->error(self->log, KC_INVALID_ARGUMENT, __LINE__, __func__);
+    self->_log->error(self->_log, KC_INVALID_ARGUMENT, __LINE__, __func__);
 
     return KC_INVALID_ARGUMENT;
   }
@@ -354,7 +354,7 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   if (self->file == NULL)
   {
     // file opening failed
-    self->log->error(self->log, KC_FILE_NOT_FOUND, __LINE__, __func__);
+    self->_log->error(self->_log, KC_FILE_NOT_FOUND, __LINE__, __func__);
 
     return KC_INVALID_ARGUMENT;
   }

@@ -42,7 +42,7 @@
 struct kc_tree_t
 {
   struct kc_node_t* root;
-  struct kc_logger_t* log;
+  struct kc_logger_t* _log;
 
   int (*compare)  (const void* a, const void* b);
   int (*insert)   (struct kc_tree_t* self, void* data, size_t size);

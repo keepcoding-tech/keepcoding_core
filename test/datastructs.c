@@ -61,8 +61,8 @@ int main() {
     {
       struct kc_list_t* list = new_list();
 
-      ok(list->head == NULL);
-      ok(list->tail == NULL);
+      ok(list->_head == NULL);
+      ok(list->_tail == NULL);
 
       destroy_list(list);
     }
@@ -217,7 +217,7 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       // check if the node was correctly removed
-      struct kc_node_t* cursor = list->head;
+      struct kc_node_t* cursor = list->_head;
       for (int i = 0; i < 5; ++i)
       {
         cursor = cursor->next;
@@ -231,7 +231,7 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       // check if the head of the list was correctly removed
-      cursor = list->head;
+      cursor = list->_head;
       ok(*(int*)cursor->data != 0 || list->length != 9);
 
       // remove the remaining nodes in reverse
@@ -359,7 +359,7 @@ int main() {
 
       for (int i = 0; i < 20; ++i)
       {
-        struct kc_node_t* cursor = list->head;
+        struct kc_node_t* cursor = list->_head;
         for (int j = 0; j < i; ++j)
         {
           cursor = cursor->next;
@@ -384,7 +384,7 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       // get the 21st node
-      struct kc_node_t* cursor = list->tail;
+      struct kc_node_t* cursor = list->_tail;
 
       // check if the node has been inserted correctly
       int* ptr = (int*)cursor->data;
@@ -415,7 +415,7 @@ int main() {
       for (int i = 0; i < 10; ++i)
       {
         // the length should be reduced only after the pop
-        ok(*(int*)list->tail->data == 10 - (i + 1));
+        ok(*(int*)list->_tail->data == 10 - (i + 1));
         ok(list->length == 10 - i);
 
         // check if the last node was deleted correctly
@@ -447,7 +447,7 @@ int main() {
       for (int i = 0; i < 10; ++i)
       {
         // the length should be reduced only after the pop
-        ok(*(int*)list->head->data == i);
+        ok(*(int*)list->_head->data == i);
         ok(list->length == 10 - i);
 
         rez = list->pop_front(list);
@@ -478,7 +478,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         // check if the node was inserted correctly
-        ok(*(int*)list->tail->data == i);
+        ok(*(int*)list->_tail->data == i);
         ok(list->length == i + 1);
       }
 
@@ -503,7 +503,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         // check if the node was inserted correctly
-        ok(*(int*)list->head->data == i);
+        ok(*(int*)list->_head->data == i);
         ok(list->length == i + 1);
       }
 
@@ -947,7 +947,7 @@ int main() {
     {
       struct kc_queue_t* queue = new_queue();
 
-      ok(queue->list->head == NULL);
+      ok(queue->_list->_head == NULL);
 
       destroy_queue(queue);
     }
@@ -1057,7 +1057,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         // check if the nodes have been removed correctly
-        ok(queue->list->length == 10 - i);
+        ok(queue->_list->length == 10 - i);
       }
 
       destroy_queue(queue);
@@ -1078,7 +1078,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         // check the length of the list
-        ok(queue->list->length == i + 1);
+        ok(queue->_list->length == i + 1);
       }
 
       // push ten new nodes of type char
@@ -1089,12 +1089,12 @@ int main() {
 
 
         // check the length of the list
-        ok(queue->list->length == i + 1);
+        ok(queue->_list->length == i + 1);
       }
 
       for (int i = 0; i < 20; ++i)
       {
-        struct kc_node_t* cursor = queue->list->head;
+        struct kc_node_t* cursor = queue->_list->_head;
         for (int j = 0; j < i; ++j)
         {
           cursor = cursor->next;
@@ -1119,7 +1119,7 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       // get the 21st node
-      struct kc_node_t* cursor = queue->list->tail;
+      struct kc_node_t* cursor = queue->_list->_tail;
 
       // check if the node has been inserted correctly
       int* ptr = (int*)cursor->data;
@@ -1141,7 +1141,7 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       // get the 22st node
-      cursor = queue->list->tail;
+      cursor = queue->_list->_tail;
 
       ok((int)(((struct Test*)cursor->data)->key) == test.key);
       ok(strcmp((char*)(((struct Test*)cursor->data)->value), test.value) == 0);
@@ -1158,7 +1158,7 @@ int main() {
     {
       struct kc_set_t* set = new_set(set_compare_int);
 
-      ok(set->entries->root == NULL);
+      ok(set->_entries->root == NULL);
 
       destroy_set(set);
     }
@@ -1484,8 +1484,8 @@ int main() {
     {
       struct kc_stack_t* stack = new_stack();
 
-      ok(stack->vector->length == 0);
-      ok(stack->vector->capacity == 16);
+      ok(stack->_vector->length == 0);
+      ok(stack->_vector->_capacity == 16);
 
       destroy_stack(stack);
     }
@@ -1516,7 +1516,7 @@ int main() {
       ok(rez == KC_SUCCESS);
       ok(length == 10);
 
-      stack->vector->clear(stack->vector);
+      stack->_vector->clear(stack->_vector);
 
       // should be empty again
       rez = stack->length(stack, &length);
@@ -1547,7 +1547,7 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         // check if the items have been removed correctly
-        ok(stack->vector->length == 10 - i);
+        ok(stack->_vector->length == 10 - i);
       }
 
       destroy_stack(stack);
@@ -1566,13 +1566,13 @@ int main() {
         ok(rez == KC_SUCCESS);
 
         // check the length of the list
-        ok(stack->vector->length == i + 1);
+        ok(stack->_vector->length == i + 1);
       }
 
       for (int i = 0; i < 10; ++i)
       {
         // check if the nodes have been pushed correctly
-        ok(*(int*)stack->vector->data[i] == i);
+        ok(*(int*)stack->_vector->data[i] == i);
       }
 
       destroy_stack(stack);
@@ -1598,7 +1598,7 @@ int main() {
       }
 
       // check the capacity of the vector
-      ok(stack->vector->capacity == 64);
+      ok(stack->_vector->_capacity == 64);
 
       destroy_stack(stack);
     }
@@ -1613,7 +1613,7 @@ int main() {
       struct kc_vector_t* vector = new_vector();
 
       ok(vector->length == 0);
-      ok(vector->capacity == 16);
+      ok(vector->_capacity == 16);
 
       destroy_vector(vector);
     }
@@ -1685,7 +1685,7 @@ int main() {
       }
 
       ok(vector->length == 20);
-      ok(vector->capacity == 32);
+      ok(vector->_capacity == 32);
 
       // clear and check again
       rez = vector->clear(vector);
@@ -1693,7 +1693,7 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       ok(vector->length == 0);
-      ok(vector->capacity == 16);
+      ok(vector->_capacity == 16);
 
       // reuse the freed memory
       vector->data[4] = malloc(sizeof(int));
@@ -1845,7 +1845,7 @@ int main() {
       }
 
       // check the capacity of the vector
-      ok(vector->capacity == 32);
+      ok(vector->_capacity == 32);
 
       int data = 100;
       rez = vector->insert(vector, 10, &data, sizeof(int));
@@ -1879,7 +1879,7 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       // check the capacity of the vector
-      ok(vector->capacity == max_size);
+      ok(vector->_capacity == max_size);
       ok(max_size == 16);
 
       // push 20 new items
@@ -1910,7 +1910,7 @@ int main() {
       ok(rez == KC_SUCCESS);
 
       // check the capacity of the vector
-      ok(vector->capacity == max_size);
+      ok(vector->_capacity == max_size);
       ok(max_size == 32);
 
       destroy_vector(vector);

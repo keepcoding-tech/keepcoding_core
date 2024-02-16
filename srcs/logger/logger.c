@@ -45,9 +45,9 @@ struct kc_logger_t* new_logger(const char** exceptions, const char** description
   }
 
   // assign the exceptions and descriptions arrays
-  new_log->exceptions   = exceptions;
-  new_log->descriptions = descriptions;
-  new_log->file         = file;
+  new_log->_exceptions   = exceptions;
+  new_log->_descriptions = descriptions;
+  new_log->_file         = file;
 
   // assign the public member methods
   new_log->debug   = display_debug_message;
@@ -89,8 +89,8 @@ int display_debug_message(struct kc_logger_t* self, const int index,
     return KC_INVALID;
   }
 
-  log_debug(self->exceptions[index],
-      self->descriptions[index], self->file, line, func);
+  log_debug(self->_exceptions[index],
+      self->_descriptions[index], self->_file, line, func);
 
   return KC_SUCCESS;
 }
@@ -109,8 +109,8 @@ int display_error_message(struct kc_logger_t* self, const int index,
     return KC_INVALID;
   }
 
-  log_error(self->exceptions[index],
-      self->descriptions[index], self->file, line, func);
+  log_error(self->_exceptions[index],
+      self->_descriptions[index], self->_file, line, func);
 
   return KC_SUCCESS;
 }
@@ -129,8 +129,8 @@ int display_fatal_message(struct kc_logger_t* self, const int index,
     return KC_INVALID;
   }
 
-  log_fatal(self->exceptions[index],
-      self->descriptions[index], self->file, line, func);
+  log_fatal(self->_exceptions[index],
+      self->_descriptions[index], self->_file, line, func);
 
   return KC_SUCCESS;
 }
@@ -149,8 +149,8 @@ int display_info_message(struct kc_logger_t* self, const int index,
     return KC_INVALID;
   }
 
-  log_info(self->exceptions[index],
-      self->descriptions[index], self->file, line, func);
+  log_info(self->_exceptions[index],
+      self->_descriptions[index], self->_file, line, func);
 
   return KC_SUCCESS;
 }
@@ -169,8 +169,8 @@ int display_warning_message(struct kc_logger_t* self, const int index,
     return KC_INVALID;
   }
 
-  log_warning(self->exceptions[index],
-      self->descriptions[index], self->file, line, func);
+  log_warning(self->_exceptions[index],
+      self->_descriptions[index], self->_file, line, func);
 
   return KC_SUCCESS;
 }

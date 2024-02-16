@@ -39,11 +39,11 @@
 
 struct kc_vector_t
 {
-  void** data;
-  size_t capacity;
-  size_t length;
+  size_t              _capacity;
+  struct kc_logger_t* _log;
 
-  struct kc_logger_t* log;
+  void** data;
+  size_t length;
 
   int (*at)          (struct kc_vector_t* self, int index, void** at);
   int (*back)        (struct kc_vector_t* self, void** back);
