@@ -17,6 +17,31 @@
 
 void* test_thread_func(void* arg)
 {
+  note("starting thread...");
+
+  if (arg != NULL)
+  {
+    int* res = malloc(sizeof(int));
+    (*res) = *(int*)arg;
+    (*res)++;
+
+    return (void*)res;
+  }
+
+  return NULL;
+}
+
+int race_counter = 0;
+pthread_mutex_t mutex;
+
+void* test_race_condition()
+{
+  for (int i = 0; i < 1000000; ++i)
+  {
+    kc_mutex_lock
+    ++race_counter;
+    kc_mutex_unlock
+  }
   return NULL;
 }
 
@@ -34,17 +59,6 @@ int main()
       ok(file->name == NULL);
       ok(file->mode == KC_FILE_NOT_FOUND);
       ok(file->opened == false);
-
-      destroy_file(file);
-    }
-
-    subtest("test create_path()")
-    {
-      struct kc_file_t* file = new_file();
-      int rez = KC_INVALID;
-
-      rez = file->create_path(file, "test_files");
-      ok(rez == KC_SUCCESS);
 
       destroy_file(file);
     }
@@ -67,6 +81,20 @@ int main()
       ok(file->file == NULL);
 
       rez = file->delete(file);
+      ok(rez == KC_SUCCESS);
+
+      destroy_file(file);
+    }
+
+    subtest("test create_path()")
+    {
+      struct kc_file_t* file = new_file();
+      int rez = KC_INVALID;
+
+      rez = file->create_path(file, "test_files");
+      ok(rez == KC_SUCCESS);
+
+      rez = file->delete_path(file, "/workspaces/keepcoding_core/test_files");
       ok(rez == KC_SUCCESS);
 
       destroy_file(file);
@@ -172,6 +200,9 @@ int main()
 
       ok(rez == KC_SUCCESS);
       ok(strcmp(path, "sys_test/get/path") == 0);
+
+      rez = file->delete_path(file, "/workspaces/keepcoding_core/sys_test");
+      ok(rez == KC_SUCCESS);
 
       destroy_file(file);
     }
@@ -291,7 +322,7 @@ int main()
     done_testing();
   }
 
-  testgroup("Thread")
+  testgroup("kc_thread_t")
   {
     subtest("test init/desc")
     {
@@ -305,10 +336,12 @@ int main()
 
       int rez = KC_INVALID;
 
-      rez = thread->start(thread, test_thread_func);
+      rez = thread->start(thread, &test_thread_func, NULL);
+
       ok(rez == KC_SUCCESS);
 
-      rez = thread->stop(thread);
+      // terminate the thread
+      rez = pthread_join(thread->_thread, NULL);
       ok(rez == KC_SUCCESS);
 
       destroy_thread(thread);
@@ -320,7 +353,8 @@ int main()
 
       int rez = KC_INVALID;
 
-      rez = thread->start(thread, test_thread_func);
+      // create a thread
+      rez = pthread_create(&thread->_thread, NULL, &test_thread_func, NULL);
       ok(rez == KC_SUCCESS);
 
       rez = thread->stop(thread);
@@ -329,59 +363,47 @@ int main()
       destroy_thread(thread);
     }
 
-    subtest("test wait()")
+    subtest("test join()")
     {
       struct kc_thread_t* thread = new_thread();
 
       int rez = KC_INVALID;
+      int val = 1;
+      void* arg = &val;
 
-      rez = thread->start(thread, test_thread_func);
+      // create a thread
+      rez = thread->start(thread, &test_thread_func, arg);
       ok(rez == KC_SUCCESS);
 
-      rez = thread->wait(thread);
+      rez = thread->join(thread, &arg);
       ok(rez == KC_SUCCESS);
+      ok(*(int*)(arg) == 2); // the value was changed
 
       destroy_thread(thread);
     }
 
-    subtest("test is_pending()")
+    subtest("test mutex")
     {
-      struct kc_thread_t* thread = new_thread();
+      struct kc_thread_t* thread1 = new_thread();
+      struct kc_thread_t* thread2 = new_thread();
 
       int rez = KC_INVALID;
-      bool pending = true;
 
-      rez = thread->start(thread, test_thread_func);
+      rez = thread1->start(thread1, &test_race_condition, NULL);
+      ok(rez == KC_SUCCESS);
+      rez = thread2->start(thread2, &test_race_condition, NULL);
       ok(rez == KC_SUCCESS);
 
-      rez = thread->is_pending(thread, &pending);
-      printf("%d\n", rez);
+      rez = thread1->join(thread1, NULL);
       ok(rez == KC_SUCCESS);
-      ok(pending == false);
-
-      rez = thread->stop(thread);
+      rez = thread2->join(thread2, NULL);
       ok(rez == KC_SUCCESS);
 
-      destroy_thread(thread);
-    }
+      // using mutex, this should be true
+      ok(race_counter == 2000000);
 
-    subtest("test on_event()")
-    {
-      struct kc_thread_t* thread = new_thread();
-
-      int rez = KC_INVALID;
-      int event = 11;
-
-      rez = thread->start(thread, test_thread_func);
-      ok(rez == KC_SUCCESS);
-
-      rez = thread->on_event(thread, &event);
-      ok(rez == KC_SUCCESS);
-
-      rez = thread->stop(thread);
-      ok(rez == KC_SUCCESS);
-
-      destroy_thread(thread);
+      destroy_thread(thread1);
+      destroy_thread(thread2);
     }
 
     done_testing();

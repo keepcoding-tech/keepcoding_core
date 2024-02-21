@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <unistd.h>
+#include <dirent.h>
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
@@ -49,7 +51,7 @@ struct kc_file_t* new_file()
   struct kc_logger_t* log = new_logger(err, log_err, __FILE__);
 
   // assigns the public member fields
-  file->_log    = log;
+  file->_log   = log;
   file->file   = NULL;
   file->name   = NULL;
   file->path   = NULL;
@@ -191,6 +193,63 @@ int delete_path(struct kc_file_t* self, char* path)
       __FILE__, __LINE__, __func__);
 
     return KC_NULL_REFERENCE;
+  }
+
+  DIR *dir;
+  struct dirent *entry;
+  struct stat statbuf;
+
+  // open the directory
+  if ((dir = opendir(path)) == NULL)
+  {
+    self->_log->error(self->_log, KC_CANT_OPEN_DIR, __LINE__, __func__);
+    return KC_CANT_OPEN_DIR;
+  }
+
+  // iterate over the entries in the directory
+  while ((entry = readdir(dir)) != NULL)
+  {
+    // skip "." and ".."
+    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+    {
+      continue;
+    }
+
+    // construct the full path of the entry
+    char entry_path[KC_MAX_PATH];
+    snprintf(entry_path, sizeof(entry_path), "%s/%s", path, entry->d_name);
+
+    // get information about the entry
+    if (stat(entry_path, &statbuf) == -1)
+    {
+      self->_log->error(self->_log, KC_FATAL_ERROR, __LINE__, __func__);
+      return KC_FATAL_ERROR;
+    }
+
+    // recursively delete subdirectories
+    if (S_ISDIR(statbuf.st_mode))
+    {
+      delete_path(self, entry_path);
+    }
+    else
+    {
+      // delete regular files
+      if (unlink(entry_path) == -1)
+      {
+        self->_log->error(self->_log, KC_FATAL_ERROR, __LINE__, __func__);
+        return KC_FATAL_ERROR;
+      }
+    }
+  }
+
+  // close the directory
+  closedir(dir);
+
+  // delete the current directory
+  if (rmdir(path) == -1)
+  {
+    self->_log->error(self->_log, KC_FATAL_ERROR, __LINE__, __func__);
+    return KC_FATAL_ERROR;
   }
 
   return KC_SUCCESS;

@@ -11,13 +11,11 @@
 
 #include <stdlib.h>
 
-//--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
+//--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static int start_thread       (struct kc_thread_t* self, void* (*thread_func)(void* arg));
-static int stop_thread        (struct kc_thread_t* self);
-static int wait_thread        (struct kc_thread_t* self);
-static int is_pending_thread  (struct kc_thread_t* self, bool* pending);
-static int on_event_thread    (struct kc_thread_t* self, int* event);
+static int start_thread      (struct kc_thread_t* self, void* (*thread_func)(void* arg), void* arg);
+static int stop_thread       (struct kc_thread_t* self);
+static int join_thread       (struct kc_thread_t* self, void** value_ptr);
 
 //---------------------------------------------------------------------------//
 
@@ -35,13 +33,10 @@ struct kc_thread_t* new_thread()
     return NULL;
   }
 
-  new_thread->_timeout = 1;
-
-  new_thread->start      = start_thread;
-  new_thread->stop       = stop_thread;
-  new_thread->wait       = wait_thread;
-  new_thread->is_pending = is_pending_thread;
-  new_thread->on_event   = on_event_thread;
+  // assigns the public member methods
+  new_thread->start = start_thread;
+  new_thread->stop  = stop_thread;
+  new_thread->join  = join_thread;
 
   return new_thread;
 }
@@ -63,7 +58,7 @@ void destroy_thread(struct kc_thread_t* thread)
 
 //---------------------------------------------------------------------------//
 
-int start_thread(struct kc_thread_t* self, void* (*thread_func)(void* arg))
+int start_thread(struct kc_thread_t* self, void* (*thread_func)(void* arg), void* arg)
 {
   if (self == NULL)
   {
@@ -74,7 +69,7 @@ int start_thread(struct kc_thread_t* self, void* (*thread_func)(void* arg))
   }
 
   // create the thread and execute the function
-  int rez = pthread_create(&(self->_thread), NULL, thread_func, NULL);
+  int rez = pthread_create(&(self->_thread), NULL, thread_func, arg);
 
   if (rez != KC_SUCCESS)
   {
@@ -115,7 +110,7 @@ int stop_thread(struct kc_thread_t* self)
 
 //---------------------------------------------------------------------------//
 
-int wait_thread(struct kc_thread_t* self)
+int join_thread(struct kc_thread_t* self, void** value_ptr)
 {
   if (self == NULL)
   {
@@ -125,7 +120,8 @@ int wait_thread(struct kc_thread_t* self)
     return KC_NULL_REFERENCE;
   }
 
-  int rez = pthread_join(self->_thread, NULL);
+  // join with a terminated thread
+  int rez = pthread_join(self->_thread, value_ptr);
 
   if (rez != KC_SUCCESS)
   {
@@ -133,54 +129,6 @@ int wait_thread(struct kc_thread_t* self)
         __FILE__, __LINE__, __func__);
 
     return rez;
-  }
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int is_pending_thread(struct kc_thread_t* self, bool* pending)
-{
-  if (self == NULL)
-  {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
-
-    return KC_NULL_REFERENCE;
-  }
-
-    int rez = pthread_self();
-
-    if (rez == KC_SUCCESS)
-    {
-      (*pending) = false;
-
-      return KC_SUCCESS;
-    }
-    else if (rez == KC_PENDING)
-    {
-      (*pending) = true;
-      return KC_PENDING;
-    }
-    else
-    {
-      return KC_THREAD_ERROR;
-    }
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int on_event_thread(struct kc_thread_t* self, int* event)
-{
-  if (self == NULL)
-  {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
-
-    return KC_NULL_REFERENCE;
   }
 
   return KC_SUCCESS;

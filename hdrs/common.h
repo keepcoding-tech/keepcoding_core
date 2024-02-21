@@ -44,6 +44,7 @@ enum
 
   KC_INVALID_ARGUMENT,      // Invalid Argument: does not meet the constraints
 
+  KC_CANT_OPEN_DIR,         // Cannot open the specified directory
   KC_FILE_NOT_FOUND,        // File not found: the specified file was not found
   KC_CANNOT_OPEN_FILE,      // Cannot open file: failed to open the specified file
   KC_IO_ERROR,              // I/O error: input/output operation failed
