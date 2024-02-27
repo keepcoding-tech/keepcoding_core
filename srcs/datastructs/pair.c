@@ -19,9 +19,7 @@ struct kc_pair_t* pair_constructor(void* key, size_t key_size, void* value, size
   // confirm the size of the data is at least one
   if (key_size < 1 || value_size < 1)
   {
-    log_error(err[KC_UNDERFLOW], log_err[KC_UNDERFLOW],
-      __FILE__, __LINE__, __func__);
-
+    log_error(KC_UNDERFLOW_LOG);
     return NULL;
   }
 
@@ -31,9 +29,7 @@ struct kc_pair_t* pair_constructor(void* key, size_t key_size, void* value, size
   // confirm that there is memory to allocate
   if (new_pair == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-      __FILE__, __LINE__, __func__);
-
+    log_error(KC_OUT_OF_MEMORY_LOG);
     return NULL;
   }
 
@@ -44,8 +40,7 @@ struct kc_pair_t* pair_constructor(void* key, size_t key_size, void* value, size
   // confirm that there is memory to allocate
   if (new_pair->key == NULL || new_pair->value == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_OUT_OF_MEMORY_LOG);
 
     // free the instances
     free(new_pair);
@@ -67,9 +62,7 @@ void pair_destructor(struct kc_pair_t* pair)
   // destroy pair only if is not dereferenced
   if (pair == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
-
+    log_error(KC_NULL_REFERENCE_LOG);
     return;
   }
 

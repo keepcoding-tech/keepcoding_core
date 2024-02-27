@@ -27,8 +27,7 @@ struct kc_thread_t* new_thread()
   // confirm that there is memory to allocate
   if (new_thread == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return NULL;
   }
@@ -47,8 +46,7 @@ void destroy_thread(struct kc_thread_t* thread)
 {
   if (thread == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return;
   }
@@ -62,8 +60,7 @@ int start_thread(struct kc_thread_t* self, void* (*thread_func)(void* arg), void
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -73,9 +70,7 @@ int start_thread(struct kc_thread_t* self, void* (*thread_func)(void* arg), void
 
   if (rez != KC_SUCCESS)
   {
-    log_error(err[KC_THREAD_ERROR], log_err[KC_THREAD_ERROR],
-        __FILE__, __LINE__, __func__);
-
+    log_error(KC_THREAD_ERROR_LOG);
     return rez;
   }
 
@@ -88,8 +83,7 @@ int stop_thread(struct kc_thread_t* self)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -99,9 +93,7 @@ int stop_thread(struct kc_thread_t* self)
 
   if (rez != KC_SUCCESS)
   {
-    log_error(err[KC_THREAD_ERROR], log_err[KC_THREAD_ERROR],
-        __FILE__, __LINE__, __func__);
-
+    log_error(KC_THREAD_ERROR_LOG);
     return rez;
   }
 
@@ -114,8 +106,7 @@ int join_thread(struct kc_thread_t* self, void** value_ptr)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -125,9 +116,7 @@ int join_thread(struct kc_thread_t* self, void** value_ptr)
 
   if (rez != KC_SUCCESS)
   {
-    log_error(err[KC_THREAD_ERROR], log_err[KC_THREAD_ERROR],
-        __FILE__, __LINE__, __func__);
-
+    log_error(KC_THREAD_ERROR_LOG);
     return rez;
   }
 

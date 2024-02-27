@@ -28,8 +28,7 @@ struct kc_stack_t* new_stack()
   // confirm that there is memory to allocate
   if (new_stack == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return NULL;
   }
@@ -39,20 +38,18 @@ struct kc_stack_t* new_stack()
 
   if (new_stack->_vector == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     free(new_stack);
 
     return NULL;
   }
 
-  new_stack->_log = new_logger(err, log_err, __FILE__);
+  new_stack->_log = new_logger(KC_STACK_LOG_PATH);
 
   if (new_stack->_log == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     free(new_stack->_vector);
     free(new_stack);
@@ -76,8 +73,7 @@ void destroy_stack(struct kc_stack_t* stack)
   // if the stack reference is NULL, do nothing
   if (stack == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return;
   }
@@ -94,8 +90,7 @@ int get_top_item_stack(struct kc_stack_t* self, void** top)
   // if the stack reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -116,8 +111,7 @@ int get_vector_length_stack(struct kc_stack_t* self, size_t* length)
   // if the stack reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -134,8 +128,7 @@ int insert_top_item_stack(struct kc_stack_t* self, void* data, size_t size)
   // if the stack reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -157,8 +150,7 @@ int remove_top_item_stack(struct kc_stack_t* self)
   // if the stack reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }

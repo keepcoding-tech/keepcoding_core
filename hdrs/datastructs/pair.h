@@ -19,9 +19,13 @@
 #ifndef KC_PAIR_T_H
 #define KC_PAIR_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_PAIR_LOG_PATH  "build/log/pair.log"
 
 //---------------------------------------------------------------------------//
 

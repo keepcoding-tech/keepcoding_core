@@ -13,7 +13,7 @@
 #ifndef KC_THREAD_T_H
 #define KC_THREAD_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 
 #include <stdio.h>
 #include <stdbool.h>

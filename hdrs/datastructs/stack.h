@@ -29,11 +29,15 @@
 #ifndef KC_STACK_T_H
 #define KC_STACK_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 
 #include "vector.h"
 
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_STACK_LOG_PATH  "build/log/stack.log"
 
 //---------------------------------------------------------------------------//
 

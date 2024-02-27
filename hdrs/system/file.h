@@ -23,6 +23,10 @@
 
 //---------------------------------------------------------------------------//
 
+#define KC_FILE_LOG  "build/log/file.log"
+
+//---------------------------------------------------------------------------//
+
 #define KC_FILE_CREATE_NEW                                           0x00000001
 #define KC_FILE_CREATE_ALWAYS                                        0x00000002
 #define KC_FILE_OPEN_EXISTING                                        0x00000004

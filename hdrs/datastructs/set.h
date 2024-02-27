@@ -29,7 +29,7 @@
 #ifndef KC_SET_T_H
 #define KC_SET_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 
 #include "tree.h"
 #include "pair.h"
@@ -37,6 +37,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_SET_LOG_PATH  "build/log/set.log"
 
 //---------------------------------------------------------------------------//
 

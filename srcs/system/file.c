@@ -9,7 +9,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "../../hdrs/common.h"
-#include "../../hdrs/logger/logger.h"
+#include "../../hdrs/system/logger.h"
 #include "../../hdrs/system/file.h"
 
 #include <errno.h>
@@ -42,13 +42,12 @@ struct kc_file_t* new_file()
 
   if (file == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-      __FILE__, __LINE__, __func__);
+log_error(KC_OUT_OF_MEMORY_LOG);
 
     return NULL;
   }
 
-  struct kc_logger_t* log = new_logger(err, log_err, __FILE__);
+  struct kc_logger_t* log = new_logger(KC_FILE_LOG);
 
   // assigns the public member fields
   file->_log   = log;
@@ -81,9 +80,7 @@ void destroy_file(struct kc_file_t* file)
 {
   if (file == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
-
+    log_error(KC_NULL_REFERENCE_LOG);
     return;
   }
 
@@ -102,8 +99,7 @@ int close_file(struct kc_file_t* self)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -126,8 +122,7 @@ int create_path(struct kc_file_t* self, char* path)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -161,8 +156,7 @@ int delete_file(struct kc_file_t* self)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -172,7 +166,8 @@ int delete_file(struct kc_file_t* self)
 
   if (remove(self->name) != 0)
   {
-    self->_log->warning(self->_log, KC_FILE_NOT_FOUND, __LINE__, __func__);
+    self->_log->log(self->_log, KC_ERROR_LOG, KC_FILE_NOT_FOUND_LOG,
+        __FILE__, __LINE__, __func__);
 
     return KC_FILE_NOT_FOUND;
   }
@@ -189,8 +184,7 @@ int delete_path(struct kc_file_t* self, char* path)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -202,7 +196,8 @@ int delete_path(struct kc_file_t* self, char* path)
   // open the directory
   if ((dir = opendir(path)) == NULL)
   {
-    self->_log->error(self->_log, KC_CANT_OPEN_DIR, __LINE__, __func__);
+    self->_log->log(self->_log, KC_ERROR_LOG, KC_CANT_OPEN_DIR_LOG,
+        __FILE__, __LINE__, __func__);
     return KC_CANT_OPEN_DIR;
   }
 
@@ -222,8 +217,9 @@ int delete_path(struct kc_file_t* self, char* path)
     // get information about the entry
     if (stat(entry_path, &statbuf) == -1)
     {
-      self->_log->error(self->_log, KC_FATAL_ERROR, __LINE__, __func__);
-      return KC_FATAL_ERROR;
+      self->_log->log(self->_log, KC_FATAL_LOG, KC_FATAL_LOG_ERROR_LOG,
+          __FILE__, __LINE__, __func__);
+      return KC_FATAL_LOG_ERROR;
     }
 
     // recursively delete subdirectories
@@ -236,8 +232,9 @@ int delete_path(struct kc_file_t* self, char* path)
       // delete regular files
       if (unlink(entry_path) == -1)
       {
-        self->_log->error(self->_log, KC_FATAL_ERROR, __LINE__, __func__);
-        return KC_FATAL_ERROR;
+        self->_log->log(self->_log, KC_FATAL_LOG, KC_FATAL_LOG_ERROR_LOG,
+            __FILE__, __LINE__, __func__);
+        return KC_FATAL_LOG_ERROR;
       }
     }
   }
@@ -248,8 +245,9 @@ int delete_path(struct kc_file_t* self, char* path)
   // delete the current directory
   if (rmdir(path) == -1)
   {
-    self->_log->error(self->_log, KC_FATAL_ERROR, __LINE__, __func__);
-    return KC_FATAL_ERROR;
+    self->_log->log(self->_log, KC_FATAL_LOG, KC_FATAL_LOG_ERROR_LOG,
+        __FILE__, __LINE__, __func__);
+    return KC_FATAL_LOG_ERROR;
   }
 
   return KC_SUCCESS;
@@ -261,8 +259,7 @@ int get_file_mode(struct kc_file_t* self, int* mode)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -285,8 +282,7 @@ int get_file_name(struct kc_file_t* self, char** name)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -309,8 +305,7 @@ int get_file_path(struct kc_file_t* self, char** path)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -327,8 +322,7 @@ int get_opened(struct kc_file_t* self, bool* is_open)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -344,8 +338,7 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
 {
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -397,7 +390,8 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   if (self->mode == KC_FILE_NOT_FOUND || tmp_mode == NULL)
   {
     // invalid mode provided
-    self->_log->error(self->_log, KC_INVALID_ARGUMENT, __LINE__, __func__);
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INVALID_ARGUMENT_LOG,
+        __FILE__, __LINE__, __func__);
 
     return KC_INVALID_ARGUMENT;
   }
@@ -413,7 +407,8 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   if (self->file == NULL)
   {
     // file opening failed
-    self->_log->error(self->_log, KC_FILE_NOT_FOUND, __LINE__, __func__);
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_FILE_NOT_FOUND_LOG,
+        __FILE__, __LINE__, __func__);
 
     return KC_INVALID_ARGUMENT;
   }
@@ -422,6 +417,9 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   self->name = (char*)malloc(sizeof(char) * (strlen(name) + 1));
   if (self->name == NULL)
   {
+    self->_log->log(self->_log, KC_ERROR_LOG, KC_OUT_OF_MEMORY_LOG,
+        __FILE__, __LINE__, __func__);
+
     return KC_OUT_OF_MEMORY;
   }
 
@@ -439,8 +437,7 @@ int read_file(struct kc_file_t* self, char** buffer)
 
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -495,8 +492,7 @@ int write_file(struct kc_file_t* self, char* buffer)
 {
   if (self == NULL || buffer == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-      __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }

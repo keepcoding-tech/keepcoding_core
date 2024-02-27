@@ -32,19 +32,16 @@ struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
   // confirm that there is memory to allocate
   if (new_set == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
-
+    log_error(KC_NULL_REFERENCE_LOG);
     return NULL;
   }
 
   // create a console log instance to be used for the set
-  new_set->_log = new_logger(err, log_err, __FILE__);
+  new_set->_log = new_logger(KC_SET_LOG_PATH);
 
   if (new_set->_log == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     // free the set instance
     free(new_set);
@@ -57,8 +54,7 @@ struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
 
   if (new_set->_entries == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     // free the set instances
     destroy_logger(new_set->_log);
@@ -82,8 +78,7 @@ void destroy_set(struct kc_set_t* set)
   // if the set reference is NULL, do nothing
   if (set == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return;
   }
@@ -108,8 +103,7 @@ int insert_new_pair_set(struct kc_set_t* self, void* key,
   // if the set reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -143,8 +137,7 @@ int remove_pair_set(struct kc_set_t* self, void* key, size_t key_size)
   // if the set reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -178,8 +171,7 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
   // if the set reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }

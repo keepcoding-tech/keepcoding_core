@@ -30,10 +30,14 @@
 #ifndef KC_VECTOR_T_H
 #define KC_VECTOR_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 
 #include <stdbool.h>
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_VECTOR_LOG_PATH  "build/log/vector.log"
 
 //---------------------------------------------------------------------------//
 

@@ -35,19 +35,16 @@ struct kc_tree_t* new_tree(int (*compare)(const void* a, const void* b))
   // confirm that there is memory to allocate
   if (new_tree == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
-
+    log_error(KC_NULL_REFERENCE_LOG);
     return NULL;
   }
 
-  new_tree->_log = new_logger(err, log_err, __FILE__);
+  new_tree->_log = new_logger(KC_TREE_LOG_PATH);
 
   // confirm that there is memory to allocate
   if (new_tree->_log == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     // free the instance
     free(new_tree);
@@ -74,8 +71,7 @@ void destroy_tree(struct kc_tree_t* tree)
   // if the tree reference is NULL, do nothing
   if (tree == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return;
   }
@@ -98,8 +94,7 @@ int insert_new_node_btree(struct kc_tree_t* self, void* data, size_t size)
   // if the tree reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -116,8 +111,7 @@ int remove_node_btree(struct kc_tree_t* self, void* data, size_t size)
   // if the tree reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -134,8 +128,7 @@ int search_node_btree(struct kc_tree_t* self, void* data, struct kc_node_t** nod
   // if the tree reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }

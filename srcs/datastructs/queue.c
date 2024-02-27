@@ -28,9 +28,7 @@ struct kc_queue_t* new_queue()
   // confirm that there is memory to allocate
   if (new_queue == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
-
+    log_error(KC_NULL_REFERENCE_LOG);
     return NULL;
   }
 
@@ -39,8 +37,7 @@ struct kc_queue_t* new_queue()
 
   if (new_queue->_list == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     // free the set instance
     free(new_queue);
@@ -48,12 +45,11 @@ struct kc_queue_t* new_queue()
     return NULL;
   }
 
-  new_queue->_log = new_logger(err, log_err, __FILE__);
+  new_queue->_log = new_logger(KC_QUEUE_LOG_PATH);
 
   if (new_queue->_log == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     // free the set instances
     destroy_list(new_queue->_list);
@@ -79,8 +75,7 @@ void destroy_queue(struct kc_queue_t* queue)
   if (queue == NULL)
   {
     // log the warning to the console
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return;
   }
@@ -97,8 +92,7 @@ int get_list_length_queue(struct kc_queue_t* self, size_t* length)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -115,8 +109,7 @@ int get_next_item_queue(struct kc_queue_t* self, void** peek)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -142,8 +135,7 @@ int insert_next_item_queue(struct kc_queue_t *self, void *data, size_t size)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -160,8 +152,7 @@ int remove_next_item_queue(struct kc_queue_t *self)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }

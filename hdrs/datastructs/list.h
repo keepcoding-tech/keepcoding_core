@@ -29,12 +29,16 @@
 #ifndef KC_LIST_T_H
 #define KC_LIST_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 #include "node.h"
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_LIST_LOG_PATH  "build/log/list.log"
 
 //---------------------------------------------------------------------------//
 

@@ -31,11 +31,15 @@
 #ifndef KC_TREE_T_H
 #define KC_TREE_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 
 #include "node.h"
 
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_TREE_LOG_PATH  "build/log/tree.log"
 
 //---------------------------------------------------------------------------//
 

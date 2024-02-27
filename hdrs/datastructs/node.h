@@ -25,9 +25,13 @@
 #ifndef KC_NODE_T_H
 #define KC_NODE_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_NODE_LOG_PATH  "build/log/node.log"
 
 //---------------------------------------------------------------------------//
 

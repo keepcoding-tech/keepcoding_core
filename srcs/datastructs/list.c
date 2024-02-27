@@ -44,20 +44,17 @@ struct kc_list_t* new_list()
   // confirm that there is memory to allocate
   if (new_list == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
-
+    log_error(KC_NULL_REFERENCE_LOG);
     return NULL;
   }
 
   // create a console log instance to be used for the list
-  struct kc_logger_t* logger = new_logger(err, log_err, __FILE__);
+  struct kc_logger_t* logger = new_logger(KC_LIST_LOG_PATH);
 
   // confirm that there is memory to allocate
   if (logger == NULL)
   {
-    log_error(err[KC_OUT_OF_MEMORY], log_err[KC_OUT_OF_MEMORY],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     // free the list instance
     free(new_list);
@@ -96,9 +93,7 @@ void destroy_list(struct kc_list_t* list)
   // if the list reference is NULL, abort the application
   if (list == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
-
+    log_error(KC_NULL_REFERENCE_LOG);
     return;
   }
 
@@ -115,8 +110,7 @@ int erase_all_nodes(struct kc_list_t* self)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -145,8 +139,7 @@ int erase_first_node(struct kc_list_t* self)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -178,8 +171,7 @@ int erase_last_node(struct kc_list_t* self)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -211,8 +203,7 @@ int erase_node(struct kc_list_t* self, int index)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -221,7 +212,8 @@ int erase_node(struct kc_list_t* self, int index)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->_log->warning(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+        __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
@@ -260,8 +252,7 @@ int erase_nodes_by_value(struct kc_list_t* self, void* value, int (*compare)(con
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -327,8 +318,7 @@ int get_first_node(struct kc_list_t* self, struct kc_node_t** first_node)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -345,8 +335,7 @@ int get_last_node(struct kc_list_t* self, struct kc_node_t** last_node)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -371,8 +360,7 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t** node)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -381,7 +369,8 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t** node)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->_log->warning(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+        __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
@@ -398,8 +387,7 @@ int insert_new_head(struct kc_list_t* self, void* data, size_t size)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -414,8 +402,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -424,7 +411,8 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   if (index < 0 || index > self->length)
   {
     // log the warning to the console
-    self->_log->warning(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+        __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
   }
@@ -492,8 +480,7 @@ int insert_new_tail(struct kc_list_t* self, void* data, size_t size)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -508,8 +495,7 @@ int is_list_empty(struct kc_list_t* self, bool* is_empty)
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -534,8 +520,7 @@ int search_node(struct kc_list_t* self, void* value,
   // if the list reference is NULL, do nothing
   if (self == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return KC_NULL_REFERENCE;
   }
@@ -568,8 +553,7 @@ struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
   // if the list reference is NULL, do nothing
   if (self == NULL || self->_head == NULL || self->_tail == NULL)
   {
-    log_error(err[KC_NULL_REFERENCE], log_err[KC_NULL_REFERENCE],
-        __FILE__, __LINE__, __func__);
+    log_error(KC_NULL_REFERENCE_LOG);
 
     return NULL;
   }
@@ -578,7 +562,8 @@ struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->_log->warning(self->_log, KC_INDEX_OUT_OF_BOUNDS, __LINE__, __func__);
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+        __FILE__, __LINE__, __func__);
 
     return NULL;
   }

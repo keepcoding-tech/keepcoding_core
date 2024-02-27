@@ -28,6 +28,57 @@
 
 //---------------------------------------------------------------------------//
 
+#define KC_PENDING_LOG                 "Operation aborted by the user."
+#define KC_ABORT_LOG                   "Operation aborted by the user."
+
+#define KC_EMPTY_STRUCTURE_LOG         "The structure was not initialized."
+#define KC_NULL_REFERENCE_LOG          "The reference was not initialized."
+
+#define KC_OUT_OF_MEMORY_LOG           "Insufficient memory in the heap."
+#define KC_UNDERFLOW_LOG               "Below minimum value."
+#define KC_OVERFLOW_LOG                "Exceeds maximum value."
+#define KC_DIVISION_BY_ZERO_LOG        "Attempted division by zero."
+#define KC_INDEX_OUT_OF_BOUNDS_LOG     "Access of an invalid index."
+
+#define KC_INVALID_ARGUMENT_LOG        "Does not meet the constraints."
+
+#define KC_CANT_OPEN_DIR_LOG           "Failed to open the specified directory."
+#define KC_FILE_NOT_FOUND_LOG          "The specified file was not found."
+#define KC_CANNOT_OPEN_FILE_LOG        "Failed to open the specified file."
+#define KC_IO_ERROR_LOG                "Input/output operation failed."
+#define KC_FORMAT_ERROR_LOG            "Input does not conform to the expected format."
+#define KC_PARSE_ERROR_LOG             "Error encountered while parsing."
+
+#define KC_INTERRUPTED_OPERATION_LOG   "Operation interrupted by an internal/external signal."
+#define KC_TIMEOUT_LOG                 "Exceeded the specified time limit."
+
+#define KC_INVALID_OPERATION_LOG       "Invalid operation in the current context."
+
+#define KC_DATA_CORRUPTION_LOG         "Data integrity is compromised or corrupted."
+
+#define KC_UNSUPPORTED_FEATURE_LOG     "Feature was not implemented yet."
+
+#define KC_RESOURCE_UNAVAILABLE_LOG    "Resource is not available."
+#define KC_DEADLOCK_LOG                "A deadlock situation was encountered."
+#define KC_LOST_CONNECTION_LOG         "Connection was lost with a resource or service."
+
+#define KC_NETWORK_ERROR_LOG           "Network communication or connectivity error."
+#define KC_PROTOCOL_ERROR_LOG          "Error in protocol adherence or communication."
+
+#define KC_SECURITY_ERROR_LOG          "Security-related error or violation."
+
+#define KC_COMPILATION_ERROR_LOG       "Error encountered during code compilation."
+#define KC_CONFIGURATION_ERROR_LOG     "Error occurred in configuration or settings."
+
+#define KC_SYSTEM_ERROR_LOG            "Unexpected or system-level error occurred."
+#define KC_THREAD_ERROR_LOG            "Related to thread management or execution."
+
+#define KC_RECOVERABLE_ERROR_LOG       "Recoverable error occurred."
+#define KC_UNRECOVERABLE_ERROR_LOG     "Unrecoverable error occurred."
+#define KC_FATAL_LOG_ERROR_LOG             "Fatal error occurred."
+
+#define KC_UNKNOWN_ERROR_LOG           "Unknown error occurred."
+
 enum
 {
   KC_PENDING = 0,           // Pending: operation in progress
@@ -77,13 +128,10 @@ enum
 
   KC_RECOVERABLE_ERROR,     // Recoverable error occurred
   KC_UNRECOVERABLE_ERROR,   // Unrecoverable error occurred
-  KC_FATAL_ERROR,           // Fatal error occurred
+  KC_FATAL_LOG_ERROR,           // Fatal error occurred
 
   KC_UNKNOWN_ERROR          // Unknown error occurred
 };
-
-extern const char* err[];
-extern const char* log_err[];
 
 //---------------------------------------------------------------------------//
 

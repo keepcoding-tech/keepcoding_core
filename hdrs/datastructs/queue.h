@@ -26,11 +26,15 @@
 #ifndef KC_QUEUE_T_H
 #define KC_QUEUE_T_H
 
-#include "../logger/logger.h"
+#include "../system/logger.h"
 
 #include "list.h"
 
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_QUEUE_LOG_PATH  "build/log/queue.log"
 
 //---------------------------------------------------------------------------//
 

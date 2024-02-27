@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT License
 
 #include "../hdrs/system/file.h"
+#include "../hdrs/system/logger.h"
 #include "../hdrs/system/thread.h"
 
 #include "../hdrs/common.h"
@@ -14,6 +15,14 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#define DEBUG "This is just a test description for debug! XD"
+#define ERROR "This is just a test description for error! XD"
+#define INFO  "This is just a test description for info! XD"
+#define WARN  "This is just a test description for warning! XD"
+#define FATAL "This is just a test description for fatal! XD\n"       \
+  "After this test, the program will exit with a status code of 1.\n" \
+  "This is GOOD!!"
 
 void* test_thread_func(void* arg)
 {
@@ -317,6 +326,78 @@ int main()
 
       file->delete(file);
       destroy_file(file);
+    }
+
+    done_testing();
+  }
+
+  testgroup("kc_logger_t")
+  {
+    subtest("test init/desc")
+    {
+      struct kc_logger_t* log = new_logger("build/bin/test/logger.log");
+      ok(strcmp(log->_log_file, "build/bin/test/logger.log") == 0);
+      destroy_logger(log);
+    }
+
+    subtest("test log_to_file()")
+    {
+      const char* filename = "build/bin/test/logger.log";
+      struct kc_logger_t* logger = new_logger(filename);
+
+      // write the log to the file
+      logger->log(logger, " [TEST] ", "This is a test description! XD",
+        __FILE__, __LINE__, __func__); // DO NOT MOVE THIS LINE!!!
+
+      // check if the log was printed correctely
+      FILE* read_file = fopen(filename, "r");
+      char read_line[100];
+
+      // skip the next two lines
+      fgets(read_line, sizeof(read_line), read_file);
+      fgets(read_line, sizeof(read_line), read_file);
+
+      char* test = " [TEST] : in function ‘main’";
+      for (int i = 0; i < strlen(test) - 1; ++i)
+      {
+        ok(read_line[i + 22] == test[i]);
+      }
+
+      fgets(read_line, sizeof(read_line), read_file);
+      test = __FILE__ ":350 -> This is a test description! XD";
+      for (int i = 0; i < strlen(test) - 1; ++i)
+      {
+        ok(read_line[i] == test[i]);
+      }
+
+      destroy_logger(logger);
+    }
+
+    subtest("test debug()")
+    {
+      log_debug(DEBUG);
+    }
+
+    subtest("test error()")
+    {
+      log_error(ERROR);
+    }
+
+    subtest("test info()")
+    {
+      log_info(INFO);
+    }
+
+    subtest("test warning()")
+    {
+      log_warning(WARN);
+    }
+
+    subtest("test fatal()")
+    {
+      // this test will also exit with error code 1
+      // uncomment only for locale testing
+      //log_fatal(FATAL);
     }
 
     done_testing();
