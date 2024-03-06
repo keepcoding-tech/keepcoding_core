@@ -19,7 +19,7 @@
  * It provides functions to encode binary data into Base64 format and decode
  * Base64-encoded strings into binary data. The library follows the Base64
  * alphabet as defined in RFC 4648.
- * 
+ *
  *      Base64 alphabet defined in RFC 4648
  *   +-----------------------------------------+
  *   |  0 - A  |  16 - Q  |  32 - g  |  48 - w |
@@ -47,8 +47,8 @@
 
 //---------------------------------------------------------------------------//
 
-int kc_base64_encode  (const unsigned char* src, size_t src_len, char** output);
-int kc_base64_decode  (const unsigned char* src, size_t src_len, char** output);
+int kc_base64_encode  (char* src, size_t src_len, char** output);
+int kc_base64_decode  (char* src, size_t src_len, char** output);
 
 //---------------------------------------------------------------------------//
 

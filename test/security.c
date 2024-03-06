@@ -11,6 +11,35 @@
 #include "../hdrs/test.h"
 
 #include <stdio.h>
+#include <string.h>
+
+int check_encode_case(char* input, char* output)
+{
+  char* out;
+  int ret = kc_base64_encode(input, sizeof(char) * strlen(input), &out);
+  if (ret != KC_SUCCESS)
+  {
+    return ret;
+  }
+  ok(strcmp(out, output) == 0);
+  free(out);
+
+  return KC_SUCCESS;
+}
+
+int check_decode_case(char* input, char* output)
+{
+  char* out;
+  int ret = kc_base64_decode(input, sizeof(char) * strlen(input), &out);
+  if (ret != KC_SUCCESS)
+  {
+    return ret;
+  }
+  ok(strcmp(out, output) == 0);
+  free(out);
+
+  return KC_SUCCESS;
+}
 
 int main()
 {
@@ -18,104 +47,24 @@ int main()
   {
     subtest("kc_base64_encode()")
     {
-      char* out;
-      int ret = KC_INVALID;
-
-      const char* empty = "";
-      ret = kc_base64_encode(empty, sizeof(char) * strlen(empty), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "") == 0);
-      free(out);
-
-      const char* f = "f";
-      ret = kc_base64_encode(f, sizeof(char) * strlen(f), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "Zg==") == 0);
-      free(out);
-
-      const char* fo = "fo";
-      ret = kc_base64_encode(fo, sizeof(char) * strlen(fo), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "Zm8=") == 0);
-      free(out);
-
-      const char* foo = "foo";
-      ret = kc_base64_encode(foo, sizeof(char) * strlen(foo), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "Zm9v") == 0);
-      free(out);
-
-      const char* foob = "foob";
-      ret = kc_base64_encode(foob, sizeof(char) * strlen(foob), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "Zm9vYg==") == 0);
-      free(out);
-
-      const char* fooba = "fooba";
-      ret = kc_base64_encode(fooba, sizeof(char) * strlen(fooba), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "Zm9vYmE=") == 0);
-      free(out);
-
-      const char* foobar = "foobar";
-      ret = kc_base64_encode(foobar, sizeof(char) * strlen(foobar), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "Zm9vYmFy") == 0);
-      free(out);
+      ok(check_encode_case("", "") == KC_SUCCESS);
+      ok(check_encode_case("f", "Zg==") == KC_SUCCESS);
+      ok(check_encode_case("fo", "Zm8=") == KC_SUCCESS);
+      ok(check_encode_case("foo", "Zm9v") == KC_SUCCESS);
+      ok(check_encode_case("foob", "Zm9vYg==") == KC_SUCCESS);
+      ok(check_encode_case("fooba", "Zm9vYmE=") == KC_SUCCESS);
+      ok(check_encode_case("foobar", "Zm9vYmFy") == KC_SUCCESS);
     }
 
     subtest("kc_base64_decode()")
     {
-      char* out;
-      int ret = KC_INVALID;
-
-      const char* empty = "";
-      ret = kc_base64_decode(empty, sizeof(char) * strlen(empty), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "") == 0);
-      free(out);
-
-      const char* f = "Zg==";
-      ret = kc_base64_decode(f, sizeof(char) * strlen(f), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "f") == 0);
-      printf("%s\n", out);
-      free(out);
-
-      const char* fo = "Zm8=";
-      ret = kc_base64_decode(fo, sizeof(char) * strlen(fo), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "fo") == 0);
-      printf("%s\n", out);
-      free(out);
-
-      const char* foo = "Zm9v";
-      ret = kc_base64_decode(foo, sizeof(char) * strlen(foo), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "foo") == 0);
-      printf("%s\n", out);
-      free(out);
-
-      const char* foob = "Zm9vYg==";
-      ret = kc_base64_decode(foob, sizeof(char) * strlen(foob), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "foob") == 0);
-      printf("%s\n", out);
-      free(out);
-
-      const char* fooba = "Zm9vYmE=";
-      ret = kc_base64_decode(fooba, sizeof(char) * strlen(fooba), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "fooba") == 0);
-      printf("%s\n", out);
-      free(out);
-
-      const char* foobar = "Zm9vYmFy";
-      ret = kc_base64_decode(foobar, sizeof(char) * strlen(foobar), &out);
-      ok(ret == KC_SUCCESS);
-      ok(strcmp(out, "foobar") == 0);
-      printf("%s\n", out);
-      free(out);
+      ok(check_decode_case("", "") == KC_SUCCESS);
+      ok(check_decode_case("Zg==", "f") == KC_SUCCESS);
+      ok(check_decode_case("Zm8=", "fo") == KC_SUCCESS);
+      ok(check_decode_case("Zm9v", "foo") == KC_SUCCESS);
+      ok(check_decode_case("Zm9vYg==", "foob") == KC_SUCCESS);
+      ok(check_decode_case("Zm9vYmE=", "fooba") == KC_SUCCESS);
+      ok(check_decode_case("Zm9vYmFy", "foobar") == KC_SUCCESS);
     }
 
     done_testing();

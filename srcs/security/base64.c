@@ -13,18 +13,18 @@
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-int kc_base64_encode  (const unsigned char* src, size_t src_len, char** output);
-int kc_base64_decode  (const unsigned char* src, size_t src_len, char** output);
+int kc_base64_encode  (char* src, size_t src_len, char** output);
+int kc_base64_decode  (char* src, size_t src_len, char** output);
 
 //---------------------------------------------------------------------------//
 
-static const unsigned char _base64_table[65] = 
+static const unsigned char _base64_table[65] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
     "0123456789+/";
 
-static const unsigned int _base64_index[256] = 
-{ 
+static const unsigned int _base64_index[256] =
+{
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  62, 63, 62, 62, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60,
@@ -36,10 +36,10 @@ static const unsigned int _base64_index[256] =
 
 //---------------------------------------------------------------------------//
 
-int kc_base64_encode(const unsigned char* src, size_t src_len, char** output)
+int kc_base64_encode(char* src, size_t src_len, char** output)
 {
-  const unsigned char* end     = src + src_len;
-  const unsigned char* tmp_in  = src;
+  const unsigned char* tmp_in  = (unsigned char*)src;
+  const unsigned char* end = (unsigned char*)src + src_len;
 
   // 3-byte blocks to 4-byte
   unsigned int _3b2_4b = (src_len * 4 / 3 + 4);
@@ -57,7 +57,7 @@ int kc_base64_encode(const unsigned char* src, size_t src_len, char** output)
     return KC_OUT_OF_MEMORY;
   }
 
-  unsigned char* pos = (*output);
+  char* pos = (*output);
 
   while (end - tmp_in >= 3)
   {
@@ -78,7 +78,7 @@ int kc_base64_encode(const unsigned char* src, size_t src_len, char** output)
       *pos++ = _base64_table[(tmp_in[0] & 0x03) << 4];
       *pos++ = '=';
     }
-    else 
+    else
     {
       *pos++ = _base64_table[((tmp_in[0] & 0x03) << 4) | (tmp_in[1] >> 4)];
       *pos++ = _base64_table[(tmp_in[1] & 0x0f) << 2];
@@ -95,29 +95,29 @@ int kc_base64_encode(const unsigned char* src, size_t src_len, char** output)
 
 //---------------------------------------------------------------------------//
 
-int kc_base64_decode(const unsigned char* src, size_t src_len, char** output)
-{   
-  unsigned char* tmp_in = src;
+int kc_base64_decode(char* src, size_t src_len, char** output)
+{
+  const unsigned char* tmp_in = (unsigned char*)src;
 
   int padding = src_len > 0 && (src_len % 4 || tmp_in[src_len - 1] == '=');
 
   // 4-byte blocks to 3-byte
   unsigned int _4b2_3b = (src_len + 3) / 4;
   (*output) = malloc(sizeof(char) * (_4b2_3b * 3 - padding) + 1);
-  
+
   if (*output == NULL)
   {
     return KC_OUT_OF_MEMORY;
   }
 
   size_t L = ((src_len + 3) / 4 - padding) * 4;
-  unsigned char* pos = (*output);
+  char* pos = (*output);
 
   for (size_t i = 0; i < L; i += 4)
   {
-    int n = (_base64_index[tmp_in[i]] << 18) 
-      | (_base64_index[tmp_in[i + 1]] << 12) 
-      | (_base64_index[tmp_in[i + 2]] << 6) 
+    int n = (_base64_index[tmp_in[i]] << 18)
+      | (_base64_index[tmp_in[i + 1]] << 12)
+      | (_base64_index[tmp_in[i + 2]] << 6)
       | (_base64_index[tmp_in[i + 3]]);
 
     *pos++ = (n >> 16);
@@ -127,7 +127,7 @@ int kc_base64_decode(const unsigned char* src, size_t src_len, char** output)
 
   if (padding != 0)
   {
-    int n = (_base64_index[tmp_in[L]] << 18) 
+    int n = (_base64_index[tmp_in[L]] << 18)
       | (_base64_index[tmp_in[L + 1]] << 12);
 
     *pos++ = (n >> 16);
