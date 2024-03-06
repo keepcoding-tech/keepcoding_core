@@ -9,6 +9,8 @@
 #ifndef KC_BASE64_H
 #define KC_BASE64_H
 
+#include "../common.h"
+
 #include <stdio.h>
 #include <stdint.h>
 
@@ -43,14 +45,10 @@
 
 #define KC_BASE64_LEN  64
 
-typedef uint8_t BYTE;
-
 //---------------------------------------------------------------------------//
 
-int kc_base64_encode  (const BYTE* buffer, unsigned int buffer_len, char** output);
-int kc_base64_decode  (const char* input, BYTE** output);
-
-int kc_base64_index   (char c);
+int kc_base64_encode  (const unsigned char* src, size_t src_len, char** output);
+int kc_base64_decode  (const unsigned char* src, size_t src_len, char** output);
 
 //---------------------------------------------------------------------------//
 

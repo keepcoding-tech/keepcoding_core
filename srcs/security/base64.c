@@ -13,168 +13,137 @@
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-int kc_base64_encode  (const BYTE* buffer, unsigned int buffer_len, char** output);
-int kc_base64_decode  (const char* input, BYTE** output);
-
-int kc_base64_index   (char c);
-
-//--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
-
-static bool _is_base64_char    (BYTE b);
-static BYTE _find_base64_char  (BYTE b);
-
-const char* _base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                            "abcdefghijklmnopqrstuvwxyz"
-                            "0123456789+/";
+int kc_base64_encode  (const unsigned char* src, size_t src_len, char** output);
+int kc_base64_decode  (const unsigned char* src, size_t src_len, char** output);
 
 //---------------------------------------------------------------------------//
 
-int kc_base64_encode(const BYTE* buffer, unsigned int buffer_len, char** output)
+static const unsigned char _base64_table[65] = 
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
+
+static const unsigned int _base64_index[256] = 
+{ 
+  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  0,  0,  0,  0,  0,  62, 63, 62, 62, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+  61, 0,  0,  0,  0,  0,  0,  0,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0,  0,  0,  0,
+  63, 0,  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42,
+  43, 44, 45, 46, 47, 48, 49, 50, 51
+};
+
+//---------------------------------------------------------------------------//
+
+int kc_base64_encode(const unsigned char* src, size_t src_len, char** output)
 {
-  int i = 0;
-  int j = 0;
-  int o = 0;
+  const unsigned char* end     = src + src_len;
+  const unsigned char* tmp_in  = src;
 
-  BYTE char_array_3[3];
-  BYTE char_array_4[4];
+  // 3-byte blocks to 4-byte
+  unsigned int _3b2_4b = (src_len * 4 / 3 + 4);
+  size_t out_len = _3b2_4b + (_3b2_4b / 72) + 1;
 
-  while (buffer_len--)
+  if (out_len < src_len)
   {
-    char_array_3[i++] = *(buffer++);
-
-    if (i == 3)
-    {
-      char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-      char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-      char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-      char_array_4[3] = char_array_3[2] & 0x3f;
-
-      for (i = 0; i < 4; ++i)
-      {
-        (*output)[o++] = _base64_chars[char_array_4[i]];
-      }
-
-      i = 0;
-    }
+    return KC_OVERFLOW;
   }
 
-  if (i)
+  (*output) = malloc(sizeof(char) * out_len);
+
+  if (output == NULL)
   {
-    for (j = i; j < 3; ++j)
-    {
-      char_array_3[j] = '\0';
-    }
-
-    char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-    char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-    char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-    char_array_4[3] = char_array_3[2] & 0x3f;
-
-    for (j = 0; j < i + 1; ++j)
-    {
-      (*output)[o++] += _base64_chars[char_array_4[j]];
-    }
-
-    while ((i++ < 3))
-    {
-      (*output)[o++] = '=';
-    }
+    return KC_OUT_OF_MEMORY;
   }
 
-  return 0;
+  unsigned char* pos = (*output);
+
+  while (end - tmp_in >= 3)
+  {
+    *pos++ = _base64_table[tmp_in[0] >> 2];
+    *pos++ = _base64_table[((tmp_in[0] & 0x03) << 4) | (tmp_in[1] >> 4)];
+    *pos++ = _base64_table[((tmp_in[1] & 0x0f) << 2) | (tmp_in[2] >> 6)];
+    *pos++ = _base64_table[tmp_in[2] & 0x3f];
+
+    tmp_in += 3;
+  }
+
+  if (end - tmp_in)
+  {
+    *pos++ = _base64_table[tmp_in[0] >> 2];
+
+    if (end - tmp_in == 1)
+    {
+      *pos++ = _base64_table[(tmp_in[0] & 0x03) << 4];
+      *pos++ = '=';
+    }
+    else 
+    {
+      *pos++ = _base64_table[((tmp_in[0] & 0x03) << 4) | (tmp_in[1] >> 4)];
+      *pos++ = _base64_table[(tmp_in[1] & 0x0f) << 2];
+    }
+
+    *pos++ = '=';
+  }
+
+  // Null-terminate the string
+  *pos = '\0';
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int kc_base64_decode(const char* input, BYTE** output)
+int kc_base64_decode(const unsigned char* src, size_t src_len, char** output)
 {   
-  int i = 0;
-  int j = 0;
-  int o = 0;
-  int in_ = 0;
+  unsigned char* tmp_in = src;
 
-  int in_len = strlen(input);
+  int padding = src_len > 0 && (src_len % 4 || tmp_in[src_len - 1] == '=');
 
-  BYTE char_array_4[4], char_array_3[3];
-
-  while (in_len-- && (input[in_] != '=') && _is_base64_char(input[in_]))
+  // 4-byte blocks to 3-byte
+  unsigned int _4b2_3b = (src_len + 3) / 4;
+  (*output) = malloc(sizeof(char) * (_4b2_3b * 3 - padding) + 1);
+  
+  if (*output == NULL)
   {
-    char_array_4[i++] = input[in_];
-    in_++;
+    return KC_OUT_OF_MEMORY;
+  }
 
-    if (i == 4)
+  size_t L = ((src_len + 3) / 4 - padding) * 4;
+  unsigned char* pos = (*output);
+
+  for (size_t i = 0; i < L; i += 4)
+  {
+    int n = (_base64_index[tmp_in[i]] << 18) 
+      | (_base64_index[tmp_in[i + 1]] << 12) 
+      | (_base64_index[tmp_in[i + 2]] << 6) 
+      | (_base64_index[tmp_in[i + 3]]);
+
+    *pos++ = (n >> 16);
+    *pos++ = (n >> 8 & 0xFF);
+    *pos++ = (n & 0xFF);
+  }
+
+  if (padding != 0)
+  {
+    int n = (_base64_index[tmp_in[L]] << 18) 
+      | (_base64_index[tmp_in[L + 1]] << 12);
+
+    *pos++ = (n >> 16);
+
+    if (src_len > L + 2 && tmp_in[L + 2] != '=')
     {
-      for (i = 0; i < 4; ++i)
-      {
-        char_array_4[i] = _find_base64_char(char_array_4[i]);
-      }
-
-      char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-      char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-      char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
-
-      for (i = 0; i < 3; ++i)
-      {
-        (*output)[o++] = char_array_3[i];
-      }
-
-      i = 0;
+      n |= _base64_index[tmp_in[L + 2]] << 6;
+      *pos++ = (n >> 8 & 0xFF);
     }
   }
 
-  if (i)
-  {
-    for (j = i; j < 4; ++j)
-    {
-      char_array_4[j] = 0;
-    }
+  // Null-terminate the string
+  *pos = '\0';
 
-    for (j = 0; j < 4; j++)
-    {
-      char_array_4[j] = _find_base64_char(char_array_4[j]);
-    }
-
-    char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-    char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-    char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
-
-    for (j = 0; j < i - 1; ++j)
-    {
-      (*output)[o++] = char_array_3[j];
-    }
-  }
-
-  return 0;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int kc_base64_index(char c)
-{
-  const char* p = strchr(_base64_chars, c);
-  return (p != NULL) ? (int)(p - _base64_chars) : -1;
-}
-
-//---------------------------------------------------------------------------//
-
-bool _is_base64_char(BYTE b)
-{
-   return (isalnum(b) || (b == '+') || (b == '/'));
-}
-
-//---------------------------------------------------------------------------//
-
-BYTE _find_base64_char(BYTE b)
-{
-  for (int i = 0; i < KC_BASE64_LEN; ++i)
-  {
-    if (_base64_chars[i] == b)
-    {
-      return _base64_chars[i];
-    }
-  }
-
-  return -1;
-}
-
-//---------------------------------------------------------------------------//
