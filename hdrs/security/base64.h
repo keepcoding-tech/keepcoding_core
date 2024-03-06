@@ -12,7 +12,6 @@
 #include "../common.h"
 
 #include <stdio.h>
-#include <stdint.h>
 
 /*
  * This header file defines a simple Base64 encoding and decoding library in C.
