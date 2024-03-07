@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT License
 
 #include "../hdrs/security/base64.h"
+#include "../hdrs/security/uuid.h"
 #include "../hdrs/common.h"
 #include "../hdrs/test.h"
 
@@ -65,6 +66,19 @@ int main()
       ok(check_decode_case("Zm9vYg==", "foob") == KC_SUCCESS);
       ok(check_decode_case("Zm9vYmE=", "fooba") == KC_SUCCESS);
       ok(check_decode_case("Zm9vYmFy", "foobar") == KC_SUCCESS);
+    }
+
+    done_testing();
+  }
+
+  testgroup("UUID")
+  {
+    subtest("kc_generate_uuid")
+    {
+      char* uuid;
+      int ret = kc_generate_uuid(&uuid);
+      printf("\n%s\n", uuid);
+      ok(ret == KC_SUCCESS);
     }
 
     done_testing();
