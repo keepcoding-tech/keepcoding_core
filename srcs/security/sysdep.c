@@ -107,7 +107,7 @@ void get_random_info(char seed[16])
   GetComputerNameA(r.hostname, &r.l);
 
   md5_update(&c, &r, sizeof r);
-  md5_final(seed, &c);
+  md5_final(&c, seed);
 }
 
 #else //---------------------------------------------------------------------//
@@ -145,7 +145,7 @@ void get_random_info(char seed[16])
   gethostname(r.hostname, 256);
 
   md5_update(&c, &r, sizeof r);
-  md5_final(seed, &c);
+  md5_final(&c, seed);
 }
 
 #endif

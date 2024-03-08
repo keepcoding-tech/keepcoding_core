@@ -65,7 +65,7 @@ struct kc_list_t* new_list()
   // initialize the structure members fields
   new_list->_head   = NULL;
   new_list->_tail   = NULL;
-  new_list->length = 0;
+  new_list->length  = 0;
   new_list->_log    = logger;
 
   // assigns the public member methods

@@ -96,7 +96,7 @@ int _check_md5_final(char* str, const char* expected)
 
   md5_init(&context);
   md5_update(&context, str, len);
-  md5_final(digest, &context);
+  md5_final(&context, digest);
 
   return _check_hex_final(digest, expected);
 }
@@ -232,7 +232,7 @@ int main()
 
       md5_init(&context);
       md5_update(&context, "test", len);
-      md5_final(digest, &context);
+      md5_final(&context, digest);
 
       const unsigned char out[16] = 
       { 
@@ -263,7 +263,7 @@ int main()
         md5_update(&context, block, TEST_BLOCK_LEN);
       }
 
-      md5_final(digest, &context);
+      md5_final(&context, digest);
 
       time(&endTime);
 
@@ -303,7 +303,7 @@ int main()
           md5_update(&context, buffer, len);
         }
 
-        md5_final(digest, &context);
+        md5_final(&context, digest);
 
         fclose(file);
       }

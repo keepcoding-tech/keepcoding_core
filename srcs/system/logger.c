@@ -6,6 +6,8 @@
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "../../hdrs/system/logger.h"
 #include "../../hdrs/common.h"
 
@@ -14,7 +16,7 @@
 
 //--- MARK: PRIVATE MEMBER METHODS PROTOTYPES -------------------------------//
 
-static int save_log  (struct kc_logger_t* self, const char* level, const char* description, const char* file, const int line, const char* func);
+static int save_log  (struct kc_logger_t* self, const char* level, const int error_code, const char* file, const int line, const char* func);
 
 //--- MARK: PUBLIC MEMBER METHODS PROTOTYPES --------------------------------//
 
@@ -72,7 +74,7 @@ void destroy_logger(struct kc_logger_t* log)
 
 //---------------------------------------------------------------------------//
 
-int save_log(struct kc_logger_t* self, const char* level, const char* description, const char* file, const int line, const char* func)
+int save_log(struct kc_logger_t* self, const char* level, const int error_code, const char* file, const int line, const char* func)
 {
   if (self == NULL)
   {
@@ -80,36 +82,20 @@ int save_log(struct kc_logger_t* self, const char* level, const char* descriptio
     return KC_NULL_REFERENCE;
   }
 
-  // // dynamically allocate memory for the concatenated string
-  // size_t msg_len = strlen(level) + strlen(description) + 1;
-  // char* log_message = (char*)malloc(sizeof(char) * msg_len);
+  if (error_code < 0 || error_code >= get_kc_error_count())
+  {
+    log_error(KC_INVALID_ARGUMENT_LOG);
+    return KC_INVALID_ARGUMENT;
+  }
 
-  // // check if memory allocation is successful
-  // if (log_message == NULL)
-  // {
-  //   log_error(KC_OUT_OF_MEMORY_LOG);
-  //   return KC_OUT_OF_MEMORY;
-  // }
+  if (line < 0)
+  {
+    log_error(KC_INVALID_ARGUMENT_LOG);
+    return KC_INVALID_ARGUMENT;
+  }
 
-  // // concatenate level and description
-  // snprintf(log_message, msg_len, "%s %s", level, description);
-
-  // // call log_to_file with the concatenated string
-  // int rez = log_to_file(self->_log_file, log_message, file, line, func);
-
-  // if (rez != KC_SUCCESS)
-  // {
-  //   // free the memory first
-  //   free(log_message);
-  //   return rez;
-  // }
-
-  // // free the memory
-  // free(log_message);
-
-  // return KC_SUCCESS;
-
-  return log_to_file(self->_log_file, level, description, file, line, func);
+  return log_to_file(self->_log_file, level, 
+    kc_error_msg[error_code], file, line, func);
 }
 
 //---------------------------------------------------------------------------//

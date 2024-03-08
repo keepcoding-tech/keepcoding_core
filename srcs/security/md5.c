@@ -10,19 +10,21 @@
 
 #include "../../hdrs/security/md5.h"
 
+#include <stdlib.h>
+
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-void md5_init   PROTO_LIST((struct kc_md5_t* context));
-void md5_update PROTO_LIST((struct kc_md5_t* context, unsigned char* input, unsigned int in_len));
-void md5_final  PROTO_LIST((unsigned char[16] digest, struct kc_md5_t* context));
+int md5_init   PROTO_LIST((struct kc_md5_t* md5));
+int md5_update PROTO_LIST((struct kc_md5_t* md5, unsigned char* input, unsigned int in_len));
+int md5_final  PROTO_LIST((struct kc_md5_t* md5, unsigned char[16] digest));
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
-static void _md5_transform PROTO_LIST((UINT4[4], unsigned char[64]));
-static void _encode        PROTO_LIST((unsigned char*, UINT4*, unsigned int));
-static void _decode        PROTO_LIST((UINT4*, unsigned char*, unsigned int));
-static void _md5_memcpy    PROTO_LIST((POINTER, POINTER, unsigned int));
-static void _md5_memset    PROTO_LIST((POINTER, int, unsigned int));
+static int _md5_transform PROTO_LIST((UINT4[4], unsigned char[64]));
+static int _encode        PROTO_LIST((unsigned char*, UINT4*, unsigned int));
+static int _decode        PROTO_LIST((UINT4*, unsigned char*, unsigned int));
+static int _md5_memcpy    PROTO_LIST((POINTER, POINTER, unsigned int));
+static int _md5_memset    PROTO_LIST((POINTER, int, unsigned int));
 
 //---------------------------------------------------------------------------//
 
@@ -35,48 +37,125 @@ static unsigned char PADDING[64] =
 
 //---------------------------------------------------------------------------//
 
-// MD5 initialization. Begins an MD5 operation, writing a new context
-void md5_init(struct kc_md5_t* context)
+struct kc_md5_t* new_md5()
 {
-  context->count[0] = context->count[1] = 0;
+  // create a MD5 instance to be returned
+  struct kc_md5_t* md5 = malloc(sizeof(struct kc_md5_t));
+  
+  // confirm that there is memory to allocate
+  if (md5 == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return NULL;
+  }
 
-  // Load magic initialization constants.
-  context->state[0] = 0x67452301;
-  context->state[1] = 0xefcdab89;
-  context->state[2] = 0x98badcfe;
-  context->state[3] = 0x10325476;
+  // initialize the structure members fields
+  md5_init(md5);
+
+  // assigns the public member methods
+  md5->digest   = md5_update;
+  md5->get_hash = md5_final;
+
+  return md5;
 }
 
 //---------------------------------------------------------------------------//
 
-// MD5 block update operation. Continues an MD5 message-digest
-// operation, processing another message block, and updating the context
-void md5_update(struct kc_md5_t* context, unsigned char* input, unsigned int in_len)
+void destroy_md5(struct kc_md5_t* md5)
 {
+  if (md5 == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+    return;
+  }
+
+  free(md5);
+}
+
+//---------------------------------------------------------------------------//
+
+int md5_init(struct kc_md5_t* md5)
+{
+  if (md5 == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+    return KC_NULL_REFERENCE;
+  }
+
+  // create a new logger instance
+  md5->logger = new_logger(KC_MD5_LOG_PATH);
+  if (md5->logger == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+    return KC_NULL_REFERENCE;
+  }
+
+  md5->count[0] = md5->count[1] = 0;
+
+  // Load magic initialization constants.
+  md5->state[0] = 0x67452301;
+  md5->state[1] = 0xefcdab89;
+  md5->state[2] = 0x98badcfe;
+  md5->state[3] = 0x10325476;
+
+  return KC_SUCCESS;
+}
+
+//---------------------------------------------------------------------------//
+
+int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
+{
+  if (md5 == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+    return KC_NULL_REFERENCE;
+  }
+
+  int ret = KC_SUCCESS;
+
   unsigned int i, index, part_len;
 
   // compute number of bytes mod 64
-  index = (unsigned int)((context->count[0] >> 3) & 0x3F);
+  index = (unsigned int)((md5->count[0] >> 3) & 0x3F);
 
   // update number of bits
-  if ((context->count[0] += ((UINT4)in_len << 3)) < ((UINT4)in_len << 3))
+  if ((md5->count[0] += ((UINT4)in_len << 3)) < ((UINT4)in_len << 3))
   {
-    context->count[1]++;
+    md5->count[1]++;
   }
 
-  context->count[1] += ((UINT4)in_len >> 29);
+  md5->count[1] += ((UINT4)in_len >> 29);
 
   part_len = 64 - index;
 
   // transform as many times as possible.
   if (in_len >= part_len)
   {
-    _md5_memcpy((POINTER)&context->buffer[index], (POINTER)input, part_len);
-    _md5_transform(context->state, context->buffer);
+    ret = _md5_memcpy((POINTER)&md5->buffer[index], (POINTER)input, part_len);
+    if (ret != KC_SUCCESS)
+    {
+      md5->logger->log(md5->logger, KC_WARNING_LOG, ret, 
+        __FILE__, __LINE__, __func__);
+      return ret;
+    }
+
+    ret = _md5_transform(md5->state, md5->buffer);
+    if (ret != KC_SUCCESS)
+    {
+      md5->logger->log(md5->logger, KC_WARNING_LOG, ret, 
+        __FILE__, __LINE__, __func__);
+      return ret;
+    }
 
     for (i = part_len; i + 63 < in_len; i += 64)
     {
-      _md5_transform(context->state, &input[i]);
+      ret = _md5_transform(md5->state, &input[i]);
+      if (ret != KC_SUCCESS)
+      {
+        md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+          __FILE__, __LINE__, __func__);
+        return ret;
+      }
     }
 
     index = 0;
@@ -87,41 +166,89 @@ void md5_update(struct kc_md5_t* context, unsigned char* input, unsigned int in_
   }
 
   // buffer remaining input
-  _md5_memcpy((POINTER)&context->buffer[index], (POINTER)&input[i], in_len - i);
+  ret = _md5_memcpy((POINTER)&md5->buffer[index], (POINTER)&input[i], in_len - i);
+  if (ret != KC_SUCCESS)
+  {
+    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+    return ret;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-// MD5 finalization. Ends an MD5 message-digest operation, writing the
-// the message digest and zeroizing the context
-void md5_final(unsigned char digest[16], struct kc_md5_t* context)
+int md5_final(struct kc_md5_t* md5, unsigned char digest[16])
 {
+  if (md5 == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+    return KC_NULL_REFERENCE;
+  }
+
+  int ret = KC_SUCCESS;
+
   unsigned char bits[8];
   unsigned int index, padLen;
 
   // save number of bits
-  _encode(bits, context->count, 8);
+  ret = _encode(bits, md5->count, 8);
+  if (ret != KC_SUCCESS)
+  {
+    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+    return ret;
+  }
 
   // pad out to 56 mod 64
-  index = (unsigned int)((context->count[0] >> 3) & 0x3f);
+  index = (unsigned int)((md5->count[0] >> 3) & 0x3f);
   padLen = (index < 56) ? (56 - index) : (120 - index);
-  md5_update(context, PADDING, padLen);
+
+  ret = md5_update(md5, PADDING, padLen);
+  if (ret != KC_SUCCESS)
+  {
+    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+    return ret;
+  }
 
   // append length (before padding)
-  md5_update(context, bits, 8);
+  ret = md5_update(md5, bits, 8);
+  if (ret != KC_SUCCESS)
+  {
+    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+    return ret;
+  }
 
   // store state in digest
-  _encode(digest, context->state, 16);
+  ret = _encode(digest, md5->state, 16);
+  if (ret != KC_SUCCESS)
+  {
+    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+    return ret;
+  }
 
   // zeroize sensitive information.
-  _md5_memset((POINTER)context, 0, sizeof(*context));
+  ret = _md5_memset((POINTER)md5, 0, sizeof(*md5));
+  if (ret != KC_SUCCESS)
+  {
+    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+    return ret;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-// MD5 basic transformation. Transforms state based on block
-static void _md5_transform(UINT4 state[4], unsigned char block[64])
+static int _md5_transform(UINT4 state[4], unsigned char block[64])
 {
+  int ret = KC_SUCCESS;
+
   UINT4 a = state[0];
   UINT4 b = state[1];
   UINT4 c = state[2];
@@ -129,7 +256,11 @@ static void _md5_transform(UINT4 state[4], unsigned char block[64])
 
   UINT4 x[16];
 
-  _decode(x, block, 64);
+  ret = _decode(x, block, 64);
+  if (ret != KC_SUCCESS)
+  {
+    return ret;
+  }
 
   // Round 1
   FF(a, b, c, d, x[0], S11, 0xd76aa478);  /* 1 */
@@ -208,41 +339,73 @@ static void _md5_transform(UINT4 state[4], unsigned char block[64])
   state[2] += c;
   state[3] += d;
 
-  // Zeroize sensitive information.
-  _md5_memset((POINTER)x, 0, sizeof(x));
+  // zeroize sensitive information
+  ret = _md5_memset((POINTER)x, 0, sizeof(x));
+  if (ret != KC_SUCCESS)
+  {
+    return ret;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-// Encodes input (UINT4) into output (unsigned char). Assumes len is a multiple of 4
-static void _encode(unsigned char* output, UINT4* input, unsigned int len)
+static int _encode(unsigned char* output, UINT4* input, unsigned int len)
 {
-  for (unsigned int i = 0, j = 0; j < len; i++, j += 4)
+  if (output == NULL || input == NULL)
+  {
+    return KC_NULL_REFERENCE;
+  }
+
+  if (len % 4 != 0)
+  {
+    return KC_INVALID_ARGUMENT;
+  }
+
+  for (unsigned int i = 0, j = 0; j < len; ++i, j += 4)
   {
     output[j] = (unsigned char)(input[i] & 0xff);
     output[j + 1] = (unsigned char)((input[i] >> 8) & 0xff);
     output[j + 2] = (unsigned char)((input[i] >> 16) & 0xff);
     output[j + 3] = (unsigned char)((input[i] >> 24) & 0xff);
   }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-// Decodes input (unsigned char) into output (UINT4). 
-// Assumes len is a multiple of 4
-static void _decode(UINT4* output, unsigned char* input, unsigned int len)
+static int _decode(UINT4* output, unsigned char* input, unsigned int len)
 {
+  if (output == NULL || input == NULL)
+  {
+    return KC_NULL_REFERENCE;
+  }
+
+  if (len % 4 != 0)
+  {
+    return KC_INVALID_ARGUMENT;
+  }
+
   for (unsigned int i = 0, j = 0; j < len; ++i, j += 4)
   {
     output[i] = ((UINT4)input[j]) | (((UINT4)input[j + 1]) << 8) | 
       (((UINT4)input[j + 2]) << 16) | (((UINT4)input[j + 3]) << 24);
   }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-static void _md5_memcpy(POINTER output, POINTER input, unsigned int len)
+static int _md5_memcpy(POINTER output, POINTER input, unsigned int len)
 {
+  if (output == NULL || input == NULL)
+  {
+    return KC_NULL_REFERENCE;
+  }
+
 #ifdef __STDC_NO_MEMORY__
   // If __STDC_NO_MEMORY__ is defined, 'memcpy' is not available
   for (unsigned int i = 0; i < len; ++i)
@@ -250,14 +413,25 @@ static void _md5_memcpy(POINTER output, POINTER input, unsigned int len)
     output[i] = input[i];
   }
 #else
-  memcpy(output, input, len);
+  void* ret = memcpy(output, input, len);
+  if (ret == NULL)
+  {
+    return KC_OUT_OF_MEMORY;
+  }
 #endif
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-static void _md5_memset(POINTER output, int value, unsigned int len)
+static int _md5_memset(POINTER output, int value, unsigned int len)
 {
+  if (output == NULL)
+  {
+    return KC_NULL_REFERENCE;
+  }
+
 #ifdef __STDC_NO_MEMORY__
   // If __STDC_NO_MEMORY__ is defined, 'memset' is not available
   for (unsigned int i = 0; i < len; ++i)
@@ -265,8 +439,14 @@ static void _md5_memset(POINTER output, int value, unsigned int len)
     ((char*)output)[i] = (char)value;
   }
 #else
-  memset(output, value, len);
+  void* ret = memset(output, value, len);
+  if (ret == NULL)
+  {
+    return KC_OUT_OF_MEMORY;
+  }
 #endif
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//

@@ -19,6 +19,8 @@
 #ifndef KC_LOGGER_T_H
 #define KC_LOGGER_T_H
 
+#include "../common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -36,7 +38,7 @@ struct kc_logger_t
 {
   const char*  _log_file;
 
-  int (*log)  (struct kc_logger_t* self, const char* level, const char* description, const char* file, const int line, const char* func);
+  int (*log)  (struct kc_logger_t* self, const char* level, const int error_code, const char* file, const int line, const char* func);
 };
 
 struct kc_logger_t* new_logger      (const char* log_file);

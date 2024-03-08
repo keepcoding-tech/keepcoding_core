@@ -28,7 +28,7 @@
 
 //---------------------------------------------------------------------------//
 
-#define KC_PENDING_LOG                 "Operation aborted by the user."
+#define KC_PENDING_LOG                 "Operation in pending by the user."
 #define KC_ABORT_LOG                   "Operation aborted by the user."
 
 #define KC_EMPTY_STRUCTURE_LOG         "The structure was not initialized."
@@ -75,7 +75,7 @@
 
 #define KC_RECOVERABLE_ERROR_LOG       "Recoverable error occurred."
 #define KC_UNRECOVERABLE_ERROR_LOG     "Unrecoverable error occurred."
-#define KC_FATAL_LOG_ERROR_LOG             "Fatal error occurred."
+#define KC_FATAL_LOG_ERROR_LOG         "Fatal error occurred."
 
 #define KC_UNKNOWN_ERROR_LOG           "Unknown error occurred."
 
@@ -132,6 +132,10 @@ enum
 
   KC_UNKNOWN_ERROR          // Unknown error occurred
 };
+
+extern const char* kc_error_msg[];
+
+int get_kc_error_count();
 
 //---------------------------------------------------------------------------//
 

@@ -241,7 +241,7 @@ void uuid_create_md5_from_name(struct kc_uuid_t* uuid, struct kc_uuid_t nsid, vo
   md5_init(&c);
   md5_update(&c, &net_nsid, sizeof net_nsid);
   md5_update(&c, name, name_len);
-  md5_final(hash, &c);
+  md5_final(&c, hash);
 
   // the hash is in network byte order at this point 
   format_uuid_v3or5(uuid, hash, 3);
