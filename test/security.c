@@ -9,14 +9,41 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "../hdrs/security/base64.h"
-#include "../hdrs/security/uuid.h"
 #include "../hdrs/security/md5.h"
+#include "../hdrs/security/sha1.h"
+#include "../hdrs/security/uuid.h"
 #include "../hdrs/common.h"
 #include "../hdrs/test.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+
+// ------------------ global ----------------- //
+
+int _check_hex_final(unsigned char digest[16], const char* expected)
+{
+  unsigned char out[16];
+  unsigned int temp;
+
+  for (int i = 0; i < 16; ++i)
+  {
+    if (sscanf(expected + 2 * i, "%02x", &temp) != 1)
+    {
+      return KC_FATAL_LOG_ERROR;
+    }
+
+    out[i] = (unsigned char)temp;
+  }
+
+  if (memcmp(digest, out, 16) != 0)
+  {
+    return KC_INVALID;
+  }
+
+  return KC_SUCCESS;
+}
+
 
 // ------------------ B64 ------------------ //
 
@@ -61,29 +88,6 @@ void _md5_print(unsigned char digest[16])
   }
 }
 
-int _check_hex_final(unsigned char digest[16], const char* expected)
-{
-  unsigned char out[16];
-  unsigned int temp;
-
-  for (int i = 0; i < 16; ++i)
-  {
-    if (sscanf(expected + 2 * i, "%02x", &temp) != 1)
-    {
-      return KC_FATAL_LOG_ERROR;
-    }
-
-    out[i] = (unsigned char)temp;
-  }
-
-  if (memcmp(digest, out, 16) != 0)
-  {
-    return KC_INVALID;
-  }
-
-  return KC_SUCCESS;
-}
-
 int _check_md5_final(char* str, const char* expected)
 {
   struct kc_md5_t context;
@@ -97,39 +101,48 @@ int _check_md5_final(char* str, const char* expected)
   return _check_hex_final(digest, expected);
 }
 
+// ------------------ SHA1 ----------------- //
+
+#define TEST1   "abc"
+
+#define TEST2a  "abcdbcdecdefdefgefghfghighijhi"
+#define TEST2b  "jkijkljklmklmnlmnomnopnopq"
+#define TEST2   TEST2a TEST2b
+
+#define TEST3   "a"
+
+#define TEST4a  "01234567012345670123456701234567"
+#define TEST4b  "01234567012345670123456701234567"
+#define TEST4   TEST4a TEST4b
+
 int main()
 {
-  //testgroup("Base64")
-  //{
-  //  subtest("kc_base64_encode()")
-  //  {
-  //    ok(check_encode_case("", "") == KC_SUCCESS);
-  //    ok(check_encode_case("f", "Zg==") == KC_SUCCESS);
-  //    ok(check_encode_case("fo", "Zm8=") == KC_SUCCESS);
-  //    ok(check_encode_case("foo", "Zm9v") == KC_SUCCESS);
-  //    ok(check_encode_case("foob", "Zm9vYg==") == KC_SUCCESS);
-  //    ok(check_encode_case("fooba", "Zm9vYmE=") == KC_SUCCESS);
-  //    ok(check_encode_case("foobar", "Zm9vYmFy") == KC_SUCCESS);
-  //  }
+  testgroup("B64")
+  {
+    subtest("kc_base64_encode()")
+    {
+      ok(check_encode_case("", "") == KC_SUCCESS);
+      ok(check_encode_case("f", "Zg==") == KC_SUCCESS);
+      ok(check_encode_case("fo", "Zm8=") == KC_SUCCESS);
+      ok(check_encode_case("foo", "Zm9v") == KC_SUCCESS);
+      ok(check_encode_case("foob", "Zm9vYg==") == KC_SUCCESS);
+      ok(check_encode_case("fooba", "Zm9vYmE=") == KC_SUCCESS);
+      ok(check_encode_case("foobar", "Zm9vYmFy") == KC_SUCCESS);
+    }
 
-  //  subtest("kc_base64_decode()")
-  //  {
-  //    ok(check_decode_case("", "") == KC_SUCCESS);
-  //    ok(check_decode_case("Zg==", "f") == KC_SUCCESS);
-  //    ok(check_decode_case("Zm8=", "fo") == KC_SUCCESS);
-  //    ok(check_decode_case("Zm9v", "foo") == KC_SUCCESS);
-  //    ok(check_decode_case("Zm9vYg==", "foob") == KC_SUCCESS);
-  //    ok(check_decode_case("Zm9vYmE=", "fooba") == KC_SUCCESS);
-  //    ok(check_decode_case("Zm9vYmFy", "foobar") == KC_SUCCESS);
-  //  }
+    subtest("kc_base64_decode()")
+    {
+      ok(check_decode_case("", "") == KC_SUCCESS);
+      ok(check_decode_case("Zg==", "f") == KC_SUCCESS);
+      ok(check_decode_case("Zm8=", "fo") == KC_SUCCESS);
+      ok(check_decode_case("Zm9v", "foo") == KC_SUCCESS);
+      ok(check_decode_case("Zm9vYg==", "foob") == KC_SUCCESS);
+      ok(check_decode_case("Zm9vYmE=", "fooba") == KC_SUCCESS);
+      ok(check_decode_case("Zm9vYmFy", "foobar") == KC_SUCCESS);
+    }
 
-  //  done_testing();
-  //}
-
-  //testgroup("UUID")
-  //{
-  //  done_testing();
-  //}
+    done_testing();
+  }
 
   testgroup("MD5")
   {
@@ -192,34 +205,86 @@ int main()
 
     subtest("md5 file")
     {
-      skip(true)
+      FILE* file;
+      unsigned char buffer[1024], digest[16];
+
+      if ((file = fopen("test", "rb")) == NULL)
       {
-        FILE* file;
-        unsigned char buffer[1024], digest[16];
+        printf("%s can't be opened\n", "test");
+      }
+      else
+      {
+        struct kc_md5_t context;
+        md5_init(&context);
 
-        if ((file = fopen("test", "rb")) == NULL)
+        int len = 0;
+
+        while (len = fread(buffer, 1, 1024, file))
         {
-          printf("%s can't be opened\n", "test");
+          md5_update(&context, buffer, len);
         }
-        else
-        {
-          struct kc_md5_t context;
-          md5_init(&context);
 
-          int len = 0;
+        md5_final(digest, &context);
 
-          while (len = fread(buffer, 1, 1024, file))
-          {
-            md5_update(&context, buffer, len);
-          }
-
-          md5_final(digest, &context);
-
-          fclose(file);
-        }
+        fclose(file);
       }
     }
 
+    done_testing();
+  }
+
+  testgroup("SHA1")
+  {
+    subtest("sha1 test suite")
+    {
+      long int repeat_count[4] = { 1, 1, 1000000, 10 };
+      char* test_arr[4] = { TEST1, TEST2, TEST3, TEST4 };
+      char* result_arr[4] =
+      {
+        "A9993E364706816ABA3E25717850C26C9CD0D89D",
+        "84983E441C3BD26EBAAE4AA1F95129E5E54670F1",
+        "34AA973CD4C4DAA4F61EEB2BDBAD27316534016F",
+        "DEA356A2CDDD90C7A7ECEDC5EBB563934F460452"
+      };
+
+      struct kc_sha1_t sha;
+      uint8_t digest[20];
+
+      int ret = KC_INVALID;
+
+      for (int j = 0; j < 4; ++j)
+      {
+        ret = sha1_init(&sha);
+        ok(ret == KC_SUCCESS);
+
+        for (int i = 0; i < repeat_count[j]; ++i)
+        {
+          ret = sha1_update(&sha, 
+            (const unsigned char*)test_arr[j], 
+            strlen(test_arr[j]));
+
+          ok(ret == KC_SUCCESS);
+        }
+
+        ret = sha1_final(&sha, digest);
+        ok(ret == KC_SUCCESS);
+
+        ok(_check_hex_final(digest, result_arr[j]) == KC_SUCCESS);
+      }
+
+      /* Test some error returns */
+      ret = sha1_update(&sha, (const unsigned char*)test_arr[1], 1);
+      ok(ret == KC_SHA1_STATE_ERROR);
+
+      ret = sha1_init(0);
+      ok(ret == KC_NULL_REFERENCE);
+    }
+
+    done_testing();
+  }
+
+  testgroup("UUID")
+  {
     done_testing();
   }
 

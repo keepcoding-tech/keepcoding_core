@@ -35,11 +35,44 @@
 
 //---------------------------------------------------------------------------//
 
+#ifndef KC_MD5_PROTOTYPES
+#define KC_MD5_PROTOTYPES 0
+#endif
+
+// POINTER defines a generic pointer type
+typedef unsigned char* POINTER;
+
+// UINT2 defines a two byte word
+typedef unsigned short int UINT2;
+
+// UINT4 defines a four byte word
+typedef unsigned long int UINT4;
+
+/*
+ * PROTO_LIST is defined depending on how PROTOTYPES is defined above.
+ * If using PROTOTYPES, then PROTO_LIST returns the list, otherwise it
+ * returns an empty list.
+ */
+
+#if KC_MD5_PROTOTYPES
+#define PROTO_LIST(list) list
+#else
+#define PROTO_LIST(list) ()
+#endif
+
+
+//---------------------------------------------------------------------------//
+
 struct kc_md5_t
 {
-  unsigned long int state[4];    // state (ABCD)
-  unsigned long int count[2];    // number of bits, modulo 2^64 (lsb first)
-  unsigned char     buffer[64];  // input buffer
+  // state (ABCD)
+  unsigned long int state[4];
+
+  // number of bits, modulo 2^64
+  unsigned long int count[2];
+
+  // input buffer
+  unsigned char buffer[64];
 };
 
 //---------------------------------------------------------------------------//

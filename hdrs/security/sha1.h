@@ -7,13 +7,20 @@
 // SPDX-License-Identifier: MIT License
 
 /*
- * This is the header file for code which implements the Secure
- * Hashing Algorithm 1 as defined in FIPS PUB 180-1 published
- * April 17, 1995.
- *
- * Many of the variable names in this code, especially the
- * single character names, were used because those were the names
- * used in the publication.
+ * Secure Hash Algorithm, SHA-1, for computing a condensed representation of a 
+ * message or a data file.  When a message of any length < 2^64 bits is input,
+ * the SHA-1 produces a 160-bit output called a message digest.
+ * 
+ * The message digest can then, for example, be input to a signature algorithm 
+ * which generates or verifies the signature for the message. Signing the 
+ * message digest rather than the message often improves the efficiency of the 
+ * process because the message digest is usually much smaller in size than the
+ * message.
+ * 
+ * The same hash algorithm must be used by the verifier of a digital signature 
+ * as was used by the creator of the digital signature. Any change to the 
+ * message in transit will, with very high probability, result in a different 
+ * message digest, and the signature will fail to verify.
 */
 
 #ifndef KC_SHA1_T_H
@@ -25,25 +32,12 @@
 
 //---------------------------------------------------------------------------//
 
-/*
- * If you do not have the ISO standard stdint.h header file,
- * then you must typdef the following:
- *
- *  name             meaning
- *  uint32_t         unsigned 32 bit integer
- *  uint8_t          unsigned 8 bit integer (i.e., unsigned char)
- *  int_least16_t    integer of >= 16 bits
- */
-
-#ifndef _SHA_enum_
-#define _SHA_enum_
+#ifndef KC_SHA1_ENUM_
+#define KC_SHA1_ENUM_
 
 enum
 {
-  shaSuccess = 0,
-  shaNull,            /* Null pointer parameter */
-  shaInputTooLong,    /* input data too long */
-  shaStateError       /* called Input after Result */
+  KC_SHA1_STATE_ERROR = 0xF0000001
 };
 
 #endif
@@ -52,8 +46,6 @@ enum
 
 #define SHA1_HASH_SIZE 20
 
-// this structure will hold context information
-// for the SHA-1 hashing operation
 struct kc_sha1_t
 {
   // message digest
@@ -75,9 +67,9 @@ struct kc_sha1_t
 
 //---------------------------------------------------------------------------//
 
-int sha1_init   (struct kc_sha1_t* context);
+int sha1_init    (struct kc_sha1_t* context);
 int sha1_update  (struct kc_sha1_t* context, const uint8_t* msg_array, unsigned int len);
-int sha1_final (struct kc_sha1_t* context, uint8_t msg_digest[SHA1_HASH_SIZE]);
+int sha1_final   (struct kc_sha1_t* context, uint8_t msg_digest[SHA1_HASH_SIZE]);
 
 //---------------------------------------------------------------------------//
 

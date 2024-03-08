@@ -17,8 +17,8 @@ int sha1_final (struct kc_sha1_t* context, uint8_t msg_digest[SHA1_HASH_SIZE]);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
-void _sha1_pad_message(struct kc_sha1_t* context);
 void _sha1_process_message_block(struct kc_sha1_t* context);
+void _sha1_pad_message(struct kc_sha1_t* context);
 
 //---------------------------------------------------------------------------//
 
@@ -61,8 +61,8 @@ int sha1_update(struct kc_sha1_t* context, const uint8_t* msg_array, unsigned in
 
   if (context->computed)
   {
-    context->corrupted = shaStateError;
-    return shaStateError;
+    context->corrupted = KC_SHA1_STATE_ERROR;
+    return KC_SHA1_STATE_ERROR;
   }
 
   if (context->corrupted)
