@@ -63,6 +63,7 @@ bool skiping;
 #define done_testing()                                                        \
   printf("\n^^^^^ RSLT > %d FAIL | %d PASS | %d SKIP \n",                     \
       failed, passed, skiped);                                                \
+  passed = 0;                                                                 \
   if (failed > 0)                                                             \
   {                                                                           \
     exit(1);                                                                  \

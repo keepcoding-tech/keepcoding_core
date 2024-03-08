@@ -115,6 +115,84 @@ int _check_md5_final(char* str, const char* expected)
 #define TEST4b  "01234567012345670123456701234567"
 #define TEST4   TEST4a TEST4b
 
+// ------------------ UUID ----------------- //
+
+void _print_uuid(struct kc_uuid_t u)
+{
+  printf("%8.8x-", u.time_low);
+  printf("%4.4x-", u.time_mid);
+  printf("%4.4x-", u.time_hi_and_version);
+  printf("%2.2x",  u.clock_seq_hi_and_reserved);
+  printf("%2.2x-", u.clock_seq_low);
+
+  for (int i = 0; i < 6; ++i)
+  {
+    printf("%02x", (unsigned char)u.node[i]);
+  }
+
+  printf("\n");
+}
+
+int _compare_uuids(struct kc_uuid_t u1, struct kc_uuid_t u2)
+{
+  int comp = uuid_compare(&u1, &u1);
+  if (comp != 0)
+  {
+    return KC_INVALID;
+  }
+
+  comp = uuid_compare(&u2, &u2);
+  if (comp != 0)
+  {
+    return KC_INVALID;
+  }
+
+  comp = uuid_compare(&u1, &u2);
+  if (comp == 0)
+  {
+    return KC_INVALID;
+  }
+
+  comp = uuid_compare(&u2, &u1);
+  if (comp == 0)
+  {
+    return KC_INVALID;
+  }
+
+  return KC_SUCCESS;
+}
+
+int _check_uuid(struct kc_uuid_t namespace_uuid)
+{
+  struct kc_uuid_t u1, u2;
+
+  for (int i = 0; i < TEST_BLOCK_LEN; ++i)
+  {
+    uuid_create(&u1);
+    uuid_create(&u2);
+
+    int ret = _compare_uuids(u1, u2);
+    if (ret != KC_SUCCESS)
+    {
+      return KC_INVALID;
+    }
+  }
+
+  for (int i = 0; i < TEST_BLOCK_LEN; ++i)
+  {
+    uuid_create_md5_from_name(&u1, namespace_uuid, "www.widgets.com", 15);
+    uuid_create_md5_from_name(&u2, namespace_uuid, "www.widgets.com", 15);
+
+    int ret = _compare_uuids(u1, u2);
+    if (ret != KC_SUCCESS)
+    {
+      return KC_INVALID;
+    }
+  }
+
+  return KC_SUCCESS;
+}
+
 int main()
 {
   testgroup("B64")
@@ -206,7 +284,6 @@ int main()
     subtest("md5 file")
     {
       FILE* file;
-      unsigned char buffer[1024], digest[16];
 
       if ((file = fopen("test", "rb")) == NULL)
       {
@@ -217,6 +294,8 @@ int main()
         struct kc_md5_t context;
         md5_init(&context);
 
+        unsigned char buffer[1024];
+        unsigned char digest[16];
         int len = 0;
 
         while (len = fread(buffer, 1, 1024, file))
@@ -285,6 +364,74 @@ int main()
 
   testgroup("UUID")
   {
+    subtest("namespace DNS")
+    {
+      // Name string is a fully-qualified domain name
+      // 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+      struct kc_uuid_t namespace_DNS = 
+      {
+          0x6ba7b810,
+          0x9dad,
+          0x11d1,
+          0x80, 
+          0xb4, 
+          0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+      };
+
+      ok(_check_uuid(namespace_DNS));
+    }
+
+    subtest("namespace URL")
+    {
+      // Name string is a URL
+      // 6ba7b811-9dad-11d1-80b4-00c04fd430c8
+      struct kc_uuid_t namespace_URL = 
+      {
+          0x6ba7b811,
+          0x9dad,
+          0x11d1,
+          0x80, 
+          0xb4, 
+          0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+      };
+
+      ok(_check_uuid(namespace_URL));
+    }
+
+    subtest("namespace OID")
+    {
+      // Name string is an ISO OID
+      // 6ba7b812-9dad-11d1-80b4-00c04fd430c8
+      struct kc_uuid_t namespace_OID = 
+      {
+          0x6ba7b812,
+          0x9dad,
+          0x11d1,
+          0x80, 
+          0xb4, 
+          0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+      };
+
+      ok(_check_uuid(namespace_OID));
+    }
+
+    subtest("namespace X500")
+    {
+      // Name string is an X.500 DN (in DER or a text output format)
+      // 6ba7b814-9dad-11d1-80b4-00c04fd430c8
+      struct kc_uuid_t namespace_X500 = 
+      {
+          0x6ba7b814,
+          0x9dad,
+          0x11d1,
+          0x80, 
+          0xb4, 
+          0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+      };
+
+      ok(_check_uuid(namespace_X500));
+    }
+
     done_testing();
   }
 

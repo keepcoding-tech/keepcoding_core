@@ -28,33 +28,20 @@
 #ifndef KC_UUID_T_H
 #define KC_UUID_T_H
 
+
+#ifdef _WIN32
+#include <windows.h>
+#include <winsock.h>
+#else
+#include <netinet/in.h>
+#endif
+
 #include "../common.h"
+#include "sysdep.h"
 #include "md5.h"
 #include "sha1.h"
 
 #include <stdio.h>
-
-/*
- *
- */
-
-//----------------- sysdep.h ----------------- //
-
-typedef unsigned long long kc_uuid_time_t;
-
-struct kc_uuid_node_t
-{
-  char nodeID[6];
-};
-
-#define LOCK
-#define UNLOCK
-#define UUIDS_PER_TICK 1024
-
-typedef unsigned long   unsigned32;
-typedef unsigned short  unsigned16;
-typedef unsigned char   unsigned8;
-typedef unsigned char   byte;
 
 //---------------------------------------------------------------------------//
 
@@ -89,7 +76,7 @@ int uuid_compare(struct kc_uuid_t* u1, struct kc_uuid_t* u2);
 
 //---------------------------------------------------------------------------//
 
-int kc_generate_uuid  (char** uuid);
+//int kc_generate_uuid  (char** uuid);
 
 //---------------------------------------------------------------------------//
 
