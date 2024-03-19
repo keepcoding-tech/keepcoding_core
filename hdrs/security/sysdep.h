@@ -25,6 +25,9 @@
 ** suitability of this software for any purpose.
 */
 
+#ifndef KC_SYSDEP_H
+#define KC_SYSDEP_H
+
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock.h>
@@ -35,9 +38,20 @@
 #endif
 
 #include "../common.h"
-#include "md5.h"
 
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+// terminologies for various bit group
+#define BIT        1
+#define HALFNIBBLE 2
+#define NIBBLE     4
+#define OCTET      8
+#define HALFWORD   16
+#define WORD       32
+#define OCTAWORD   64
+#define QUADWORD   128
 
 // set the following to the number of 100ns ticks 
 // of the actual resolution of your system's clock
@@ -47,10 +61,14 @@
 #define LOCK
 #define UNLOCK
 
+//---------------------------------------------------------------------------//
+
 typedef unsigned long   unsigned32;
 typedef unsigned short  unsigned16;
 typedef unsigned char   unsigned8;
 typedef unsigned char   byte;
+
+//---------------------------------------------------------------------------//
 
 // set this to what your compiler uses for 64-bit data type
 #ifdef WININC
@@ -61,6 +79,8 @@ typedef unsigned char   byte;
 #define I64(C) C##LL
 #endif
 
+//---------------------------------------------------------------------------//
+
 typedef unsigned64_t kc_uuid_time_t;
 
 struct kc_uuid_node_t
@@ -68,13 +88,12 @@ struct kc_uuid_node_t
   char node_id[6];
 };
 
-// system dependent call to get IEEE node ID, 
-// which will generate a random node ID
-void get_ieee_node_identifier(struct kc_uuid_node_t* node);
+//---------------------------------------------------------------------------//
 
-// system dependent call to get the current system time. Returned as
-// 100ns ticks since UUID epoch, but resolution may be less than 100ns
-void get_system_time(kc_uuid_time_t* uuid_time);
+int  get_ieee_node_identifier  (struct kc_uuid_node_t* node);
+void get_system_time           (kc_uuid_time_t* uuid_time);
+void get_random_info           (char seed[HALFWORD]);
 
-/* !! Sample code, not for use in production; see RFC 1750 !! */
-void get_random_info(char seed[16]);
+//---------------------------------------------------------------------------//
+
+#endif /* KC_SYSDEP_H */

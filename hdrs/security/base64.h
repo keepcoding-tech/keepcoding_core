@@ -10,6 +10,7 @@
 #define KC_BASE64_H
 
 #include "../common.h"
+#include "sysdep.h"
 
 #include <stdio.h>
 
@@ -42,7 +43,7 @@
  *   +-----------------------------------------+
  */
 
-#define KC_BASE64_LEN  64
+#define KC_BASE64_LEN OCTAWORD // 64
 
 //---------------------------------------------------------------------------//
 

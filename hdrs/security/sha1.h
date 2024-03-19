@@ -27,7 +27,9 @@
 #define KC_SHA1_T_H
 
 #include "../common.h"
+#include "../system/logger.h"
 
+#include <stdio.h>
 #include <stdint.h>
 
 //---------------------------------------------------------------------------//
@@ -37,19 +39,25 @@
 
 enum
 {
-  KC_SHA1_STATE_ERROR = 0xF0000001
+  KC_SHA1_STATE_ERROR    = 0xF0000001,
+  KC_SHA1_INPUT_TOO_LONG = 0xF0000002
 };
 
 #endif
 
 //---------------------------------------------------------------------------//
 
-#define SHA1_HASH_SIZE 20
+#define KC_SHA1_LOG_PATH  "build/log/sha1.log"
+
+#define KC_SHA1_LENGTH  20
+#define KC_STR_SHA1_LEN 41
+
+//---------------------------------------------------------------------------//
 
 struct kc_sha1_t
 {
   // message digest
-  uint32_t intermediate_hash[SHA1_HASH_SIZE / 4];
+  uint32_t intermediate_hash[KC_SHA1_LENGTH / 4];
 
   // message length in bits
   uint32_t length_low;
@@ -61,15 +69,25 @@ struct kc_sha1_t
   // 512-bit message blocks
   uint8_t message_block[64];
 
-  int computed;   // Is the digest computed?
-  int corrupted;  // Is the message digest corrupted? 
+  int computed;
+  int corrupted;
+
+  struct kc_logger_t* logger;
+
+  int (*digest)    (struct kc_sha1_t* self, const uint8_t* msg_array, unsigned int len);
+  int (*get_hash)  (struct kc_sha1_t* context, uint8_t msg_digest[KC_SHA1_LENGTH]);
 };
+
+struct kc_sha1_t* new_sha1      ();
+void              destroy_sha1  (struct kc_sha1_t* sha1);
 
 //---------------------------------------------------------------------------//
 
 int sha1_init    (struct kc_sha1_t* context);
 int sha1_update  (struct kc_sha1_t* context, const uint8_t* msg_array, unsigned int len);
-int sha1_final   (struct kc_sha1_t* context, uint8_t msg_digest[SHA1_HASH_SIZE]);
+int sha1_final   (struct kc_sha1_t* context, uint8_t msg_digest[KC_SHA1_LENGTH]);
+
+int sha1_to_string  (uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[KC_STR_SHA1_LEN]);
 
 //---------------------------------------------------------------------------//
 

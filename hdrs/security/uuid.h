@@ -37,11 +37,16 @@
 #endif
 
 #include "../common.h"
-#include "sysdep.h"
 #include "md5.h"
 #include "sha1.h"
 
 #include <stdio.h>
+
+//---------------------------------------------------------------------------//
+
+#define KC_UUID_LOG_PATH  "build/log/uuid.log"
+
+#define KC_UUID_LENGTH 37
 
 //---------------------------------------------------------------------------//
 
@@ -53,30 +58,26 @@ struct kc_uuid_t
   unsigned char  clock_seq_hi_and_reserved;
   unsigned char  clock_seq_low;
   char           node[6];
+
+  struct kc_logger_t* logger;
+
+  int (*create_v1)  (struct kc_uuid_t* self);
+  int (*create_v3)  (struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name, int name_len);
+  int (*create_v5)  (struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name, int name_len);
+  int (*get_uuid)   (struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH]);
+  int (*compare)    (struct kc_uuid_t* self, struct kc_uuid_t* uuid);
 };
 
-/* uuid_create -- generate a UUID */
-int uuid_create(struct kc_uuid_t * uuid);
-
-/* uuid_create_md5_from_name -- create a version 3 (MD5) UUID using a
-   "name" from a "name space" */
-void uuid_create_md5_from_name(struct kc_uuid_t* uuid, struct kc_uuid_t nsid, void* name, int name_len);
-
-/* uuid_create_sha1_from_name -- create a version 5 (SHA-1) UUID
-   using a "name" from a "name space" */
-void uuid_create_sha1_from_name(struct kc_uuid_t* uuid, struct kc_uuid_t nsid, void* name, int name_len);
-
-/* uuid_compare --  Compare two UUID's "lexically" and return
-        -1   u1 is lexically before u2
-         0   u1 is equal to u2
-         1   u1 is lexically after u2
-   Note that lexical ordering is not temporal ordering!
-*/
-int uuid_compare(struct kc_uuid_t* u1, struct kc_uuid_t* u2);
+struct kc_uuid_t* new_uuid      ();
+void              destroy_uuid  (struct kc_uuid_t* uuid);
 
 //---------------------------------------------------------------------------//
 
-//int kc_generate_uuid  (char** uuid);
+int uuid_create_ver_1  (struct kc_uuid_t * uuid);
+int uuid_create_ver_3  (struct kc_uuid_t* uuid, struct kc_uuid_t nsid, void* name, int name_len);
+int uuid_create_ver_5  (struct kc_uuid_t* uuid, struct kc_uuid_t nsid, void* name, int name_len);
+int uuid_get_hash      (struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH]);
+int uuid_compare       (struct kc_uuid_t* u1, struct kc_uuid_t* u2);
 
 //---------------------------------------------------------------------------//
 

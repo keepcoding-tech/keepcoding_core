@@ -33,6 +33,9 @@
 
 #include "../common.h"
 #include "../system/logger.h"
+#include "sysdep.h"
+
+#include <stdio.h>
 
 //---------------------------------------------------------------------------//
 
@@ -65,18 +68,20 @@ typedef unsigned long int UINT4;
 
 #define KC_MD5_LOG_PATH  "build/log/md5.log"
 
+#define KC_MD5_LENGTH HALFWORD // 16
+
 //---------------------------------------------------------------------------//
 
 struct kc_md5_t
 {
-  unsigned long int state[4];
-  unsigned long int count[2];
-  unsigned char buffer[64];
+  unsigned long int state[NIBBLE];
+  unsigned long int count[HALFNIBBLE];
+  unsigned char     buffer[OCTAWORD];
 
   struct kc_logger_t* logger;
 
-  int (*digest)    (struct kc_md5_t* self);
-  int (*get_hash)  (struct kc_md5_t* self, unsigned char digest[16]);
+  int (*digest)    (struct kc_md5_t* self, unsigned char* input, unsigned int in_len);
+  int (*get_hash)  (struct kc_md5_t* self, unsigned char digest[HALFWORD]);
 };
 
 struct kc_md5_t* new_md5      ();
@@ -84,16 +89,11 @@ void             destroy_md5  (struct kc_md5_t* md5);
 
 //---------------------------------------------------------------------------//
 
-// begins an MD5 operation, writing a new context
 int md5_init   PROTO_LIST((struct kc_md5_t* context));
-
-// continues an MD5 message-digest operation, processing 
-// another message block, and updating the context
 int md5_update PROTO_LIST((struct kc_md5_t* context, unsigned char* input, unsigned int in_len));
+int md5_final  PROTO_LIST((struct kc_md5_t* context, unsigned char digest[HALFWORD]));
 
-// ends an MD5 message-digest operation, writing the
-// the message digest and zeroizing the context
-int md5_final  PROTO_LIST((struct kc_md5_t* context, unsigned char digest[16]));
+int md5_to_string  (unsigned char digest[HALFWORD], unsigned char str_hash[WORD + 1]);
 
 //---------------------------------------------------------------------------//
 

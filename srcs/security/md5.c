@@ -1,26 +1,31 @@
 // This file is part of keepcoding_core
 // ==================================
 //
-// uuid.c
+// md5.c
 //
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 //
 // RSA Data Security, Inc. MD5 Message-Digest Algorithm
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "../../hdrs/security/md5.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
 int md5_init   PROTO_LIST((struct kc_md5_t* md5));
 int md5_update PROTO_LIST((struct kc_md5_t* md5, unsigned char* input, unsigned int in_len));
-int md5_final  PROTO_LIST((struct kc_md5_t* md5, unsigned char[16] digest));
+int md5_final  PROTO_LIST((struct kc_md5_t* md5, unsigned char digest[WORD]));
+
+int md5_to_string(unsigned char digest[HALFWORD], unsigned char str_hash[WORD]);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
-static int _md5_transform PROTO_LIST((UINT4[4], unsigned char[64]));
+static int _md5_transform PROTO_LIST((UINT4[NIBBLE], unsigned char[OCTAWORD]));
 static int _encode        PROTO_LIST((unsigned char*, UINT4*, unsigned int));
 static int _decode        PROTO_LIST((UINT4*, unsigned char*, unsigned int));
 static int _md5_memcpy    PROTO_LIST((POINTER, POINTER, unsigned int));
@@ -50,7 +55,11 @@ struct kc_md5_t* new_md5()
   }
 
   // initialize the structure members fields
-  md5_init(md5);
+  int ret = md5_init(md5);
+  if (ret != KC_SUCCESS)
+  {
+    return ret;
+  }
 
   // assigns the public member methods
   md5->digest   = md5_update;
@@ -86,13 +95,13 @@ int md5_init(struct kc_md5_t* md5)
   md5->logger = new_logger(KC_MD5_LOG_PATH);
   if (md5->logger == NULL)
   {
-    log_error(KC_NULL_REFERENCE_LOG);
-    return KC_NULL_REFERENCE;
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return KC_OUT_OF_MEMORY;
   }
 
   md5->count[0] = md5->count[1] = 0;
 
-  // Load magic initialization constants.
+  // load magic initialization constants
   md5->state[0] = 0x67452301;
   md5->state[1] = 0xefcdab89;
   md5->state[2] = 0x98badcfe;
@@ -179,7 +188,7 @@ int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
 
 //---------------------------------------------------------------------------//
 
-int md5_final(struct kc_md5_t* md5, unsigned char digest[16])
+int md5_final(struct kc_md5_t* md5, unsigned char digest[HALFWORD])
 {
   if (md5 == NULL)
   {
@@ -231,7 +240,7 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[16])
     return ret;
   }
 
-  // zeroize sensitive information.
+  // zeroize sensitive information
   ret = _md5_memset((POINTER)md5, 0, sizeof(*md5));
   if (ret != KC_SUCCESS)
   {
@@ -245,7 +254,48 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[16])
 
 //---------------------------------------------------------------------------//
 
-static int _md5_transform(UINT4 state[4], unsigned char block[64])
+int md5_to_string(unsigned char digest[HALFWORD], unsigned char str_hash[WORD])
+{
+  if (strlen(digest) <= 0)
+  {
+    log_error(KC_INVALID_ARGUMENT_LOG);
+    return KC_INVALID_ARGUMENT;
+  }
+
+  int ret = KC_SUCCESS;
+
+  ret = sprintf(
+    (char*)str_hash, 
+    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+    digest[0],
+    digest[1],
+    digest[2],
+    digest[3],
+    digest[4],
+    digest[5],
+    digest[6],
+    digest[7],
+    digest[8],
+    digest[9],
+    digest[10],
+    digest[11],
+    digest[12],
+    digest[13],
+    digest[14],
+    digest[15]
+  );
+
+  if (ret == KC_INVALID)
+  {
+    return KC_FORMAT_ERROR;
+  }
+
+  return KC_SUCCESS;
+}
+
+//---------------------------------------------------------------------------//
+
+static int _md5_transform(UINT4 state[NIBBLE], unsigned char block[OCTAWORD])
 {
   int ret = KC_SUCCESS;
 

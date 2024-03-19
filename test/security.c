@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 
 // ------------------ global ----------------- //
@@ -80,23 +81,23 @@ int check_decode_case(char* input, char* output)
 #define TEST_BLOCK_LEN   1000
 #define TEST_BLOCK_COUNT 1000
 
-void _md5_print(unsigned char digest[16])
-{
-  for (unsigned int i = 0; i < 16; ++i)
-  {
-    printf("%02x", digest[i]);
-  }
-}
+#ifdef _WIN32
+#define MD5_TEST_FILE        "C:\\Users\\user\\source\\repos\\keepcoding_core\\win\\kc_core\\biuld\\bin\\md5_test.txt"
+#else
+#define MD5_TEST_FILE        "build/bin/test/md5_test.txt"
+#endif
 
 int _check_md5_final(char* str, const char* expected)
 {
-  struct kc_md5_t context;
+  struct kc_md5_t* md5 = new_md5();
+
   unsigned char digest[16];
   unsigned int len = strlen(str);
 
-  md5_init(&context);
-  md5_update(&context, str, len);
-  md5_final(&context, digest);
+  md5->digest(md5, str, len);
+  md5->get_hash(md5, digest);
+
+  destroy_md5(md5);
 
   return _check_hex_final(digest, expected);
 }
@@ -117,43 +118,27 @@ int _check_md5_final(char* str, const char* expected)
 
 // ------------------ UUID ----------------- //
 
-void _print_uuid(struct kc_uuid_t u)
+int _compare_uuids(struct kc_uuid_t* u1, struct kc_uuid_t* u2)
 {
-  printf("%8.8x-", u.time_low);
-  printf("%4.4x-", u.time_mid);
-  printf("%4.4x-", u.time_hi_and_version);
-  printf("%2.2x",  u.clock_seq_hi_and_reserved);
-  printf("%2.2x-", u.clock_seq_low);
-
-  for (int i = 0; i < 6; ++i)
-  {
-    printf("%02x", (unsigned char)u.node[i]);
-  }
-
-  printf("\n");
-}
-
-int _compare_uuids(struct kc_uuid_t u1, struct kc_uuid_t u2)
-{
-  int comp = uuid_compare(&u1, &u1);
+  int comp = uuid_compare(u1, u1);
   if (comp != 0)
   {
     return KC_INVALID;
   }
 
-  comp = uuid_compare(&u2, &u2);
+  comp = uuid_compare(u2, u2);
   if (comp != 0)
   {
     return KC_INVALID;
   }
 
-  comp = uuid_compare(&u1, &u2);
+  comp = uuid_compare(u1, u2);
   if (comp == 0)
   {
     return KC_INVALID;
   }
 
-  comp = uuid_compare(&u2, &u1);
+  comp = uuid_compare(u2, u1);
   if (comp == 0)
   {
     return KC_INVALID;
@@ -164,12 +149,13 @@ int _compare_uuids(struct kc_uuid_t u1, struct kc_uuid_t u2)
 
 int _check_uuid(struct kc_uuid_t namespace_uuid)
 {
-  struct kc_uuid_t u1, u2;
+  struct kc_uuid_t* u1 = new_uuid();
+  struct kc_uuid_t* u2 = new_uuid();
 
   for (int i = 0; i < TEST_BLOCK_LEN; ++i)
   {
-    uuid_create(&u1);
-    uuid_create(&u2);
+    u1->create_v1(u1);
+    u2->create_v1(u2);
 
     int ret = _compare_uuids(u1, u2);
     if (ret != KC_SUCCESS)
@@ -180,8 +166,8 @@ int _check_uuid(struct kc_uuid_t namespace_uuid)
 
   for (int i = 0; i < TEST_BLOCK_LEN; ++i)
   {
-    uuid_create_md5_from_name(&u1, namespace_uuid, "www.widgets.com", 15);
-    uuid_create_md5_from_name(&u2, namespace_uuid, "www.widgets.com", 15);
+    u1->create_v3(u1, namespace_uuid, "www.keepcoding.tech", 19);
+    u2->create_v3(u2, namespace_uuid, "www.keepcoding.tech", 19);
 
     int ret = _compare_uuids(u1, u2);
     if (ret != KC_SUCCESS)
@@ -226,13 +212,11 @@ int main()
   {
     subtest("md5 string")
     {
-      struct kc_md5_t context;
+      struct kc_md5_t* md5 = new_md5();
       unsigned char digest[16];
-      unsigned int len = strlen("test");
 
-      md5_init(&context);
-      md5_update(&context, "test", len);
-      md5_final(&context, digest);
+      md5->digest(md5, "test", 4);
+      md5->get_hash(md5, digest);
 
       const unsigned char out[16] = 
       { 
@@ -241,12 +225,16 @@ int main()
       };
 
       ok(memcmp(digest, out, 16) == KC_SUCCESS);
+
+      destroy_md5(md5);
     }
 
     subtest("md5 time trial")
     {
-      struct kc_md5_t context;
-      time_t endTime, startTime;
+      struct kc_md5_t* md5 = new_md5();
+
+      time_t end_time, start_time;
+
       unsigned char block[TEST_BLOCK_LEN];
       unsigned char digest[16];
 
@@ -255,44 +243,75 @@ int main()
         block[i] = (unsigned char)(i & 0xff);
       }
 
-      time(&startTime);
-      md5_init(&context);
+      time(&start_time);
 
       for (unsigned int i = 0; i < TEST_BLOCK_COUNT; ++i)
       {
-        md5_update(&context, block, TEST_BLOCK_LEN);
+        md5->digest(md5, block, TEST_BLOCK_LEN);
       }
 
-      md5_final(&context, digest);
+      md5->get_hash(md5, digest);
 
-      time(&endTime);
+      time(&end_time);
 
-      ok((long)(endTime - startTime) <= 0);
+      ok((long)(end_time - start_time) <= 0);
+
+      destroy_md5(md5);
     }
 
     subtest("md5 test suite")
     {
-      ok(_check_md5_final("", "d41d8cd98f00b204e9800998ecf8427e") == KC_SUCCESS);
-      ok(_check_md5_final("a", "0cc175b9c0f1b6a831c399e269772661") == KC_SUCCESS);
-      ok(_check_md5_final("abc", "900150983cd24fb0d6963f7d28e17f72") == KC_SUCCESS);
-      ok(_check_md5_final("message digest", "f96b697d7cb7938d525a2f31aaf161d0") == KC_SUCCESS);
-      ok(_check_md5_final("abcdefghijklmnopqrstuvwxyz", "c3fcd3d76192e4007dfb496cca67e13b") == KC_SUCCESS);
-      ok(_check_md5_final("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", "d174ab98d277d9f5a5611c2c9f419d9f") == KC_SUCCESS);
-      ok(_check_md5_final("1234567890123456789012345678901234567890\1234567890123456789012345678901234567890", "ab56e40dae99a018623a018ea92693cd") == KC_SUCCESS);
+      ok(_check_md5_final(
+         "", 
+         "d41d8cd98f00b204e9800998ecf8427e"
+      ) == KC_SUCCESS);
+
+      ok(_check_md5_final(
+         "a", 
+         "0cc175b9c0f1b6a831c399e269772661"
+      ) == KC_SUCCESS);
+
+      ok(_check_md5_final(
+         "abc", 
+         "900150983cd24fb0d6963f7d28e17f72"
+      ) == KC_SUCCESS);
+
+      ok(_check_md5_final(
+         "message digest", 
+         "f96b697d7cb7938d525a2f31aaf161d0"
+      ) == KC_SUCCESS);
+
+      ok(_check_md5_final(
+         "abcdefghijklmnopqrstuvwxyz", 
+         "c3fcd3d76192e4007dfb496cca67e13b"
+      ) == KC_SUCCESS);
+
+      ok(_check_md5_final(
+         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 
+         "d174ab98d277d9f5a5611c2c9f419d9f"
+      ) == KC_SUCCESS);
+
+      ok(_check_md5_final(
+         "1234567890123456789012345678901234567890\1234567890123456789012345678901234567890", 
+         "ab56e40dae99a018623a018ea92693cd"
+      ) == KC_SUCCESS);
     }
 
     subtest("md5 file")
     {
       FILE* file;
 
-      if ((file = fopen("test", "rb")) == NULL)
+      if ((file = fopen(MD5_TEST_FILE, "w+")) == NULL)
       {
         printf("%s can't be opened\n", "test");
       }
       else
       {
-        struct kc_md5_t context;
-        md5_init(&context);
+        fprintf(file, "\na\nabc\n~!@#$%^&*()-_=+[{]}:;\"',<.>/?|\n1234567890\n"
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\n           \n"
+        );
+
+        struct kc_md5_t* md5 = new_md5();
 
         unsigned char buffer[1024];
         unsigned char digest[16];
@@ -300,13 +319,39 @@ int main()
 
         while (len = fread(buffer, 1, 1024, file))
         {
-          md5_update(&context, buffer, len);
+          md5->digest(md5, buffer, len);
         }
 
-        md5_final(&context, digest);
+        md5->get_hash(md5, digest);
+
+        ok(_check_hex_final(digest, "9908923b9c4b3028a6a881f8c37efba4") == KC_SUCCESS);
 
         fclose(file);
+
+        destroy_md5(md5);
       }
+    }
+
+    subtest("md5_to_string")
+    {
+      struct kc_md5_t* md5 = new_md5();
+      unsigned char digest[HALFWORD];
+      unsigned char str_md5[WORD + 1];
+
+      int ret = KC_SUCCESS;
+
+      ret = md5->digest(md5, "message digest", strlen("message digest"));
+      ok(ret == KC_SUCCESS);
+
+      ret = md5->get_hash(md5, digest);
+      ok(ret == KC_SUCCESS);
+
+      ret = md5_to_string(digest, str_md5);
+      ok(ret == KC_SUCCESS);
+      ok(strlen(str_md5) == WORD);
+      ok(strcmp(str_md5, "f96b697d7cb7938d525a2f31aaf161d0") == 0);
+
+      destroy_md5(md5);
     }
 
     done_testing();
@@ -326,37 +371,51 @@ int main()
         "DEA356A2CDDD90C7A7ECEDC5EBB563934F460452"
       };
 
-      struct kc_sha1_t sha;
       uint8_t digest[20];
 
       int ret = KC_INVALID;
 
       for (int j = 0; j < 4; ++j)
       {
-        ret = sha1_init(&sha);
-        ok(ret == KC_SUCCESS);
+        struct kc_sha1_t* sha1 = new_sha1();
 
         for (int i = 0; i < repeat_count[j]; ++i)
         {
-          ret = sha1_update(&sha, 
+          ret = sha1->digest(sha1, 
             (const unsigned char*)test_arr[j], 
             strlen(test_arr[j]));
 
           ok(ret == KC_SUCCESS);
         }
 
-        ret = sha1_final(&sha, digest);
+        ret = sha1->get_hash(sha1, digest);
         ok(ret == KC_SUCCESS);
 
         ok(_check_hex_final(digest, result_arr[j]) == KC_SUCCESS);
+
+        destroy_sha1(sha1);
       }
+    }
 
-      /* Test some error returns */
-      ret = sha1_update(&sha, (const unsigned char*)test_arr[1], 1);
-      ok(ret == KC_SHA1_STATE_ERROR);
+    subtest("sha1_to_string")
+    {
+      struct kc_sha1_t* sha1 = new_sha1();
+      uint8_t digest[KC_SHA1_LENGTH];
+      unsigned char str_sha1[41];
+      int ret = KC_SUCCESS;
 
-      ret = sha1_init(0);
-      ok(ret == KC_NULL_REFERENCE);
+      ret = sha1->digest(sha1, (const unsigned char*)TEST1, strlen(TEST1));
+      ok(ret == KC_SUCCESS);
+
+      ret = sha1->get_hash(sha1, digest);
+      ok(ret == KC_SUCCESS);
+
+      ret = sha1_to_string(digest, str_sha1);
+      ok(ret == KC_SUCCESS);
+      ok(strlen(str_sha1) == KC_STR_SHA1_LEN - 1);
+      ok(strcmp(str_sha1, "a9993e364706816aba3e25717850c26c9cd0d89d") == 0);
+
+      destroy_sha1(sha1);
     }
 
     done_testing();
@@ -364,6 +423,63 @@ int main()
 
   testgroup("UUID")
   {
+    const char* name = "www.keepcoding.tech";
+    struct kc_uuid_t nsid =
+    {
+        0x6ba7b811,
+        0x9dad,
+        0x11d1,
+        0x80,
+        0xb4,
+        0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+    };
+
+    subtest("UUID V1")
+    {
+      struct kc_uuid_t* uuid = new_uuid();
+      int ret = KC_SUCCESS;
+
+      ret = uuid->create_v1(uuid);
+      ok(ret == KC_SUCCESS);
+
+      destroy_uuid(uuid);
+    }
+
+    subtest("UUID V3")
+    {
+      struct kc_uuid_t* uuid = new_uuid();
+      int ret = KC_SUCCESS;
+
+      ret = uuid->create_v3(uuid, nsid, name, strlen(name));
+      ok(ret == KC_SUCCESS);
+
+      destroy_uuid(uuid);
+    }
+
+    subtest("UUID V5")
+    {
+      struct kc_uuid_t* uuid = new_uuid();
+      int ret = KC_SUCCESS;
+
+      ret = uuid->create_v5(uuid, nsid, name, strlen(name));
+      ok(ret == KC_SUCCESS);
+
+      destroy_uuid(uuid);
+    }
+
+    subtest("get_uuid()")
+    {
+      struct kc_uuid_t* uuid = new_uuid();
+      unsigned char str_uuid[KC_UUID_LENGTH];
+      int ret = KC_SUCCESS;
+
+      ret = uuid->get_uuid(uuid, str_uuid);
+      ok(ret == KC_SUCCESS);
+      ok(strlen(str_uuid) == (KC_UUID_LENGTH - 1));
+
+      destroy_uuid(uuid);
+    }
+
     subtest("namespace DNS")
     {
       // Name string is a fully-qualified domain name

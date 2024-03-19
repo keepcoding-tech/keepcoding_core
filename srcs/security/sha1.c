@@ -6,88 +6,154 @@
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "../../hdrs/security/sha1.h"
 
+#include <stdlib.h>
+
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-int sha1_init  (struct kc_sha1_t* context);
-int sha1_update  (struct kc_sha1_t* context, const uint8_t* msg_arrey, unsigned int len);
-int sha1_final (struct kc_sha1_t* context, uint8_t msg_digest[SHA1_HASH_SIZE]);
+int sha1_init    (struct kc_sha1_t* sha1);
+int sha1_update  (struct kc_sha1_t* sha1, const uint8_t* msg_arrey, unsigned int len);
+int sha1_final   (struct kc_sha1_t* sha1, uint8_t msg_digest[KC_SHA1_LENGTH]);
+
+int sha1_to_string  (uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[KC_STR_SHA1_LEN]);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
-void _sha1_process_message_block(struct kc_sha1_t* context);
-void _sha1_pad_message(struct kc_sha1_t* context);
+int _sha1_process_message_block  (struct kc_sha1_t* sha1);
+int _sha1_pad_message            (struct kc_sha1_t* sha1);
 
 //---------------------------------------------------------------------------//
 
-int sha1_init(struct kc_sha1_t* context)
+struct kc_sha1_t* new_sha1()
 {
-  if (context == NULL)
+  // create a SHA1 instance to be returned
+  struct kc_sha1_t* sha1 = malloc(sizeof(struct kc_sha1_t));
+  
+  // confirm that there is memory to allocate
+  if (sha1 == NULL)
   {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return NULL;
+  }
+
+  // initialize the structure members fields
+  int ret = sha1_init(sha1);
+  if (ret != KC_SUCCESS)
+  {
+    return NULL;
+  }
+
+  // assigns the public member methods
+  sha1->digest   = sha1_update;
+  sha1->get_hash = sha1_final;
+
+  return sha1;
+}
+
+//---------------------------------------------------------------------------//
+
+void destroy_sha1(struct kc_sha1_t* sha1)
+{
+  if (sha1 == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+    return;
+  }
+
+  free(sha1);
+}
+
+//---------------------------------------------------------------------------//
+
+int sha1_init(struct kc_sha1_t* sha1)
+{
+  if (sha1 == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
     return KC_NULL_REFERENCE;
   }
 
-  context->length_low = 0;
-  context->length_high = 0;
-  context->message_block_index = 0;
+  // create a new logger instance
+  sha1->logger = new_logger(KC_SHA1_LOG_PATH);
+  if (sha1->logger == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return KC_OUT_OF_MEMORY;
+  }
 
-  context->intermediate_hash[0] = 0x67452301;
-  context->intermediate_hash[1] = 0xEFCDAB89;
-  context->intermediate_hash[2] = 0x98BADCFE;
-  context->intermediate_hash[3] = 0x10325476;
-  context->intermediate_hash[4] = 0xC3D2E1F0;
+  sha1->length_low = 0;
+  sha1->length_high = 0;
+  sha1->message_block_index = 0;
 
-  context->computed = 0;
-  context->corrupted = 0;
+  // load magic initialization constants
+  sha1->intermediate_hash[0] = 0x67452301;
+  sha1->intermediate_hash[1] = 0xEFCDAB89;
+  sha1->intermediate_hash[2] = 0x98BADCFE;
+  sha1->intermediate_hash[3] = 0x10325476;
+  sha1->intermediate_hash[4] = 0xC3D2E1F0;
+
+  sha1->computed = 0;
+  sha1->corrupted = 0;
 
   return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-int sha1_update(struct kc_sha1_t* context, const uint8_t* msg_array, unsigned int len)
+int sha1_update(struct kc_sha1_t* sha1, const uint8_t* msg_array, unsigned int len)
 {
   if (len == 0)
   {
     return KC_SUCCESS;
   }
 
-  if (context == NULL || msg_array == NULL)
+  if (sha1 == NULL || msg_array == NULL)
   {
+    log_error(KC_NULL_REFERENCE_LOG);
     return KC_NULL_REFERENCE;
   }
 
-  if (context->computed)
+  if (sha1->computed)
   {
-    context->corrupted = KC_SHA1_STATE_ERROR;
+    sha1->corrupted = KC_SHA1_STATE_ERROR;
     return KC_SHA1_STATE_ERROR;
   }
 
-  if (context->corrupted)
+  if (sha1->corrupted)
   {
-    return context->corrupted;
+    return sha1->corrupted;
   }
 
-  while (len-- && !context->corrupted)
-  {
-    context->message_block[context->message_block_index++] = (*msg_array & 0xFF);
-    context->length_low += 8;
+  int ret = KC_SUCCESS;
 
-    if (context->length_low == 0)
+  while (len-- && !sha1->corrupted)
+  {
+    sha1->message_block[sha1->message_block_index++] = (*msg_array & 0xFF);
+
+    sha1->length_low += 8;
+
+    if (sha1->length_low == 0)
     {
-      context->length_high++;
-      if (context->length_high == 0)
+      sha1->length_high++;
+      if (sha1->length_high == 0)
       {
-        // Message is too long
-        context->corrupted = 1;
+        // message is too long
+        sha1->corrupted = KC_SHA1_INPUT_TOO_LONG;
       }
     }
 
-    if (context->message_block_index == 64)
+    if (sha1->message_block_index == 64)
     {
-      _sha1_process_message_block(context);
+      ret = _sha1_process_message_block(sha1);
+      if (ret != KC_SUCCESS)
+      {
+        sha1->logger->log(sha1->logger, KC_WARNING_LOG, ret,
+          __FILE__, __LINE__, __func__);
+        return ret;
+      }
     }
 
     msg_array++;
@@ -98,39 +164,46 @@ int sha1_update(struct kc_sha1_t* context, const uint8_t* msg_array, unsigned in
 
 //---------------------------------------------------------------------------//
 
-int sha1_final(struct kc_sha1_t* context, uint8_t msg_digest[SHA1_HASH_SIZE])
+int sha1_final(struct kc_sha1_t* sha1, uint8_t msg_digest[KC_SHA1_LENGTH])
 {
-  int i;
-
-  if (context == NULL || msg_digest == NULL)
+  if (sha1 == NULL || msg_digest == NULL)
   {
+    log_error(KC_NULL_REFERENCE_LOG);
     return KC_NULL_REFERENCE;
   }
 
-  if (context->corrupted)
+  int ret = KC_SUCCESS;
+
+  if (sha1->corrupted)
   {
-    return context->corrupted;
+    return sha1->corrupted;
   }
 
-  if (!context->computed)
+  if (!sha1->computed)
   {
-    _sha1_pad_message(context);
+    ret = _sha1_pad_message(sha1);
+    if (ret != KC_SUCCESS)
+    {
+      sha1->logger->log(sha1->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+      return ret;
+    }
 
     // message may be sensitive, clear it out
-    for (i = 0; i < 64; ++i)
+    for (int i = 0; i < 64; ++i)
     {
-      context->message_block[i] = 0;
+      sha1->message_block[i] = 0;
     }
 
     // and clear length
-    context->length_low = 0;
-    context->length_high = 0;
-    context->computed = 1;
+    sha1->length_low = 0;
+    sha1->length_high = 0;
+    sha1->computed = 1;
   }
 
-  for (i = 0; i < SHA1_HASH_SIZE; ++i)
+  for (int i = 0; i < KC_SHA1_LENGTH; ++i)
   {
-    msg_digest[i] = context->intermediate_hash[i >> 2] >> 8 * (3 - (i & 0x03));
+    msg_digest[i] = sha1->intermediate_hash[i >> 2] >> 8 * (3 - (i & 0x03));
   }
 
   return KC_SUCCESS;
@@ -138,8 +211,61 @@ int sha1_final(struct kc_sha1_t* context, uint8_t msg_digest[SHA1_HASH_SIZE])
 
 //---------------------------------------------------------------------------//
 
-void _sha1_process_message_block(struct kc_sha1_t* context)
+int sha1_to_string(uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[KC_STR_SHA1_LEN])
+{  
+  if (strlen(digest) <= 0)
+  {
+    log_error(KC_INVALID_ARGUMENT_LOG);
+    return KC_INVALID_ARGUMENT;
+  }
+
+  int ret = KC_SUCCESS;
+
+  ret = sprintf(
+    (char*)str_hash, 
+    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+    digest[0],
+    digest[1],
+    digest[2],
+    digest[3],
+    digest[4],
+    digest[5],
+    digest[6],
+    digest[7],
+    digest[8],
+    digest[9],
+    digest[10],
+    digest[11],
+    digest[12],
+    digest[13],
+    digest[14],
+    digest[15],
+    digest[16],
+    digest[17],
+    digest[18],
+    digest[19]
+  );
+
+  if (ret == KC_INVALID)
+  {
+    return KC_FORMAT_ERROR;
+  }
+
+
+  return KC_SUCCESS;
+}
+
+//---------------------------------------------------------------------------//
+
+int _sha1_process_message_block(struct kc_sha1_t* sha1)
 {
+  if (sha1 == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+    return KC_NULL_REFERENCE;
+  }
+
   // Constants defined in SHA-1
   const uint32_t K[] = 
   { 
@@ -157,10 +283,10 @@ void _sha1_process_message_block(struct kc_sha1_t* context)
   // initialize the first 16 words in the array W
   for (t = 0; t < 16; ++t)
   {
-    W[t] = context->message_block[t * 4] << 24;
-    W[t] |= context->message_block[t * 4 + 1] << 16;
-    W[t] |= context->message_block[t * 4 + 2] << 8;
-    W[t] |= context->message_block[t * 4 + 3];
+    W[t] = sha1->message_block[t * 4] << 24;
+    W[t] |= sha1->message_block[t * 4 + 1] << 16;
+    W[t] |= sha1->message_block[t * 4 + 2] << 8;
+    W[t] |= sha1->message_block[t * 4 + 3];
   }
 
   for (t = 16; t < 80; ++t)
@@ -168,11 +294,11 @@ void _sha1_process_message_block(struct kc_sha1_t* context)
     W[t] = SHA1_CIRCULAR_SHIFT(1, W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16]);
   }
 
-  A = context->intermediate_hash[0];
-  B = context->intermediate_hash[1];
-  C = context->intermediate_hash[2];
-  D = context->intermediate_hash[3];
-  E = context->intermediate_hash[4];
+  A = sha1->intermediate_hash[0];
+  B = sha1->intermediate_hash[1];
+  C = sha1->intermediate_hash[2];
+  D = sha1->intermediate_hash[3];
+  E = sha1->intermediate_hash[4];
 
   for (t = 0; t < 20; ++t)
   {
@@ -215,63 +341,88 @@ void _sha1_process_message_block(struct kc_sha1_t* context)
     A = temp;
   }
 
-  context->intermediate_hash[0] += A;
-  context->intermediate_hash[1] += B;
-  context->intermediate_hash[2] += C;
-  context->intermediate_hash[3] += D;
-  context->intermediate_hash[4] += E;
+  sha1->intermediate_hash[0] += A;
+  sha1->intermediate_hash[1] += B;
+  sha1->intermediate_hash[2] += C;
+  sha1->intermediate_hash[3] += D;
+  sha1->intermediate_hash[4] += E;
 
-  context->message_block_index = 0;
+  sha1->message_block_index = 0;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-void _sha1_pad_message(struct kc_sha1_t* context)
+int _sha1_pad_message(struct kc_sha1_t* sha1)
 {
+  if (sha1 == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+    return KC_NULL_REFERENCE;
+  }
+
+  int ret = KC_SUCCESS;
+
   // check to see if the current message block is too small to hold
   // the initial padding bits and length
   // 
   // if so, we will pad the block, process it, and then continue 
   // padding into a second block
   
-  if (context->message_block_index > 55)
+  if (sha1->message_block_index > 55)
   {
-    context->message_block[context->message_block_index++] = 0x80;
+    sha1->message_block[sha1->message_block_index++] = 0x80;
 
-    while (context->message_block_index < 64)
+    while (sha1->message_block_index < 64)
     {
-      context->message_block[context->message_block_index++] = 0;
+      sha1->message_block[sha1->message_block_index++] = 0;
     }
 
-    _sha1_process_message_block(context);
-
-    while (context->message_block_index < 56)
+    ret = _sha1_process_message_block(sha1);
+    if (ret != KC_SUCCESS)
     {
-      context->message_block[context->message_block_index++] = 0;
+      sha1->logger->log(sha1->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+      return ret;
+    }
+
+    while (sha1->message_block_index < 56)
+    {
+      sha1->message_block[sha1->message_block_index++] = 0;
     }
   }
   else
   {
-    context->message_block[context->message_block_index++] = 0x80;
+    sha1->message_block[sha1->message_block_index++] = 0x80;
 
-    while (context->message_block_index < 56)
+    while (sha1->message_block_index < 56)
     {
-      context->message_block[context->message_block_index++] = 0;
+      sha1->message_block[sha1->message_block_index++] = 0;
     }
   }
 
   // store the message length as the last 8 octets
-  context->message_block[56] = context->length_high >> 24;
-  context->message_block[57] = context->length_high >> 16;
-  context->message_block[58] = context->length_high >> 8;
-  context->message_block[59] = context->length_high;
+  sha1->message_block[56] = sha1->length_high >> 24;
+  sha1->message_block[57] = sha1->length_high >> 16;
+  sha1->message_block[58] = sha1->length_high >> 8;
+  sha1->message_block[59] = sha1->length_high;
 
-  context->message_block[60] = context->length_low >> 24;
-  context->message_block[61] = context->length_low >> 16;
-  context->message_block[62] = context->length_low >> 8;
-  context->message_block[63] = context->length_low;
+  sha1->message_block[60] = sha1->length_low >> 24;
+  sha1->message_block[61] = sha1->length_low >> 16;
+  sha1->message_block[62] = sha1->length_low >> 8;
+  sha1->message_block[63] = sha1->length_low;
 
-  _sha1_process_message_block(context);
+  ret = _sha1_process_message_block(sha1);
+  if (ret != KC_SUCCESS)
+  {
+    sha1->logger->log(sha1->logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+    return ret;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
+

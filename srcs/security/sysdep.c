@@ -9,19 +9,30 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "../../hdrs/security/sysdep.h"
+#include "../../hdrs/security/md5.h"
 
 #include <stdlib.h>
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-void get_ieee_node_identifier(struct kc_uuid_node_t* node);
-void get_system_time(kc_uuid_time_t* uuid_time);
-void get_random_info(char seed[16]);
+int  get_ieee_node_identifier  (struct kc_uuid_node_t* node);
+void get_system_time           (kc_uuid_time_t* uuid_time);
+void get_random_info           (char seed[HALFWORD]);
 
 //---------------------------------------------------------------------------//
 
-void get_ieee_node_identifier(struct kc_uuid_node_t* node)
+int get_ieee_node_identifier(struct kc_uuid_node_t* node)
 {
+  // system dependent call to get IEEE node ID, 
+  // which will generate a random node ID
+
+  if (node == NULL)
+  {
+    return KC_NULL_REFERENCE;
+  }
+
+  int ret = KC_SUCCESS;
+
   static struct kc_uuid_node_t saved_node;
   static inited = 0;
 
@@ -40,7 +51,6 @@ void get_ieee_node_identifier(struct kc_uuid_node_t* node)
       char seed[16];
       get_random_info(seed);
       seed[0] |= 0x01;
-
       memcpy(&saved_node, seed, sizeof saved_node);
 
       fp = fopen("nodeid", "wb");
@@ -56,13 +66,18 @@ void get_ieee_node_identifier(struct kc_uuid_node_t* node)
   }
 
   *node = saved_node;
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
 
-#ifdef _WIN32
 void get_system_time(kc_uuid_time_t* uuid_time)
 {
+  // system dependent call to get the current system time. Returned as
+  // 100ns ticks since UUID epoch, but resolution may be less than 100ns
+
+#ifdef _WIN32
   ULARGE_INTEGER time;
 
   // NT keeps time in FILETIME format which is 100ns ticks since
@@ -71,19 +86,33 @@ void get_system_time(kc_uuid_time_t* uuid_time)
   // + 18 years and 5 leap days. */
   GetSystemTimeAsFileTime((FILETIME*)&time);
   time.QuadPart +=
-
     (unsigned __int64)(1000 * 1000 * 10)               // seconds
     * (unsigned __int64)(60 * 60 * 24)                 // days
     * (unsigned __int64)(17 + 30 + 31 + 365 * 18 + 5); // # of days
 
   *uuid_time = time.QuadPart;
+
+#else
+
+  struct timeval tp;
+
+  gettimeofday(&tp, (struct timezone*)0);
+
+  // Offset between UUID formatted times and Unix formatted times.
+  // UUID UTC base time is October 15, 1582.
+  // Unix base time is January 1, 1970
+  *uuid_time = ((unsigned64)tp.tv_sec * 10000000)
+    + ((unsigned64)tp.tv_usec * 10)
+    + I64(0x01B21DD213814000);
+#endif
 }
 
 //---------------------------------------------------------------------------//
 
 /* !! Sample code, not for use in production; see RFC 1750 !! */
-void get_random_info(char seed[16])
+void get_random_info(char seed[HALFWORD])
 {
+#ifdef _WIN32
   struct kc_md5_t c;
 
   struct {
@@ -108,29 +137,9 @@ void get_random_info(char seed[16])
 
   md5_update(&c, &r, sizeof r);
   md5_final(&c, seed);
-}
 
-#else //---------------------------------------------------------------------//
+#else
 
-void get_system_time(uuid_time_t* uuid_time)
-{
-  struct timeval tp;
-
-  gettimeofday(&tp, (struct timezone*)0);
-
-  // Offset between UUID formatted times and Unix formatted times.
-  // UUID UTC base time is October 15, 1582.
-  // Unix base time is January 1, 1970
-  *uuid_time = ((unsigned64)tp.tv_sec * 10000000)
-    + ((unsigned64)tp.tv_usec * 10)
-    + I64(0x01B21DD213814000);
-}
-
-//---------------------------------------------------------------------------//
-
-/* !! Sample code, not for use in production; see RFC 1750 !! */
-void get_random_info(char seed[16])
-{
   struct kc_md5_t c;
 
   struct {
@@ -146,8 +155,7 @@ void get_random_info(char seed[16])
 
   md5_update(&c, &r, sizeof r);
   md5_final(&c, seed);
-}
-
 #endif
+}
 
 //---------------------------------------------------------------------------//
