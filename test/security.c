@@ -218,10 +218,10 @@ int main()
       md5->digest(md5, "test", 4);
       md5->get_hash(md5, digest);
 
-      const unsigned char out[16] = 
-      { 
-        0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 
-        0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6 
+      const unsigned char out[16] =
+      {
+        0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73,
+        0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6
       };
 
       ok(memcmp(digest, out, 16) == KC_SUCCESS);
@@ -262,37 +262,37 @@ int main()
     subtest("md5 test suite")
     {
       ok(_check_md5_final(
-         "", 
+         "",
          "d41d8cd98f00b204e9800998ecf8427e"
       ) == KC_SUCCESS);
 
       ok(_check_md5_final(
-         "a", 
+         "a",
          "0cc175b9c0f1b6a831c399e269772661"
       ) == KC_SUCCESS);
 
       ok(_check_md5_final(
-         "abc", 
+         "abc",
          "900150983cd24fb0d6963f7d28e17f72"
       ) == KC_SUCCESS);
 
       ok(_check_md5_final(
-         "message digest", 
+         "message digest",
          "f96b697d7cb7938d525a2f31aaf161d0"
       ) == KC_SUCCESS);
 
       ok(_check_md5_final(
-         "abcdefghijklmnopqrstuvwxyz", 
+         "abcdefghijklmnopqrstuvwxyz",
          "c3fcd3d76192e4007dfb496cca67e13b"
       ) == KC_SUCCESS);
 
       ok(_check_md5_final(
-         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 
+         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
          "d174ab98d277d9f5a5611c2c9f419d9f"
       ) == KC_SUCCESS);
 
       ok(_check_md5_final(
-         "1234567890123456789012345678901234567890\1234567890123456789012345678901234567890", 
+         "1234567890123456789012345678901234567890\1234567890123456789012345678901234567890",
          "ab56e40dae99a018623a018ea92693cd"
       ) == KC_SUCCESS);
     }
@@ -335,8 +335,8 @@ int main()
     subtest("md5_to_string")
     {
       struct kc_md5_t* md5 = new_md5();
-      unsigned char digest[HALFWORD];
-      unsigned char str_md5[WORD + 1];
+      unsigned char digest[16];
+      unsigned char str_md5[32 + 1];
 
       int ret = KC_SUCCESS;
 
@@ -348,7 +348,7 @@ int main()
 
       ret = md5_to_string(digest, str_md5);
       ok(ret == KC_SUCCESS);
-      ok(strlen(str_md5) == WORD);
+      ok(strlen(str_md5) == 32);
       ok(strcmp(str_md5, "f96b697d7cb7938d525a2f31aaf161d0") == 0);
 
       destroy_md5(md5);
@@ -381,8 +381,8 @@ int main()
 
         for (int i = 0; i < repeat_count[j]; ++i)
         {
-          ret = sha1->digest(sha1, 
-            (const unsigned char*)test_arr[j], 
+          ret = sha1->digest(sha1,
+            (const unsigned char*)test_arr[j],
             strlen(test_arr[j]));
 
           ok(ret == KC_SUCCESS);
@@ -412,7 +412,7 @@ int main()
 
       ret = sha1_to_string(digest, str_sha1);
       ok(ret == KC_SUCCESS);
-      ok(strlen(str_sha1) == KC_STR_SHA1_LEN - 1);
+      ok(strlen(str_sha1) == KC_SHA1_LENGTH);
       ok(strcmp(str_sha1, "a9993e364706816aba3e25717850c26c9cd0d89d") == 0);
 
       destroy_sha1(sha1);
@@ -484,13 +484,13 @@ int main()
     {
       // Name string is a fully-qualified domain name
       // 6ba7b810-9dad-11d1-80b4-00c04fd430c8
-      struct kc_uuid_t namespace_DNS = 
+      struct kc_uuid_t namespace_DNS =
       {
           0x6ba7b810,
           0x9dad,
           0x11d1,
-          0x80, 
-          0xb4, 
+          0x80,
+          0xb4,
           0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
       };
 
@@ -501,13 +501,13 @@ int main()
     {
       // Name string is a URL
       // 6ba7b811-9dad-11d1-80b4-00c04fd430c8
-      struct kc_uuid_t namespace_URL = 
+      struct kc_uuid_t namespace_URL =
       {
           0x6ba7b811,
           0x9dad,
           0x11d1,
-          0x80, 
-          0xb4, 
+          0x80,
+          0xb4,
           0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
       };
 
@@ -518,13 +518,13 @@ int main()
     {
       // Name string is an ISO OID
       // 6ba7b812-9dad-11d1-80b4-00c04fd430c8
-      struct kc_uuid_t namespace_OID = 
+      struct kc_uuid_t namespace_OID =
       {
           0x6ba7b812,
           0x9dad,
           0x11d1,
-          0x80, 
-          0xb4, 
+          0x80,
+          0xb4,
           0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
       };
 
@@ -535,13 +535,13 @@ int main()
     {
       // Name string is an X.500 DN (in DER or a text output format)
       // 6ba7b814-9dad-11d1-80b4-00c04fd430c8
-      struct kc_uuid_t namespace_X500 = 
+      struct kc_uuid_t namespace_X500 =
       {
           0x6ba7b814,
           0x9dad,
           0x11d1,
-          0x80, 
-          0xb4, 
+          0x80,
+          0xb4,
           0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
       };
 

@@ -7,19 +7,19 @@
 // SPDX-License-Identifier: MIT License
 
 /*
- * Secure Hash Algorithm, SHA-1, for computing a condensed representation of a 
+ * Secure Hash Algorithm, SHA-1, for computing a condensed representation of a
  * message or a data file.  When a message of any length < 2^64 bits is input,
  * the SHA-1 produces a 160-bit output called a message digest.
- * 
- * The message digest can then, for example, be input to a signature algorithm 
- * which generates or verifies the signature for the message. Signing the 
- * message digest rather than the message often improves the efficiency of the 
+ *
+ * The message digest can then, for example, be input to a signature algorithm
+ * which generates or verifies the signature for the message. Signing the
+ * message digest rather than the message often improves the efficiency of the
  * process because the message digest is usually much smaller in size than the
  * message.
- * 
- * The same hash algorithm must be used by the verifier of a digital signature 
- * as was used by the creator of the digital signature. Any change to the 
- * message in transit will, with very high probability, result in a different 
+ *
+ * The same hash algorithm must be used by the verifier of a digital signature
+ * as was used by the creator of the digital signature. Any change to the
+ * message in transit will, with very high probability, result in a different
  * message digest, and the signature will fail to verify.
 */
 
@@ -50,7 +50,6 @@ enum
 #define KC_SHA1_LOG_PATH  "build/log/sha1.log"
 
 #define KC_SHA1_LENGTH  20
-#define KC_STR_SHA1_LEN 41
 
 //---------------------------------------------------------------------------//
 
@@ -87,13 +86,13 @@ int sha1_init    (struct kc_sha1_t* context);
 int sha1_update  (struct kc_sha1_t* context, const uint8_t* msg_array, unsigned int len);
 int sha1_final   (struct kc_sha1_t* context, uint8_t msg_digest[KC_SHA1_LENGTH]);
 
-int sha1_to_string  (uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[KC_STR_SHA1_LEN]);
+int sha1_to_string  (uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[(KC_SHA1_LENGTH * 2) + 1]);
 
 //---------------------------------------------------------------------------//
 
 // SHA1 circular left shift macro
-#define SHA1_CIRCULAR_SHIFT(bits, word)           \
-  (((word) << (bits)) | ((word) >> (32-(bits))))
+#define SHA1_CIRCULAR_SHIFT(bits, 32)           \
+  (((32) << (bits)) | ((32) >> (32-(bits))))
 
 //---------------------------------------------------------------------------//
 

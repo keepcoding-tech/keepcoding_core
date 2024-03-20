@@ -46,7 +46,7 @@
 
 #define KC_UUID_LOG_PATH  "build/log/uuid.log"
 
-#define KC_UUID_LENGTH 37
+#define KC_UUID_LENGTH 36
 
 //---------------------------------------------------------------------------//
 
@@ -64,7 +64,7 @@ struct kc_uuid_t
   int (*create_v1)  (struct kc_uuid_t* self);
   int (*create_v3)  (struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name, int name_len);
   int (*create_v5)  (struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name, int name_len);
-  int (*get_uuid)   (struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH]);
+  int (*get_uuid)   (struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH + 1]);
   int (*compare)    (struct kc_uuid_t* self, struct kc_uuid_t* uuid);
 };
 
@@ -76,7 +76,7 @@ void              destroy_uuid  (struct kc_uuid_t* uuid);
 int uuid_create_ver_1  (struct kc_uuid_t * uuid);
 int uuid_create_ver_3  (struct kc_uuid_t* uuid, struct kc_uuid_t nsid, void* name, int name_len);
 int uuid_create_ver_5  (struct kc_uuid_t* uuid, struct kc_uuid_t nsid, void* name, int name_len);
-int uuid_get_hash      (struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH]);
+int uuid_get_hash      (struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH + 1]);
 int uuid_compare       (struct kc_uuid_t* u1, struct kc_uuid_t* u2);
 
 //---------------------------------------------------------------------------//

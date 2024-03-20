@@ -17,13 +17,13 @@
 
 int  get_ieee_node_identifier  (struct kc_uuid_node_t* node);
 void get_system_time           (kc_uuid_time_t* uuid_time);
-void get_random_info           (char seed[HALFWORD]);
+void get_random_info           (char seed[16]);
 
 //---------------------------------------------------------------------------//
 
 int get_ieee_node_identifier(struct kc_uuid_node_t* node)
 {
-  // system dependent call to get IEEE node ID, 
+  // system dependent call to get IEEE node ID,
   // which will generate a random node ID
 
   if (node == NULL)
@@ -110,7 +110,7 @@ void get_system_time(kc_uuid_time_t* uuid_time)
 //---------------------------------------------------------------------------//
 
 /* !! Sample code, not for use in production; see RFC 1750 !! */
-void get_random_info(char seed[HALFWORD])
+void get_random_info(char seed[16])
 {
 #ifdef _WIN32
   struct kc_md5_t c;

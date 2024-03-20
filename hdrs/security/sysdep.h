@@ -43,17 +43,7 @@
 
 //---------------------------------------------------------------------------//
 
-// terminologies for various bit group
-#define BIT        1
-#define HALFNIBBLE 2
-#define NIBBLE     4
-#define OCTET      8
-#define HALFWORD   16
-#define WORD       32
-#define OCTAWORD   64
-#define QUADWORD   128
-
-// set the following to the number of 100ns ticks 
+// set the following to the number of 100ns ticks
 // of the actual resolution of your system's clock
 #define UUIDS_PER_TICK 1024
 
@@ -92,7 +82,7 @@ struct kc_uuid_node_t
 
 int  get_ieee_node_identifier  (struct kc_uuid_node_t* node);
 void get_system_time           (kc_uuid_time_t* uuid_time);
-void get_random_info           (char seed[HALFWORD]);
+void get_random_info           (char seed[16]);
 
 //---------------------------------------------------------------------------//
 

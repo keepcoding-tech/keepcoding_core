@@ -18,7 +18,7 @@ int sha1_init    (struct kc_sha1_t* sha1);
 int sha1_update  (struct kc_sha1_t* sha1, const uint8_t* msg_arrey, unsigned int len);
 int sha1_final   (struct kc_sha1_t* sha1, uint8_t msg_digest[KC_SHA1_LENGTH]);
 
-int sha1_to_string  (uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[KC_STR_SHA1_LEN]);
+int sha1_to_string  (uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[(KC_SHA1_LENGTH * 2) + 1]);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
@@ -31,7 +31,7 @@ struct kc_sha1_t* new_sha1()
 {
   // create a SHA1 instance to be returned
   struct kc_sha1_t* sha1 = malloc(sizeof(struct kc_sha1_t));
-  
+
   // confirm that there is memory to allocate
   if (sha1 == NULL)
   {
@@ -211,8 +211,8 @@ int sha1_final(struct kc_sha1_t* sha1, uint8_t msg_digest[KC_SHA1_LENGTH])
 
 //---------------------------------------------------------------------------//
 
-int sha1_to_string(uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[KC_STR_SHA1_LEN])
-{  
+int sha1_to_string(uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[(KC_SHA1_LENGTH * 2) + 1])
+{
   if (strlen(digest) <= 0)
   {
     log_error(KC_INVALID_ARGUMENT_LOG);
@@ -222,7 +222,7 @@ int sha1_to_string(uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[KC_STR
   int ret = KC_SUCCESS;
 
   ret = sprintf(
-    (char*)str_hash, 
+    (char*)str_hash,
     "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
     "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
     digest[0],
@@ -267,18 +267,18 @@ int _sha1_process_message_block(struct kc_sha1_t* sha1)
   }
 
   // Constants defined in SHA-1
-  const uint32_t K[] = 
-  { 
+  const uint32_t K[] =
+  {
     0x5A827999,
     0x6ED9EBA1,
     0x8F1BBCDC,
     0xCA62C1D6
   };
 
-  int      t;                 // Loop counter                
-  uint32_t temp;              // Temporary word value        
-  uint32_t W[80];             // Word sequence               
-  uint32_t A, B, C, D, E;     // Word buffers      
+  int      t;                 // Loop counter
+  uint32_t temp;              // Temporary 32 value
+  uint32_t W[80];             // 32 sequence
+  uint32_t A, B, C, D, E;     // 32 buffers
 
   // initialize the first 16 words in the array W
   for (t = 0; t < 16; ++t)
@@ -366,10 +366,10 @@ int _sha1_pad_message(struct kc_sha1_t* sha1)
 
   // check to see if the current message block is too small to hold
   // the initial padding bits and length
-  // 
-  // if so, we will pad the block, process it, and then continue 
+  //
+  // if so, we will pad the block, process it, and then continue
   // padding into a second block
-  
+
   if (sha1->message_block_index > 55)
   {
     sha1->message_block[sha1->message_block_index++] = 0x80;

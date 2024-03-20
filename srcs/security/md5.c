@@ -19,13 +19,13 @@
 
 int md5_init   PROTO_LIST((struct kc_md5_t* md5));
 int md5_update PROTO_LIST((struct kc_md5_t* md5, unsigned char* input, unsigned int in_len));
-int md5_final  PROTO_LIST((struct kc_md5_t* md5, unsigned char digest[WORD]));
+int md5_final  PROTO_LIST((struct kc_md5_t* md5, unsigned char digest[KC_MD5_LENGTH]));
 
-int md5_to_string(unsigned char digest[HALFWORD], unsigned char str_hash[WORD]);
+int md5_to_string(unsigned char digest[KC_MD5_LENGTH], unsigned char str_hash[(KC_MD5_LENGTH * 2) + 1]);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
-static int _md5_transform PROTO_LIST((UINT4[NIBBLE], unsigned char[OCTAWORD]));
+static int _md5_transform PROTO_LIST((UINT4[4], unsigned char[64]));
 static int _encode        PROTO_LIST((unsigned char*, UINT4*, unsigned int));
 static int _decode        PROTO_LIST((UINT4*, unsigned char*, unsigned int));
 static int _md5_memcpy    PROTO_LIST((POINTER, POINTER, unsigned int));
@@ -33,7 +33,7 @@ static int _md5_memset    PROTO_LIST((POINTER, int, unsigned int));
 
 //---------------------------------------------------------------------------//
 
-static unsigned char PADDING[64] = 
+static unsigned char PADDING[64] =
 {
   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -46,7 +46,7 @@ struct kc_md5_t* new_md5()
 {
   // create a MD5 instance to be returned
   struct kc_md5_t* md5 = malloc(sizeof(struct kc_md5_t));
-  
+
   // confirm that there is memory to allocate
   if (md5 == NULL)
   {
@@ -143,7 +143,7 @@ int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
     ret = _md5_memcpy((POINTER)&md5->buffer[index], (POINTER)input, part_len);
     if (ret != KC_SUCCESS)
     {
-      md5->logger->log(md5->logger, KC_WARNING_LOG, ret, 
+      md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
         __FILE__, __LINE__, __func__);
       return ret;
     }
@@ -151,7 +151,7 @@ int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
     ret = _md5_transform(md5->state, md5->buffer);
     if (ret != KC_SUCCESS)
     {
-      md5->logger->log(md5->logger, KC_WARNING_LOG, ret, 
+      md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
         __FILE__, __LINE__, __func__);
       return ret;
     }
@@ -188,7 +188,7 @@ int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
 
 //---------------------------------------------------------------------------//
 
-int md5_final(struct kc_md5_t* md5, unsigned char digest[HALFWORD])
+int md5_final(struct kc_md5_t* md5, unsigned char digest[(KC_MD5_LENGTH * 2) + 1])
 {
   if (md5 == NULL)
   {
@@ -254,7 +254,7 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[HALFWORD])
 
 //---------------------------------------------------------------------------//
 
-int md5_to_string(unsigned char digest[HALFWORD], unsigned char str_hash[WORD])
+int md5_to_string(unsigned char digest[KC_MD5_LENGTH], unsigned char str_hash[(KC_MD5_LENGTH * 2) + 1])
 {
   if (strlen(digest) <= 0)
   {
@@ -265,7 +265,7 @@ int md5_to_string(unsigned char digest[HALFWORD], unsigned char str_hash[WORD])
   int ret = KC_SUCCESS;
 
   ret = sprintf(
-    (char*)str_hash, 
+    (char*)str_hash,
     "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
     digest[0],
     digest[1],
@@ -295,7 +295,7 @@ int md5_to_string(unsigned char digest[HALFWORD], unsigned char str_hash[WORD])
 
 //---------------------------------------------------------------------------//
 
-static int _md5_transform(UINT4 state[NIBBLE], unsigned char block[OCTAWORD])
+static int _md5_transform(UINT4 state[4], unsigned char block[64])
 {
   int ret = KC_SUCCESS;
 
@@ -440,7 +440,7 @@ static int _decode(UINT4* output, unsigned char* input, unsigned int len)
 
   for (unsigned int i = 0, j = 0; j < len; ++i, j += 4)
   {
-    output[i] = ((UINT4)input[j]) | (((UINT4)input[j + 1]) << 8) | 
+    output[i] = ((UINT4)input[j]) | (((UINT4)input[j + 1]) << 8) |
       (((UINT4)input[j + 2]) << 16) | (((UINT4)input[j + 3]) << 24);
   }
 
