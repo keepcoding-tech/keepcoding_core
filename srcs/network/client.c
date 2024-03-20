@@ -29,7 +29,6 @@ struct kc_client_t* new_client()
   if (new_client == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return NULL;
   }
 
@@ -46,7 +45,6 @@ void destroy_client(struct kc_client_t* client)
   if (client == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return;
   }
 
@@ -60,7 +58,6 @@ int start_client(struct kc_client_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -74,7 +71,6 @@ int stop_client(struct kc_client_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 

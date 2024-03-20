@@ -44,7 +44,7 @@
 struct kc_vector_t
 {
   size_t              _capacity;
-  struct kc_logger_t* _log;
+  struct kc_logger_t* _logger;
 
   void** data;
   size_t length;
@@ -68,6 +68,8 @@ struct kc_vector_t
 
 struct kc_vector_t* new_vector      ();
 void                destroy_vector  (struct kc_vector_t* vector);
+
+//---------------------------------------------------------------------------//
 
 #define COMPARE_VECTOR(type, function_name)         \
   int function_name(const void* a, const void* b)   \

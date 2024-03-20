@@ -71,7 +71,7 @@ struct kc_sha1_t
   int computed;
   int corrupted;
 
-  struct kc_logger_t* logger;
+  struct kc_logger_t* _logger;
 
   int (*digest)    (struct kc_sha1_t* self, const uint8_t* msg_array, unsigned int len);
   int (*get_hash)  (struct kc_sha1_t* context, uint8_t msg_digest[KC_SHA1_LENGTH]);

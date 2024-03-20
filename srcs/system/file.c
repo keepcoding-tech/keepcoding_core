@@ -38,40 +38,47 @@ static int write_file     (struct kc_file_t* self, char* buffer);
 struct kc_file_t* new_file()
 {
   // create a file instance to be returned
-  struct kc_file_t* file = malloc(sizeof(struct kc_file_t));
+  struct kc_file_t* new_file = malloc(sizeof(struct kc_file_t));
 
-  if (file == NULL)
+  if (new_file == NULL)
   {
-log_error(KC_OUT_OF_MEMORY_LOG);
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return NULL;
+  }
+
+  new_file->_logger = new_logger(KC_FILE_LOG);
+  if (new_file->_logger == NULL)
+  {
+    log_error(KC_NULL_REFERENCE_LOG);
+
+    // free the list instance
+    free(new_file);
 
     return NULL;
   }
 
-  struct kc_logger_t* log = new_logger(KC_FILE_LOG);
-
   // assigns the public member fields
-  file->_log   = log;
-  file->file   = NULL;
-  file->name   = NULL;
-  file->path   = NULL;
-  file->mode   = KC_FILE_NOT_FOUND;
-  file->opened = false;
+  new_file->file     = NULL;
+  new_file->name     = NULL;
+  new_file->path     = NULL;
+  new_file->mode     = KC_FILE_NOT_FOUND;
+  new_file->opened   = false;
 
   // assigns the public member methods
-  file->close       = close_file;
-  file->create_path = create_path;
-  file->delete      = delete_file;
-  file->delete_path = delete_path;
-  file->get_mode    = get_file_mode;
-  file->get_name    = get_file_name;
-  file->get_path    = get_file_path;
-  file->is_open     = get_opened;
-  file->move        = NULL;
-  file->open        = open_file;
-  file->read        = read_file;
-  file->write       = write_file;
+  new_file->close       = close_file;
+  new_file->create_path = create_path;
+  new_file->delete      = delete_file;
+  new_file->delete_path = delete_path;
+  new_file->get_mode    = get_file_mode;
+  new_file->get_name    = get_file_name;
+  new_file->get_path    = get_file_path;
+  new_file->is_open     = get_opened;
+  new_file->move        = NULL;
+  new_file->open        = open_file;
+  new_file->read        = read_file;
+  new_file->write       = write_file;
 
-  return file;
+  return new_file;
 }
 
 //---------------------------------------------------------------------------//
@@ -84,7 +91,7 @@ void destroy_file(struct kc_file_t* file)
     return;
   }
 
-  destroy_logger(file->_log);
+  destroy_logger(file->_logger);
 
   // close the file if still open
   file->close(file);
@@ -100,7 +107,6 @@ int close_file(struct kc_file_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -123,7 +129,6 @@ int create_path(struct kc_file_t* self, char* path)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -141,6 +146,9 @@ int create_path(struct kc_file_t* self, char* path)
   self->path = (char*)malloc(sizeof(char) * (strlen(path) + 1));
   if (self->path == NULL)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_OUT_OF_MEMORY,
+        __FILE__, __LINE__, __func__);
+
     return KC_OUT_OF_MEMORY;
   }
 
@@ -157,7 +165,6 @@ int delete_file(struct kc_file_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -166,7 +173,7 @@ int delete_file(struct kc_file_t* self)
 
   if (remove(self->name) != 0)
   {
-    self->_log->log(self->_log, KC_ERROR_LOG, KC_FILE_NOT_FOUND_LOG,
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_FILE_NOT_FOUND,
         __FILE__, __LINE__, __func__);
 
     return KC_FILE_NOT_FOUND;
@@ -185,7 +192,6 @@ int delete_path(struct kc_file_t* self, char* path)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -196,8 +202,9 @@ int delete_path(struct kc_file_t* self, char* path)
   // open the directory
   if ((dir = opendir(path)) == NULL)
   {
-    self->_log->log(self->_log, KC_ERROR_LOG, KC_CANT_OPEN_DIR_LOG,
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_CANT_OPEN_DIR,
         __FILE__, __LINE__, __func__);
+
     return KC_CANT_OPEN_DIR;
   }
 
@@ -217,8 +224,9 @@ int delete_path(struct kc_file_t* self, char* path)
     // get information about the entry
     if (stat(entry_path, &statbuf) == -1)
     {
-      self->_log->log(self->_log, KC_FATAL_LOG, KC_FATAL_LOG_ERROR_LOG,
+      self->_logger->log(self->_logger, KC_FATAL_LOG, KC_FATAL_LOG_ERROR,
           __FILE__, __LINE__, __func__);
+
       return KC_FATAL_LOG_ERROR;
     }
 
@@ -232,8 +240,9 @@ int delete_path(struct kc_file_t* self, char* path)
       // delete regular files
       if (unlink(entry_path) == -1)
       {
-        self->_log->log(self->_log, KC_FATAL_LOG, KC_FATAL_LOG_ERROR_LOG,
+        self->_logger->log(self->_logger, KC_FATAL_LOG, KC_FATAL_LOG_ERROR,
             __FILE__, __LINE__, __func__);
+
         return KC_FATAL_LOG_ERROR;
       }
     }
@@ -245,8 +254,9 @@ int delete_path(struct kc_file_t* self, char* path)
   // delete the current directory
   if (rmdir(path) == -1)
   {
-    self->_log->log(self->_log, KC_FATAL_LOG, KC_FATAL_LOG_ERROR_LOG,
+    self->_logger->log(self->_logger, KC_FATAL_LOG, KC_FATAL_LOG_ERROR,
         __FILE__, __LINE__, __func__);
+
     return KC_FATAL_LOG_ERROR;
   }
 
@@ -260,7 +270,6 @@ int get_file_mode(struct kc_file_t* self, int* mode)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -283,7 +292,6 @@ int get_file_name(struct kc_file_t* self, char** name)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -306,7 +314,6 @@ int get_file_path(struct kc_file_t* self, char** path)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -323,7 +330,6 @@ int get_opened(struct kc_file_t* self, bool* is_open)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -339,7 +345,6 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -390,7 +395,7 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   if (self->mode == KC_FILE_NOT_FOUND || tmp_mode == NULL)
   {
     // invalid mode provided
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INVALID_ARGUMENT_LOG,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_INVALID_ARGUMENT,
         __FILE__, __LINE__, __func__);
 
     return KC_INVALID_ARGUMENT;
@@ -407,7 +412,7 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   if (self->file == NULL)
   {
     // file opening failed
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_FILE_NOT_FOUND_LOG,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_FILE_NOT_FOUND,
         __FILE__, __LINE__, __func__);
 
     return KC_INVALID_ARGUMENT;
@@ -417,7 +422,7 @@ int open_file(struct kc_file_t* self, char* name, unsigned int mode)
   self->name = (char*)malloc(sizeof(char) * (strlen(name) + 1));
   if (self->name == NULL)
   {
-    self->_log->log(self->_log, KC_ERROR_LOG, KC_OUT_OF_MEMORY_LOG,
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_OUT_OF_MEMORY,
         __FILE__, __LINE__, __func__);
 
     return KC_OUT_OF_MEMORY;
@@ -438,7 +443,6 @@ int read_file(struct kc_file_t* self, char** buffer)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -455,6 +459,9 @@ int read_file(struct kc_file_t* self, char** buffer)
   // Error determining file size
   if (file_size == -1)
   {
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_OVERFLOW,
+        __FILE__, __LINE__, __func__);
+
     return KC_OVERFLOW;
   }
 
@@ -466,6 +473,9 @@ int read_file(struct kc_file_t* self, char** buffer)
   // Memory allocation failed
   if (*buffer == NULL)
   {
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_OUT_OF_MEMORY,
+        __FILE__, __LINE__, __func__);
+
     return KC_OUT_OF_MEMORY;
   }
 
@@ -476,6 +486,9 @@ int read_file(struct kc_file_t* self, char** buffer)
   if (bytes_read != (size_t)file_size)
   {
     free(buffer);
+
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_OVERFLOW,
+        __FILE__, __LINE__, __func__);
 
     return KC_OVERFLOW;
   }
@@ -502,6 +515,9 @@ int write_file(struct kc_file_t* self, char* buffer)
   // Error writing content to file
   if (bytes_written != strlen(buffer))
   {
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_IO_ERROR,
+        __FILE__, __LINE__, __func__);
+
     return KC_IO_ERROR;
   }
 

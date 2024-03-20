@@ -59,7 +59,7 @@ struct kc_uuid_t
   unsigned char  clock_seq_low;
   char           node[6];
 
-  struct kc_logger_t* logger;
+  struct kc_logger_t* _logger;
 
   int (*create_v1)  (struct kc_uuid_t* self);
   int (*create_v3)  (struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name, int name_len);

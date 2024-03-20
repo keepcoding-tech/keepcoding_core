@@ -37,9 +37,9 @@ struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
   }
 
   // create a console log instance to be used for the set
-  new_set->_log = new_logger(KC_SET_LOG_PATH);
+  new_set->_logger = new_logger(KC_SET_LOG_PATH);
 
-  if (new_set->_log == NULL)
+  if (new_set->_logger == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
 
@@ -57,7 +57,7 @@ struct kc_set_t* new_set(int (*compare)(const void* a, const void* b))
     log_error(KC_NULL_REFERENCE_LOG);
 
     // free the set instances
-    destroy_logger(new_set->_log);
+    destroy_logger(new_set->_logger);
     free(new_set);
 
     return NULL;
@@ -89,7 +89,7 @@ void destroy_set(struct kc_set_t* set)
     recursive_set_destroy(set->_entries->root);
   }
 
-  destroy_logger(set->_log);
+  destroy_logger(set->_logger);
 
   // free the instance too
   free(set);
@@ -97,20 +97,26 @@ void destroy_set(struct kc_set_t* set)
 
 //---------------------------------------------------------------------------//
 
-int insert_new_pair_set(struct kc_set_t* self, void* key,
-    size_t key_size, void* value, size_t value_size)
+int insert_new_pair_set(struct kc_set_t* self, void* key, size_t key_size, void* value, size_t value_size)
 {
   // if the set reference is NULL, do nothing
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   // check if the pair already exists in the set
   struct kc_node_t* node = NULL;
-  search_pair_set(self, key, key_size, &node->data);
+  int ret = search_pair_set(self, key, key_size, &node->data);
+  if (ret != KC_SUCCESS)
+  {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
+    return ret;
+  }
+
   if (node != NULL)
   {
     return KC_SUCCESS;
@@ -124,6 +130,9 @@ int insert_new_pair_set(struct kc_set_t* self, void* key,
 
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -138,7 +147,6 @@ int remove_pair_set(struct kc_set_t* self, void* key, size_t key_size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -156,6 +164,9 @@ int remove_pair_set(struct kc_set_t* self, void* key, size_t key_size)
   int ret = self->_entries->remove(self->_entries, pair_to_remove, sizeof(struct kc_pair_t));
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -183,6 +194,9 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
 
   if (searchable == NULL)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_OUT_OF_MEMORY,
+      __FILE__, __LINE__, __func__);
+
     return KC_INVALID;
   }
 
@@ -191,6 +205,9 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
   int ret = self->_entries->search(self->_entries, searchable, &result_node);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
     return ret;
   }
 

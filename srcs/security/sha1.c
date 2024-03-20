@@ -30,27 +30,27 @@ int _sha1_pad_message            (struct kc_sha1_t* sha1);
 struct kc_sha1_t* new_sha1()
 {
   // create a SHA1 instance to be returned
-  struct kc_sha1_t* sha1 = malloc(sizeof(struct kc_sha1_t));
+  struct kc_sha1_t* new_sha1 = malloc(sizeof(struct kc_sha1_t));
 
   // confirm that there is memory to allocate
-  if (sha1 == NULL)
+  if (new_sha1 == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
     return NULL;
   }
 
   // initialize the structure members fields
-  int ret = sha1_init(sha1);
+  int ret = sha1_init(new_sha1);
   if (ret != KC_SUCCESS)
   {
     return NULL;
   }
 
   // assigns the public member methods
-  sha1->digest   = sha1_update;
-  sha1->get_hash = sha1_final;
+  new_sha1->digest   = sha1_update;
+  new_sha1->get_hash = sha1_final;
 
-  return sha1;
+  return new_sha1;
 }
 
 //---------------------------------------------------------------------------//
@@ -77,8 +77,8 @@ int sha1_init(struct kc_sha1_t* sha1)
   }
 
   // create a new logger instance
-  sha1->logger = new_logger(KC_SHA1_LOG_PATH);
-  if (sha1->logger == NULL)
+  sha1->_logger = new_logger(KC_SHA1_LOG_PATH);
+  if (sha1->_logger == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
     return KC_OUT_OF_MEMORY;
@@ -150,7 +150,7 @@ int sha1_update(struct kc_sha1_t* sha1, const uint8_t* msg_array, unsigned int l
       ret = _sha1_process_message_block(sha1);
       if (ret != KC_SUCCESS)
       {
-        sha1->logger->log(sha1->logger, KC_WARNING_LOG, ret,
+        sha1->_logger->log(sha1->_logger, KC_WARNING_LOG, ret,
           __FILE__, __LINE__, __func__);
         return ret;
       }
@@ -184,7 +184,7 @@ int sha1_final(struct kc_sha1_t* sha1, uint8_t msg_digest[KC_SHA1_LENGTH])
     ret = _sha1_pad_message(sha1);
     if (ret != KC_SUCCESS)
     {
-      sha1->logger->log(sha1->logger, KC_WARNING_LOG, ret,
+      sha1->_logger->log(sha1->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
       return ret;
     }
@@ -382,7 +382,7 @@ int _sha1_pad_message(struct kc_sha1_t* sha1)
     ret = _sha1_process_message_block(sha1);
     if (ret != KC_SUCCESS)
     {
-      sha1->logger->log(sha1->logger, KC_WARNING_LOG, ret,
+      sha1->_logger->log(sha1->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
       return ret;
     }
@@ -416,7 +416,7 @@ int _sha1_pad_message(struct kc_sha1_t* sha1)
   ret = _sha1_process_message_block(sha1);
   if (ret != KC_SUCCESS)
   {
-    sha1->logger->log(sha1->logger, KC_WARNING_LOG, ret,
+    sha1->_logger->log(sha1->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }

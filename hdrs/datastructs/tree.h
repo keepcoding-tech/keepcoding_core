@@ -46,7 +46,7 @@
 struct kc_tree_t
 {
   struct kc_node_t* root;
-  struct kc_logger_t* _log;
+  struct kc_logger_t* _logger;
 
   int (*compare)  (const void* a, const void* b);
   int (*insert)   (struct kc_tree_t* self, void* data, size_t size);
@@ -56,6 +56,8 @@ struct kc_tree_t
 
 struct kc_tree_t* new_tree      (int (*compare)(const void* a, const void* b));
 void              destroy_tree  (struct kc_tree_t* tree);
+
+//---------------------------------------------------------------------------//
 
 #define COMPARE_TREE(type, function_name)           \
   int function_name(const void* a, const void* b)   \

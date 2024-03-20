@@ -48,11 +48,10 @@ struct kc_list_t* new_list()
     return NULL;
   }
 
-  // create a console log instance to be used for the list
-  struct kc_logger_t* logger = new_logger(KC_LIST_LOG_PATH);
+  new_list->_logger = new_logger(KC_LIST_LOG_PATH);
 
   // confirm that there is memory to allocate
-  if (logger == NULL)
+  if (new_list->_logger == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
 
@@ -66,7 +65,6 @@ struct kc_list_t* new_list()
   new_list->_head   = NULL;
   new_list->_tail   = NULL;
   new_list->length  = 0;
-  new_list->_log    = logger;
 
   // assigns the public member methods
   new_list->back       = get_last_node;
@@ -97,7 +95,7 @@ void destroy_list(struct kc_list_t* list)
     return;
   }
 
-  destroy_logger(list->_log);
+  destroy_logger(list->_logger);
 
   erase_all_nodes(list);
   free(list);
@@ -207,8 +205,7 @@ int erase_node(struct kc_list_t* self, int index)
   // confirm the user has specified a valid index
   if (index < 0 || index >= self->length)
   {
-    // log the warning to the console
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -361,7 +358,7 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t** node)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -401,7 +398,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   if (index < 0 || index > self->length)
   {
     // log the warning to the console
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -548,7 +545,7 @@ struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return NULL;

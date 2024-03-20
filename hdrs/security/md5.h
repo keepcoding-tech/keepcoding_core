@@ -78,7 +78,7 @@ struct kc_md5_t
   unsigned long int count[2];
   unsigned char     buffer[64];
 
-  struct kc_logger_t* logger;
+  struct kc_logger_t* _logger;
 
   int (*digest)    (struct kc_md5_t* self, unsigned char* input, unsigned int in_len);
   int (*get_hash)  (struct kc_md5_t* self, unsigned char digest[16]);

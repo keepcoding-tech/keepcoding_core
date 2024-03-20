@@ -50,7 +50,7 @@ struct kc_vector_t* new_vector()
     return NULL;
   }
 
-  new_vector->_log = new_logger(KC_VECTOR_LOG_PATH);
+  new_vector->_logger = new_logger(KC_VECTOR_LOG_PATH);
 
   if (new_vector == NULL)
   {
@@ -70,7 +70,7 @@ struct kc_vector_t* new_vector()
     log_error(KC_NULL_REFERENCE_LOG);
 
     // free the instances and exit
-    free(new_vector->_log);
+    free(new_vector->_logger);
     free(new_vector->data);
     free(new_vector);
 
@@ -105,11 +105,10 @@ void destroy_vector(struct kc_vector_t* vector)
   if (vector == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return;
   }
 
-  destroy_logger(vector->_log);
+  destroy_logger(vector->_logger);
 
   // free the memory for each element and the array itself
   if (vector->data != NULL)
@@ -135,7 +134,6 @@ int erase_all_elems(struct kc_vector_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -171,14 +169,13 @@ int erase_elem(struct kc_vector_t* self, int index)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   // make sure the list is not empty
   if (self->length == 0)
   {
-    self->_log->log(self->_log, KC_ERROR_LOG, KC_EMPTY_STRUCTURE_LOG,
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_EMPTY_STRUCTURE,
         __FILE__, __LINE__, __func__);
 
     return KC_EMPTY_STRUCTURE;
@@ -187,7 +184,7 @@ int erase_elem(struct kc_vector_t* self, int index)
   // confirm the user has specified a valid index
   if (index < 0 || index >= self->length)
   {
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -215,7 +212,6 @@ int erase_elems_by_value(struct kc_vector_t* self, void* value,
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -247,13 +243,15 @@ int erase_first_elem(struct kc_vector_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   int ret = erase_elem(self, 0);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+        __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -268,13 +266,15 @@ int erase_last_elem(struct kc_vector_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   int ret = erase_elem(self, self->length - 1);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+        __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -289,14 +289,13 @@ int get_elem(struct kc_vector_t* self, int index, void** at)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   // make sure the list is not empty
   if (self->length == 0)
   {
-    self->_log->log(self->_log, KC_ERROR_LOG, KC_EMPTY_STRUCTURE_LOG,
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_EMPTY_STRUCTURE,
         __FILE__, __LINE__, __func__);
 
     return KC_EMPTY_STRUCTURE;
@@ -305,7 +304,7 @@ int get_elem(struct kc_vector_t* self, int index, void** at)
   // confirm the user has specified a valid index
   if (index < 0 || index >= self->length)
   {
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -324,13 +323,15 @@ int get_first_elem(struct kc_vector_t* self, void** first)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   int ret = get_elem(self, 0, first);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+        __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -345,13 +346,15 @@ int get_last_elem(struct kc_vector_t* self, void** back)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   int ret = get_elem(self, self->length - 1, back);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+        __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -366,7 +369,6 @@ int get_vector_capacity(struct kc_vector_t* self, size_t* max_size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -382,13 +384,15 @@ int insert_at_beginning(struct kc_vector_t* self, void* data, size_t size) {
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   int ret = insert_new_elem(self, 0, data, size);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+        __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -403,13 +407,15 @@ int insert_at_end(struct kc_vector_t* self, void* data, size_t size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   int ret = insert_new_elem(self, self->length, data, size);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+        __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -423,7 +429,6 @@ int is_vector_empty(struct kc_vector_t* self, bool* empty) {
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -447,14 +452,13 @@ int insert_new_elem(struct kc_vector_t* self, int index, void* data, size_t size
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   // confirm the user has specified a valid index
   if (index < 0 || index > self->length)
   {
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -472,7 +476,7 @@ int insert_new_elem(struct kc_vector_t* self, int index, void* data, size_t size
   // check if the memory allocation was succesfull
   if (new_elem == NULL)
   {
-    self->_log->log(self->_log, KC_ERROR_LOG, KC_OUT_OF_MEMORY_LOG,
+    self->_logger->log(self->_logger, KC_ERROR_LOG, KC_OUT_OF_MEMORY,
         __FILE__, __LINE__, __func__);
 
     return KC_OUT_OF_MEMORY;
@@ -495,7 +499,6 @@ int resize_vector_capacity(struct kc_vector_t* self, size_t new_capacity)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -513,7 +516,6 @@ int search_elem(struct kc_vector_t* self, void* value,
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -560,8 +562,9 @@ void resize_vector(struct kc_vector_t* vector, size_t new_capacity)
   // make sure the user specific a valid capacity size
   if (new_capacity < 1)
   {
-    vector->_log->log(vector->_log, KC_ERROR_LOG, KC_UNDERFLOW_LOG,
+    vector->_logger->log(vector->_logger, KC_ERROR_LOG, KC_UNDERFLOW,
         __FILE__, __LINE__, __func__);
+
     return;
   }
 
@@ -571,8 +574,9 @@ void resize_vector(struct kc_vector_t* vector, size_t new_capacity)
   // check if the memory reallocation was succesfull
   if (new_data == NULL)
   {
-    vector->_log->log(vector->_log, KC_ERROR_LOG, KC_OUT_OF_MEMORY_LOG,
+    vector->_logger->log(vector->_logger, KC_ERROR_LOG, KC_OUT_OF_MEMORY,
         __FILE__, __LINE__, __func__);
+
     return;
   }
 

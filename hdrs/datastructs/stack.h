@@ -44,7 +44,7 @@
 struct kc_stack_t
 {
   struct kc_vector_t* _vector;
-  struct kc_logger_t* _log;
+  struct kc_logger_t* _logger;
 
   int (*length)  (struct kc_stack_t* self, size_t* length);
   int (*pop)     (struct kc_stack_t* self);

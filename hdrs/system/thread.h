@@ -14,6 +14,7 @@
 #define KC_THREAD_T_H
 
 #include "../system/logger.h"
+#include "../common.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -21,9 +22,15 @@
 
 //---------------------------------------------------------------------------//
 
+#define KC_THREAD_LOG_PATH  "build/log/vector.log"
+
+//---------------------------------------------------------------------------//
+
 struct kc_thread_t
 {
   pthread_t _thread;
+
+  struct kc_logger_t* _logger;
 
   int (*start)  (struct kc_thread_t* self, void* (*thread_func)(void* arg), void* arg);
   int (*stop)   (struct kc_thread_t* self);

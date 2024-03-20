@@ -46,7 +46,7 @@ struct kc_list_t
 {
   struct kc_node_t*   _head;
   struct kc_node_t*   _tail;
-  struct kc_logger_t* _log;
+  struct kc_logger_t* _logger;
 
   size_t length;
 
@@ -67,6 +67,8 @@ struct kc_list_t
 
 struct kc_list_t* new_list      ();
 void              destroy_list  (struct kc_list_t *list);
+
+//---------------------------------------------------------------------------//
 
 #define COMPARE_LIST(type, function_name)           \
   int function_name(const void* a, const void* b)   \

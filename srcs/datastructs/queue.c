@@ -45,9 +45,9 @@ struct kc_queue_t* new_queue()
     return NULL;
   }
 
-  new_queue->_log = new_logger(KC_QUEUE_LOG_PATH);
+  new_queue->_logger = new_logger(KC_QUEUE_LOG_PATH);
 
-  if (new_queue->_log == NULL)
+  if (new_queue->_logger == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
 
@@ -80,7 +80,7 @@ void destroy_queue(struct kc_queue_t* queue)
     return;
   }
 
-  destroy_logger(queue->_log);
+  destroy_logger(queue->_logger);
   destroy_list(queue->_list);
   free(queue);
 }
@@ -116,7 +116,7 @@ int get_next_item_queue(struct kc_queue_t* self, void** peek)
   int ret = self->_list->front(self->_list, &next_item);
   if (ret != KC_SUCCESS)
   {
-    self->_log->log(self->_log, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
 
     return ret;
@@ -147,7 +147,7 @@ int insert_next_item_queue(struct kc_queue_t *self, void *data, size_t size)
   int ret = self->_list->push_back(self->_list, data, size);
   if (ret != KC_SUCCESS)
   {
-    self->_log->log(self->_log, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
 
     return ret;
@@ -170,7 +170,7 @@ int remove_next_item_queue(struct kc_queue_t *self)
   int ret = self->_list->pop_front(self->_list);
   if (ret != KC_SUCCESS)
   {
-    self->_log->log(self->_log, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
 
     return ret;

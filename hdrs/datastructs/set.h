@@ -47,7 +47,7 @@
 struct kc_set_t
 {
   struct kc_tree_t*   _entries;
-  struct kc_logger_t* _log;
+  struct kc_logger_t* _logger;
 
   int (*insert)  (struct kc_set_t* self, void* key, size_t key_size, void* value, size_t value_size);
   int (*remove)  (struct kc_set_t* self, void* key, size_t key_size);
@@ -56,6 +56,8 @@ struct kc_set_t
 
 struct kc_set_t* new_set      (int (*compare)(const void* a, const void* b));
 void             destroy_set  (struct kc_set_t* set);
+
+//---------------------------------------------------------------------------//
 
 #define COMPARE_SET(type, function_name)                                               \
   int function_name(const void* a, const void* b)                                      \

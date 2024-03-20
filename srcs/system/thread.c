@@ -27,7 +27,17 @@ struct kc_thread_t* new_thread()
   // confirm that there is memory to allocate
   if (new_thread == NULL)
   {
-    log_error(KC_NULL_REFERENCE_LOG);
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return NULL;
+  }
+
+  new_thread->_logger = new_logger(KC_THREAD_LOG_PATH);
+  if (new_thread->_logger == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // free the thread instance
+    free(new_thread);
 
     return NULL;
   }
@@ -47,7 +57,6 @@ void destroy_thread(struct kc_thread_t* thread)
   if (thread == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return;
   }
 
@@ -61,7 +70,6 @@ int start_thread(struct kc_thread_t* self, void* (*thread_func)(void* arg), void
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -84,7 +92,6 @@ int stop_thread(struct kc_thread_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -93,7 +100,9 @@ int stop_thread(struct kc_thread_t* self)
 
   if (ret != KC_SUCCESS)
   {
-    log_error(KC_THREAD_ERROR_LOG);
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+        __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -107,7 +116,6 @@ int join_thread(struct kc_thread_t* self, void** value_ptr)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -116,7 +124,9 @@ int join_thread(struct kc_thread_t* self, void** value_ptr)
 
   if (ret != KC_SUCCESS)
   {
-    log_error(KC_THREAD_ERROR_LOG);
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+        __FILE__, __LINE__, __func__);
+
     return ret;
   }
 

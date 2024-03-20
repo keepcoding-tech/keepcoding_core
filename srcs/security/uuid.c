@@ -49,45 +49,45 @@ struct _uuid_state
 struct kc_uuid_t* new_uuid()
 {
   // create a UUID instance to be returned
-  struct kc_uuid_t* uuid = malloc(sizeof(struct kc_uuid_t));
+  struct kc_uuid_t* new_uuid = malloc(sizeof(struct kc_uuid_t));
 
-  if (uuid == NULL)
+  if (new_uuid == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
     return NULL;
   }
 
   // create a new logger instance
-  uuid->logger = new_logger(KC_UUID_LOG_PATH);
-  if (uuid->logger == NULL)
+  new_uuid->_logger = new_logger(KC_UUID_LOG_PATH);
+  if (new_uuid->_logger == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
     return NULL;
   }
 
   // load magic initialization constants
-  uuid->time_low                  = 0x98BADCFE;
-  uuid->time_mid                  = 0x6745;
-  uuid->time_hi_and_version       = 0xEFCD;
-  uuid->clock_seq_hi_and_reserved = 0x56;
-  uuid->clock_seq_low             = 0x78;
+  new_uuid->time_low                  = 0x98BADCFE;
+  new_uuid->time_mid                  = 0x6745;
+  new_uuid->time_hi_and_version       = 0xEFCD;
+  new_uuid->clock_seq_hi_and_reserved = 0x56;
+  new_uuid->clock_seq_low             = 0x78;
 
-  uuid->node[0] = 0xC3;
-  uuid->node[1] = 0xB1;
-  uuid->node[2] = 0x29;
-  uuid->node[3] = 0xF5;
-  uuid->node[4] = 0xE8;
-  uuid->node[5] = 0xFA;
+  new_uuid->node[0] = 0xC3;
+  new_uuid->node[1] = 0xB1;
+  new_uuid->node[2] = 0x29;
+  new_uuid->node[3] = 0xF5;
+  new_uuid->node[4] = 0xE8;
+  new_uuid->node[5] = 0xFA;
 
 
   // assigns the public member methods
-  uuid->create_v1 = uuid_create_ver_1;
-  uuid->create_v3 = uuid_create_ver_3;
-  uuid->create_v5 = uuid_create_ver_5;
-  uuid->get_uuid  = uuid_get_hash;
-  uuid->compare   = uuid_compare;
+  new_uuid->create_v1 = uuid_create_ver_1;
+  new_uuid->create_v3 = uuid_create_ver_3;
+  new_uuid->create_v5 = uuid_create_ver_5;
+  new_uuid->get_uuid  = uuid_get_hash;
+  new_uuid->compare   = uuid_compare;
 
-  return uuid;
+  return new_uuid;
 }
 
 //---------------------------------------------------------------------------//
@@ -131,7 +131,7 @@ int uuid_create_ver_1(struct kc_uuid_t* self)
   ret = _get_current_time(&timestamp);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -139,7 +139,7 @@ int uuid_create_ver_1(struct kc_uuid_t* self)
   ret = get_ieee_node_identifier(&node);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -161,7 +161,7 @@ int uuid_create_ver_1(struct kc_uuid_t* self)
   ret = _write_state(clockseq, timestamp, node);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -172,7 +172,7 @@ int uuid_create_ver_1(struct kc_uuid_t* self)
   ret = _format_uuid_v1(self, clockseq, timestamp, node);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -205,7 +205,7 @@ int uuid_create_ver_3(struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name,
   ret = md5_init(&context);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -213,7 +213,7 @@ int uuid_create_ver_3(struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name,
   ret = md5_update(&context, &net_nsid, sizeof(net_nsid));
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -221,7 +221,7 @@ int uuid_create_ver_3(struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name,
   ret = md5_update(&context, name, name_len);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -229,7 +229,7 @@ int uuid_create_ver_3(struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name,
   ret = md5_final(&context, hash);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -238,7 +238,7 @@ int uuid_create_ver_3(struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name,
   ret = _format_uuid_v3or5(self, hash, 3);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -272,7 +272,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
   ret = sha1_init(&context);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -280,7 +280,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
   ret = sha1_update(&context, &net_nsid, sizeof net_nsid);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -288,7 +288,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
   ret = sha1_update(&context, name, name_len);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -296,7 +296,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
   ret = sha1_final(&context, hash);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -305,7 +305,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
   ret = _format_uuid_v3or5(self, hash, 5);
   if (ret != KC_SUCCESS)
   {
-    self->logger->log(self->logger, KC_WARNING_LOG, ret,
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }

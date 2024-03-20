@@ -39,10 +39,10 @@ struct kc_tree_t* new_tree(int (*compare)(const void* a, const void* b))
     return NULL;
   }
 
-  new_tree->_log = new_logger(KC_TREE_LOG_PATH);
+  new_tree->_logger = new_logger(KC_TREE_LOG_PATH);
 
   // confirm that there is memory to allocate
-  if (new_tree->_log == NULL)
+  if (new_tree->_logger == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
 
@@ -72,7 +72,6 @@ void destroy_tree(struct kc_tree_t* tree)
   if (tree == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return;
   }
 
@@ -81,7 +80,7 @@ void destroy_tree(struct kc_tree_t* tree)
     recursive_destroy_tree(tree->root);
   }
 
-  destroy_logger(tree->_log);
+  destroy_logger(tree->_logger);
 
   // free the binary tree too
   free(tree);
@@ -95,7 +94,6 @@ int insert_new_node_btree(struct kc_tree_t* self, void* data, size_t size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -112,7 +110,6 @@ int remove_node_btree(struct kc_tree_t* self, void* data, size_t size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -129,7 +126,6 @@ int search_node_btree(struct kc_tree_t* self, void* data, struct kc_node_t** nod
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -277,6 +273,7 @@ struct kc_node_t* recursive_remove_node(struct kc_tree_t* self, struct kc_node_t
 
   // delete successor and return root
   node_destructor(successor);
+
   return root;
 }
 

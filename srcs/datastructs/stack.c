@@ -29,7 +29,6 @@ struct kc_stack_t* new_stack()
   if (new_stack == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return NULL;
   }
 
@@ -45,9 +44,9 @@ struct kc_stack_t* new_stack()
     return NULL;
   }
 
-  new_stack->_log = new_logger(KC_STACK_LOG_PATH);
+  new_stack->_logger = new_logger(KC_STACK_LOG_PATH);
 
-  if (new_stack->_log == NULL)
+  if (new_stack->_logger == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
 
@@ -74,11 +73,10 @@ void destroy_stack(struct kc_stack_t* stack)
   if (stack == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return;
   }
 
-  destroy_logger(stack->_log);
+  destroy_logger(stack->_logger);
   destroy_vector(stack->_vector);
   free(stack);
 }
@@ -91,13 +89,15 @@ int get_top_item_stack(struct kc_stack_t* self, void** top)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   int ret = self->_vector->back(self->_vector, top);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -129,7 +129,6 @@ int insert_top_item_stack(struct kc_stack_t* self, void* data, size_t size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -137,6 +136,9 @@ int insert_top_item_stack(struct kc_stack_t* self, void* data, size_t size)
   int ret = self->_vector->push_back(self->_vector, data, size);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
     return ret;
   }
 
@@ -151,7 +153,6 @@ int remove_top_item_stack(struct kc_stack_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -159,6 +160,9 @@ int remove_top_item_stack(struct kc_stack_t* self)
   int ret = self->_vector->pop_back(self->_vector);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
     return ret;
   }
 

@@ -45,27 +45,27 @@ static unsigned char PADDING[64] =
 struct kc_md5_t* new_md5()
 {
   // create a MD5 instance to be returned
-  struct kc_md5_t* md5 = malloc(sizeof(struct kc_md5_t));
+  struct kc_md5_t* new_md5 = malloc(sizeof(struct kc_md5_t));
 
   // confirm that there is memory to allocate
-  if (md5 == NULL)
+  if (new_md5 == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
     return NULL;
   }
 
   // initialize the structure members fields
-  int ret = md5_init(md5);
+  int ret = md5_init(new_md5);
   if (ret != KC_SUCCESS)
   {
     return ret;
   }
 
   // assigns the public member methods
-  md5->digest   = md5_update;
-  md5->get_hash = md5_final;
+  new_md5->digest   = md5_update;
+  new_md5->get_hash = md5_final;
 
-  return md5;
+  return new_md5;
 }
 
 //---------------------------------------------------------------------------//
@@ -92,8 +92,8 @@ int md5_init(struct kc_md5_t* md5)
   }
 
   // create a new logger instance
-  md5->logger = new_logger(KC_MD5_LOG_PATH);
-  if (md5->logger == NULL)
+  md5->_logger = new_logger(KC_MD5_LOG_PATH);
+  if (md5->_logger == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
     return KC_OUT_OF_MEMORY;
@@ -143,7 +143,7 @@ int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
     ret = _md5_memcpy((POINTER)&md5->buffer[index], (POINTER)input, part_len);
     if (ret != KC_SUCCESS)
     {
-      md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+      md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
         __FILE__, __LINE__, __func__);
       return ret;
     }
@@ -151,7 +151,7 @@ int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
     ret = _md5_transform(md5->state, md5->buffer);
     if (ret != KC_SUCCESS)
     {
-      md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+      md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
         __FILE__, __LINE__, __func__);
       return ret;
     }
@@ -161,7 +161,7 @@ int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
       ret = _md5_transform(md5->state, &input[i]);
       if (ret != KC_SUCCESS)
       {
-        md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+        md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
           __FILE__, __LINE__, __func__);
         return ret;
       }
@@ -178,7 +178,7 @@ int md5_update(struct kc_md5_t* md5, unsigned char* input, unsigned int in_len)
   ret = _md5_memcpy((POINTER)&md5->buffer[index], (POINTER)&input[i], in_len - i);
   if (ret != KC_SUCCESS)
   {
-    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+    md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -205,7 +205,7 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[(KC_MD5_LENGTH * 2) + 1
   ret = _encode(bits, md5->count, 8);
   if (ret != KC_SUCCESS)
   {
-    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+    md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -217,7 +217,7 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[(KC_MD5_LENGTH * 2) + 1
   ret = md5_update(md5, PADDING, padLen);
   if (ret != KC_SUCCESS)
   {
-    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+    md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -226,7 +226,7 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[(KC_MD5_LENGTH * 2) + 1
   ret = md5_update(md5, bits, 8);
   if (ret != KC_SUCCESS)
   {
-    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+    md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -235,7 +235,7 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[(KC_MD5_LENGTH * 2) + 1
   ret = _encode(digest, md5->state, 16);
   if (ret != KC_SUCCESS)
   {
-    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+    md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }
@@ -244,7 +244,7 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[(KC_MD5_LENGTH * 2) + 1
   ret = _md5_memset((POINTER)md5, 0, sizeof(*md5));
   if (ret != KC_SUCCESS)
   {
-    md5->logger->log(md5->logger, KC_WARNING_LOG, ret,
+    md5->_logger->log(md5->_logger, KC_WARNING_LOG, ret,
       __FILE__, __LINE__, __func__);
     return ret;
   }

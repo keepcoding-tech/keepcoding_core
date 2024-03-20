@@ -29,7 +29,6 @@ struct kc_server_t* new_server()
   if (new_server == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return NULL;
   }
 
@@ -46,7 +45,6 @@ void destroy_server(struct kc_server_t* server)
   if (server == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return;
   }
 
@@ -60,7 +58,6 @@ int start_server(struct kc_server_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -104,7 +101,6 @@ int stop_server(struct kc_server_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
