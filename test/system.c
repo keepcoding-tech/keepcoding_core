@@ -75,22 +75,22 @@ int main()
     subtest("test close()")
     {
       struct kc_file_t* file = new_file();
-      int rez = KC_INVALID;
+      int ret = KC_INVALID;
 
-      rez = file->open(file, "test_close", KC_FILE_CREATE_NEW);
+      ret = file->open(file, "test_close", KC_FILE_CREATE_NEW);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(file->file != NULL);
       ok(file->mode & KC_FILE_CREATE_NEW);
 
-      rez = file->close(file);
+      ret = file->close(file);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(file->opened == false);
       ok(file->file == NULL);
 
-      rez = file->delete(file);
-      ok(rez == KC_SUCCESS);
+      ret = file->delete(file);
+      ok(ret == KC_SUCCESS);
 
       destroy_file(file);
     }
@@ -98,13 +98,13 @@ int main()
     subtest("test create_path()")
     {
       struct kc_file_t* file = new_file();
-      int rez = KC_INVALID;
+      int ret = KC_INVALID;
 
-      rez = file->create_path(file, "test_files");
-      ok(rez == KC_SUCCESS);
+      ret = file->create_path(file, "test_files");
+      ok(ret == KC_SUCCESS);
 
-      rez = file->delete_path(file, "/workspaces/keepcoding_core/test_files");
-      ok(rez == KC_SUCCESS);
+      ret = file->delete_path(file, "/workspaces/keepcoding_core/test_files");
+      ok(ret == KC_SUCCESS);
 
       destroy_file(file);
     }
@@ -112,14 +112,14 @@ int main()
     subtest("test delete()")
     {
       struct kc_file_t* file = new_file();
-      int rez = KC_INVALID;
+      int ret = KC_INVALID;
 
-      rez = file->open(file, "test_delete", KC_FILE_CREATE_NEW);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_delete", KC_FILE_CREATE_NEW);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->delete(file);
+      ret = file->delete(file);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(file->file == NULL);
 
       destroy_file(file);
@@ -129,43 +129,43 @@ int main()
     {
       struct kc_file_t* file = new_file();
 
-      int rez  = KC_INVALID;
+      int ret  = KC_INVALID;
       int mode = KC_INVALID;
 
-      rez = file->open(file, "test_get_mode", KC_FILE_CREATE_NEW);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_get_mode", KC_FILE_CREATE_NEW);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->get_mode(file, &mode);
+      ret = file->get_mode(file, &mode);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(mode == KC_FILE_CREATE_NEW);
 
-      rez = file->open(file, "test_get_mode", KC_FILE_CREATE_ALWAYS);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_get_mode", KC_FILE_CREATE_ALWAYS);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->get_mode(file, &mode);
+      ret = file->get_mode(file, &mode);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(mode == KC_FILE_CREATE_ALWAYS);
 
-      rez = file->open(file, "test_get_mode", KC_FILE_OPEN_EXISTING);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_get_mode", KC_FILE_OPEN_EXISTING);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->get_mode(file, &mode);
+      ret = file->get_mode(file, &mode);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(mode & KC_FILE_OPEN_EXISTING);
 
-      rez = file->open(file, "test_get_mode", KC_FILE_OPEN_ALWAYS);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_get_mode", KC_FILE_OPEN_ALWAYS);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->get_mode(file, &mode);
+      ret = file->get_mode(file, &mode);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(mode == KC_FILE_OPEN_ALWAYS);
 
-      rez = file->delete(file);
-      ok(rez == KC_SUCCESS);
+      ret = file->delete(file);
+      ok(ret == KC_SUCCESS);
 
       destroy_file(file);
     }
@@ -174,15 +174,15 @@ int main()
     {
       struct kc_file_t* file = new_file();
 
-      int   rez = KC_INVALID;
+      int   ret = KC_INVALID;
       char* name;
 
-      rez = file->open(file, "test_get_name", KC_FILE_CREATE_NEW);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_get_name", KC_FILE_CREATE_NEW);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->get_name(file, &name);
+      ret = file->get_name(file, &name);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(strcmp(name, "test_get_name") == 0);
 
       file->delete(file);
@@ -193,25 +193,25 @@ int main()
     {
       struct kc_file_t* file = new_file();
 
-      int   rez = KC_INVALID;
+      int   ret = KC_INVALID;
       char* path;
 
-      rez = file->create_path(file, "sys_test");
-      ok(rez == KC_SUCCESS);
+      ret = file->create_path(file, "sys_test");
+      ok(ret == KC_SUCCESS);
 
-      rez = file->create_path(file, "sys_test/get");
-      ok(rez == KC_SUCCESS);
+      ret = file->create_path(file, "sys_test/get");
+      ok(ret == KC_SUCCESS);
 
-      rez = file->create_path(file, "sys_test/get/path");
-      ok(rez == KC_SUCCESS);
+      ret = file->create_path(file, "sys_test/get/path");
+      ok(ret == KC_SUCCESS);
 
-      rez = file->get_path(file, &path);
+      ret = file->get_path(file, &path);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(strcmp(path, "sys_test/get/path") == 0);
 
-      rez = file->delete_path(file, "/workspaces/keepcoding_core/sys_test");
-      ok(rez == KC_SUCCESS);
+      ret = file->delete_path(file, "/workspaces/keepcoding_core/sys_test");
+      ok(ret == KC_SUCCESS);
 
       destroy_file(file);
     }
@@ -220,31 +220,31 @@ int main()
     {
       struct kc_file_t* file = new_file();
 
-      int  rez     = KC_INVALID;
+      int  ret     = KC_INVALID;
       bool is_open = false;
 
-      rez = file->is_open(file, &is_open);
+      ret = file->is_open(file, &is_open);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(is_open == false);
 
-      rez = file->open(file, "test_close", KC_FILE_CREATE_NEW);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_close", KC_FILE_CREATE_NEW);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->is_open(file, &is_open);
+      ret = file->is_open(file, &is_open);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(is_open == true);
 
       file->close(file);
 
-      rez = file->is_open(file, &is_open);
+      ret = file->is_open(file, &is_open);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(is_open == false);
 
-      rez = file->delete(file);
-      ok(rez == KC_SUCCESS);
+      ret = file->delete(file);
+      ok(ret == KC_SUCCESS);
 
       destroy_file(file);
     }
@@ -252,34 +252,34 @@ int main()
     subtest("test open()")
     {
       struct kc_file_t* file = new_file();
-      int rez = KC_INVALID;
+      int ret = KC_INVALID;
 
       note("Create New")
-      rez = file->open(file, "test_open", KC_FILE_CREATE_NEW);
+      ret = file->open(file, "test_open", KC_FILE_CREATE_NEW);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(file->mode & KC_FILE_CREATE_NEW);
 
       note("Create Always")
-      rez = file->open(file, "test_open", KC_FILE_CREATE_ALWAYS);
+      ret = file->open(file, "test_open", KC_FILE_CREATE_ALWAYS);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(file->mode & KC_FILE_CREATE_ALWAYS);
 
       note("Open Existing")
-      rez = file->open(file, "test_open", KC_FILE_OPEN_EXISTING);
+      ret = file->open(file, "test_open", KC_FILE_OPEN_EXISTING);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(file->mode & KC_FILE_OPEN_EXISTING);
 
       note("Open Always")
-      rez = file->open(file, "test_open", KC_FILE_OPEN_ALWAYS);
+      ret = file->open(file, "test_open", KC_FILE_OPEN_ALWAYS);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(file->mode & KC_FILE_OPEN_ALWAYS);
 
-      rez = file->delete(file);
-      ok(rez == KC_SUCCESS);
+      ret = file->delete(file);
+      ok(ret == KC_SUCCESS);
 
       destroy_file(file);
     }
@@ -288,18 +288,18 @@ int main()
     {
       struct kc_file_t* file = new_file();
 
-      int   rez = KC_INVALID;
+      int   ret = KC_INVALID;
       char* buffer;
 
-      rez = file->open(file, "test_read", KC_FILE_CREATE_NEW);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_read", KC_FILE_CREATE_NEW);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->write(file, "This is just a read test");
-      ok(rez == KC_SUCCESS);
+      ret = file->write(file, "This is just a read test");
+      ok(ret == KC_SUCCESS);
 
-      rez = file->read(file, &buffer);
+      ret = file->read(file, &buffer);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
       ok(strcmp(buffer, "This is just a read test") == 0);
 
       file->delete(file);
@@ -310,17 +310,17 @@ int main()
     {
       struct kc_file_t* file = new_file();
 
-      int   rez = KC_INVALID;
+      int   ret = KC_INVALID;
       char* buffer;
 
-      rez = file->open(file, "test_write", KC_FILE_CREATE_NEW);
-      ok(rez == KC_SUCCESS);
+      ret = file->open(file, "test_write", KC_FILE_CREATE_NEW);
+      ok(ret == KC_SUCCESS);
 
-      rez = file->write(file, "This is just a write test");
-      ok(rez == KC_SUCCESS);
+      ret = file->write(file, "This is just a write test");
+      ok(ret == KC_SUCCESS);
 
-      rez = file->read(file, &buffer);
-      ok(rez == KC_SUCCESS);
+      ret = file->read(file, &buffer);
+      ok(ret == KC_SUCCESS);
 
       ok(strcmp(buffer, "This is just a write test") == 0);
 
@@ -415,15 +415,15 @@ int main()
     {
       struct kc_thread_t* thread = new_thread();
 
-      int rez = KC_INVALID;
+      int ret = KC_INVALID;
 
-      rez = thread->start(thread, &test_thread_func, NULL);
+      ret = thread->start(thread, &test_thread_func, NULL);
 
-      ok(rez == KC_SUCCESS);
+      ok(ret == KC_SUCCESS);
 
       // terminate the thread
-      rez = pthread_join(thread->_thread, NULL);
-      ok(rez == KC_SUCCESS);
+      ret = pthread_join(thread->_thread, NULL);
+      ok(ret == KC_SUCCESS);
 
       destroy_thread(thread);
     }
@@ -432,14 +432,14 @@ int main()
     {
       struct kc_thread_t* thread = new_thread();
 
-      int rez = KC_INVALID;
+      int ret = KC_INVALID;
 
       // create a thread
-      rez = pthread_create(&thread->_thread, NULL, &test_thread_func, NULL);
-      ok(rez == KC_SUCCESS);
+      ret = pthread_create(&thread->_thread, NULL, &test_thread_func, NULL);
+      ok(ret == KC_SUCCESS);
 
-      rez = thread->stop(thread);
-      ok(rez == KC_SUCCESS);
+      ret = thread->stop(thread);
+      ok(ret == KC_SUCCESS);
 
       destroy_thread(thread);
     }
@@ -448,16 +448,16 @@ int main()
     {
       struct kc_thread_t* thread = new_thread();
 
-      int rez = KC_INVALID;
+      int ret = KC_INVALID;
       int val = 1;
       void* arg = &val;
 
       // create a thread
-      rez = thread->start(thread, &test_thread_func, arg);
-      ok(rez == KC_SUCCESS);
+      ret = thread->start(thread, &test_thread_func, arg);
+      ok(ret == KC_SUCCESS);
 
-      rez = thread->join(thread, &arg);
-      ok(rez == KC_SUCCESS);
+      ret = thread->join(thread, &arg);
+      ok(ret == KC_SUCCESS);
       ok(*(int*)(arg) == 2); // the value was changed
 
       destroy_thread(thread);
@@ -468,17 +468,17 @@ int main()
       struct kc_thread_t* thread1 = new_thread();
       struct kc_thread_t* thread2 = new_thread();
 
-      int rez = KC_INVALID;
+      int ret = KC_INVALID;
 
-      rez = thread1->start(thread1, &test_race_condition, NULL);
-      ok(rez == KC_SUCCESS);
-      rez = thread2->start(thread2, &test_race_condition, NULL);
-      ok(rez == KC_SUCCESS);
+      ret = thread1->start(thread1, &test_race_condition, NULL);
+      ok(ret == KC_SUCCESS);
+      ret = thread2->start(thread2, &test_race_condition, NULL);
+      ok(ret == KC_SUCCESS);
 
-      rez = thread1->join(thread1, NULL);
-      ok(rez == KC_SUCCESS);
-      rez = thread2->join(thread2, NULL);
-      ok(rez == KC_SUCCESS);
+      ret = thread1->join(thread1, NULL);
+      ok(ret == KC_SUCCESS);
+      ret = thread2->join(thread2, NULL);
+      ok(ret == KC_SUCCESS);
 
       // using mutex, this should be true
       ok(race_counter == 2000000);

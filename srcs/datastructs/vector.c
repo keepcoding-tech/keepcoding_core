@@ -225,10 +225,10 @@ int erase_elems_by_value(struct kc_vector_t* self, void* value,
   {
     if (compare(self->data[index], value) == 0)
     {
-      int rez = erase_elem(self, index);
-      if (rez != KC_SUCCESS)
+      int ret = erase_elem(self, index);
+      if (ret != KC_SUCCESS)
       {
-        return rez;
+        return ret;
       }
 
       continue;
@@ -251,10 +251,10 @@ int erase_first_elem(struct kc_vector_t* self)
     return KC_NULL_REFERENCE;
   }
 
-  int rez = erase_elem(self, 0);
-  if (rez != KC_SUCCESS)
+  int ret = erase_elem(self, 0);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -272,10 +272,10 @@ int erase_last_elem(struct kc_vector_t* self)
     return KC_NULL_REFERENCE;
   }
 
-  int rez = erase_elem(self, self->length - 1);
-  if (rez != KC_SUCCESS)
+  int ret = erase_elem(self, self->length - 1);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -328,10 +328,10 @@ int get_first_elem(struct kc_vector_t* self, void** first)
     return KC_NULL_REFERENCE;
   }
 
-  int rez = get_elem(self, 0, first);
-  if (rez != KC_SUCCESS)
+  int ret = get_elem(self, 0, first);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -349,10 +349,10 @@ int get_last_elem(struct kc_vector_t* self, void** back)
     return KC_NULL_REFERENCE;
   }
 
-  int rez = get_elem(self, self->length - 1, back);
-  if (rez != KC_SUCCESS)
+  int ret = get_elem(self, self->length - 1, back);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -386,10 +386,10 @@ int insert_at_beginning(struct kc_vector_t* self, void* data, size_t size) {
     return KC_NULL_REFERENCE;
   }
 
-  int rez = insert_new_elem(self, 0, data, size);
-  if (rez != KC_SUCCESS)
+  int ret = insert_new_elem(self, 0, data, size);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -407,10 +407,10 @@ int insert_at_end(struct kc_vector_t* self, void* data, size_t size)
     return KC_NULL_REFERENCE;
   }
 
-  int rez = insert_new_elem(self, self->length, data, size);
-  if (rez != KC_SUCCESS)
+  int ret = insert_new_elem(self, self->length, data, size);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;

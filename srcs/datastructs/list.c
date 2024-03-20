@@ -111,7 +111,6 @@ int erase_all_nodes(struct kc_list_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -140,7 +139,6 @@ int erase_first_node(struct kc_list_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -172,7 +170,6 @@ int erase_last_node(struct kc_list_t* self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -204,7 +201,6 @@ int erase_node(struct kc_list_t* self, int index)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -212,7 +208,7 @@ int erase_node(struct kc_list_t* self, int index)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -253,7 +249,6 @@ int erase_nodes_by_value(struct kc_list_t* self, void* value, int (*compare)(con
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -271,10 +266,10 @@ int erase_nodes_by_value(struct kc_list_t* self, void* value, int (*compare)(con
       {
         cursor = cursor->next;
 
-        int rez = erase_first_node(self);
-        if (rez != KC_SUCCESS)
+        int ret = erase_first_node(self);
+        if (ret != KC_SUCCESS)
         {
-          return rez;
+          return ret;
         }
 
         continue;
@@ -283,10 +278,10 @@ int erase_nodes_by_value(struct kc_list_t* self, void* value, int (*compare)(con
       // erase the tail
       if (index == self->length - 1)
       {
-        int rez = erase_last_node(self);
-        if (rez != KC_SUCCESS)
+        int ret = erase_last_node(self);
+        if (ret != KC_SUCCESS)
         {
-          return rez;
+          return ret;
         }
 
         break;
@@ -319,7 +314,6 @@ int get_first_node(struct kc_list_t* self, struct kc_node_t** first_node)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -336,7 +330,6 @@ int get_last_node(struct kc_list_t* self, struct kc_node_t** last_node)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -361,7 +354,6 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t** node)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -369,7 +361,7 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t** node)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -388,7 +380,6 @@ int insert_new_head(struct kc_list_t* self, void* data, size_t size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -403,7 +394,6 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -411,7 +401,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   if (index < 0 || index > self->length)
   {
     // log the warning to the console
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return KC_INDEX_OUT_OF_BOUNDS;
@@ -481,7 +471,6 @@ int insert_new_tail(struct kc_list_t* self, void* data, size_t size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -496,7 +485,6 @@ int is_list_empty(struct kc_list_t* self, bool* is_empty)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -521,7 +509,6 @@ int search_node(struct kc_list_t* self, void* value,
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -554,7 +541,6 @@ struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
   if (self == NULL || self->_head == NULL || self->_tail == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return NULL;
   }
 
@@ -562,7 +548,7 @@ struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
   if (index < 0 || index >= self->length)
   {
     // log the warning to the console
-    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS_LOG,
+    self->_log->log(self->_log, KC_WARNING_LOG, KC_INDEX_OUT_OF_BOUNDS,
         __FILE__, __LINE__, __func__);
 
     return NULL;

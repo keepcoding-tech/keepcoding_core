@@ -120,11 +120,11 @@ int insert_new_pair_set(struct kc_set_t* self, void* key,
   struct kc_pair_t* pair = pair_constructor(key, key_size, value, value_size);
 
   // insert that pair into the tree
-  int rez = self->_entries->insert(self->_entries, pair, sizeof(struct kc_pair_t));
+  int ret = self->_entries->insert(self->_entries, pair, sizeof(struct kc_pair_t));
 
-  if (rez != KC_SUCCESS)
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -153,10 +153,10 @@ int remove_pair_set(struct kc_set_t* self, void* key, size_t key_size)
   }
 
   // call the remove function of the Tree structure
-  int rez = self->_entries->remove(self->_entries, pair_to_remove, sizeof(struct kc_pair_t));
-  if (rez != KC_SUCCESS)
+  int ret = self->_entries->remove(self->_entries, pair_to_remove, sizeof(struct kc_pair_t));
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   pair_destructor(pair_to_remove);
@@ -188,10 +188,10 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
 
   // use the search function of the kc_tree_t to find the desired node
   struct kc_node_t* result_node = NULL;
-  int rez = self->_entries->search(self->_entries, searchable, &result_node);
-  if (rez != KC_SUCCESS)
+  int ret = self->_entries->search(self->_entries, searchable, &result_node);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   // free the dummy pair

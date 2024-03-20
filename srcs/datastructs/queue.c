@@ -93,7 +93,6 @@ int get_list_length_queue(struct kc_queue_t* self, size_t* length)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -110,15 +109,21 @@ int get_next_item_queue(struct kc_queue_t* self, void** peek)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
   struct kc_node_t* next_item = NULL;
-  int rez = self->_list->front(self->_list, &next_item);
+  int ret = self->_list->front(self->_list, &next_item);
+  if (ret != KC_SUCCESS)
+  {
+    self->_log->log(self->_log, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
+    return ret;
+  }
 
   // check if the head of the list exists
-  if (next_item != NULL && next_item->data != NULL && rez == KC_SUCCESS)
+  if (next_item != NULL && next_item->data != NULL)
   {
     (*peek) = next_item->data;
 
@@ -136,11 +141,17 @@ int insert_next_item_queue(struct kc_queue_t *self, void *data, size_t size)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
-  self->_list->push_back(self->_list, data, size);
+  int ret = self->_list->push_back(self->_list, data, size);
+  if (ret != KC_SUCCESS)
+  {
+    self->_log->log(self->_log, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
+    return ret;
+  }
 
   return KC_SUCCESS;
 }
@@ -153,11 +164,17 @@ int remove_next_item_queue(struct kc_queue_t *self)
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
-  self->_list->pop_front(self->_list);
+  int ret = self->_list->pop_front(self->_list);
+  if (ret != KC_SUCCESS)
+  {
+    self->_log->log(self->_log, KC_WARNING_LOG, ret,
+      __FILE__, __LINE__, __func__);
+
+    return ret;
+  }
 
   return KC_SUCCESS;
 }

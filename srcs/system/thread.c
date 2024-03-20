@@ -66,12 +66,12 @@ int start_thread(struct kc_thread_t* self, void* (*thread_func)(void* arg), void
   }
 
   // create the thread and execute the function
-  int rez = pthread_create(&(self->_thread), NULL, thread_func, arg);
+  int ret = pthread_create(&(self->_thread), NULL, thread_func, arg);
 
-  if (rez != KC_SUCCESS)
+  if (ret != KC_SUCCESS)
   {
     log_error(KC_THREAD_ERROR_LOG);
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -89,12 +89,12 @@ int stop_thread(struct kc_thread_t* self)
   }
 
   // cancel the thread
-  int rez = pthread_cancel(self->_thread);
+  int ret = pthread_cancel(self->_thread);
 
-  if (rez != KC_SUCCESS)
+  if (ret != KC_SUCCESS)
   {
     log_error(KC_THREAD_ERROR_LOG);
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -112,12 +112,12 @@ int join_thread(struct kc_thread_t* self, void** value_ptr)
   }
 
   // join with a terminated thread
-  int rez = pthread_join(self->_thread, value_ptr);
+  int ret = pthread_join(self->_thread, value_ptr);
 
-  if (rez != KC_SUCCESS)
+  if (ret != KC_SUCCESS)
   {
     log_error(KC_THREAD_ERROR_LOG);
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;

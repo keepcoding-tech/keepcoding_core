@@ -95,10 +95,10 @@ int get_top_item_stack(struct kc_stack_t* self, void** top)
     return KC_NULL_REFERENCE;
   }
 
-  int rez = self->_vector->back(self->_vector, top);
-  if (rez != KC_SUCCESS)
+  int ret = self->_vector->back(self->_vector, top);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -134,10 +134,10 @@ int insert_top_item_stack(struct kc_stack_t* self, void* data, size_t size)
   }
 
   // utilize the push_back from Vector with enforced parameters
-  int rez = self->_vector->push_back(self->_vector, data, size);
-  if (rez != KC_SUCCESS)
+  int ret = self->_vector->push_back(self->_vector, data, size);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
@@ -156,10 +156,10 @@ int remove_top_item_stack(struct kc_stack_t* self)
   }
 
   // utilize the erase from Vector with enforced parameters
-  int rez = self->_vector->pop_back(self->_vector);
-  if (rez != KC_SUCCESS)
+  int ret = self->_vector->pop_back(self->_vector);
+  if (ret != KC_SUCCESS)
   {
-    return rez;
+    return ret;
   }
 
   return KC_SUCCESS;
