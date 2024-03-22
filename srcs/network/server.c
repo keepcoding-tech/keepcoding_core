@@ -10,8 +10,6 @@
 #include "../../hdrs/common.h"
 
 #include <stdlib.h>
-#include <sys/socket.h>
-#include <netdb.h>
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 

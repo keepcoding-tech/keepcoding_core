@@ -33,7 +33,7 @@
 
 #include "../common.h"
 #include "../system/logger.h"
-#include "sysdep.h"
+#include "../sysdep.h"
 
 #include <stdio.h>
 

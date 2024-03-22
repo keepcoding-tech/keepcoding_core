@@ -29,13 +29,7 @@
 #define KC_UUID_T_H
 
 
-#ifdef _WIN32
-#include <windows.h>
-#include <winsock.h>
-#else
-#include <netinet/in.h>
-#endif
-
+#include "../sysdep.h"
 #include "../common.h"
 #include "md5.h"
 #include "sha1.h"
@@ -47,6 +41,10 @@
 #define KC_UUID_LOG_PATH  "build/log/uuid.log"
 
 #define KC_UUID_LENGTH 36
+
+// set the following to the number of 100ns ticks
+// of the actual resolution of your system's clock
+#define UUIDS_PER_TICK 1024
 
 //---------------------------------------------------------------------------//
 

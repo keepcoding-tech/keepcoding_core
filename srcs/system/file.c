@@ -14,12 +14,9 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 #include <string.h>
-#include <unistd.h>
-#include <dirent.h>
 
-//--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
+//--- MARK: PUBLIC FUNCTION PROTOTYPES -------------------------------------//
 
 static int close_file     (struct kc_file_t* self);
 static int create_path    (struct kc_file_t* self, char* path);

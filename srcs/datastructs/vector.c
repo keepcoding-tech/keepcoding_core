@@ -32,9 +32,9 @@ static int search_elem             (struct kc_vector_t* self, void* value, int (
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static void permute_to_left         (struct kc_vector_t* vector, int start, int end);
-static void permute_to_right        (struct kc_vector_t* vector, int start, int end);
-static void resize_vector           (struct kc_vector_t* vector, size_t new_capacity);
+static void _permute_to_left   (struct kc_vector_t* vector, int start, int end);
+static void _permute_to_right  (struct kc_vector_t* vector, int start, int end);
+static void _resize_vector     (struct kc_vector_t* vector, size_t new_capacity);
 
 //---------------------------------------------------------------------------//
 
@@ -61,8 +61,8 @@ struct kc_vector_t* new_vector()
 
   // initialize the structure members fields
   new_vector->_capacity = 16;
-  new_vector->length   = 0;
-  new_vector->data     = malloc(16 * sizeof(void*));
+  new_vector->length    = 0;
+  new_vector->data      = malloc(16 * sizeof(void*));
 
   // confirm that there is memory to allocate
   if (new_vector->data == NULL)
@@ -152,7 +152,7 @@ int erase_all_elems(struct kc_vector_t* self)
   // reallocate the default capacity
   if (self->_capacity > 16)
   {
-    resize_vector(self, 16);
+    _resize_vector(self, 16);
   }
 
   // reset the length
@@ -191,13 +191,13 @@ int erase_elem(struct kc_vector_t* self, int index)
   }
 
   // free the memory from the desired position
-  permute_to_left(self, index, self->length);
+  _permute_to_left(self, index, (int)self->length);
   --self->length;
 
   // resize if the length of the vector is less than half
   if (self->length < self->_capacity / 2 && self->_capacity > 16)
   {
-    resize_vector(self, self->_capacity / 2);
+    _resize_vector(self, self->_capacity / 2);
   }
 
   return KC_SUCCESS;
@@ -269,7 +269,7 @@ int erase_last_elem(struct kc_vector_t* self)
     return KC_NULL_REFERENCE;
   }
 
-  int ret = erase_elem(self, self->length - 1);
+  int ret = erase_elem(self, (int)(self->length - 1));
   if (ret != KC_SUCCESS)
   {
     self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
@@ -349,7 +349,7 @@ int get_last_elem(struct kc_vector_t* self, void** back)
     return KC_NULL_REFERENCE;
   }
 
-  int ret = get_elem(self, self->length - 1, back);
+  int ret = get_elem(self, (int)(self->length - 1), back);
   if (ret != KC_SUCCESS)
   {
     self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
@@ -410,7 +410,7 @@ int insert_at_end(struct kc_vector_t* self, void* data, size_t size)
     return KC_NULL_REFERENCE;
   }
 
-  int ret = insert_new_elem(self, self->length, data, size);
+  int ret = insert_new_elem(self, (int)(self->length), data, size);
   if (ret != KC_SUCCESS)
   {
     self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
@@ -467,7 +467,7 @@ int insert_new_elem(struct kc_vector_t* self, int index, void* data, size_t size
   // reallocate more memory if the capacity is full
   if (self->length + 1 >= self->_capacity)
   {
-    resize_vector(self, self->_capacity * 2);
+    _resize_vector(self, self->_capacity * 2);
   }
 
   // alocate space in memory
@@ -484,7 +484,7 @@ int insert_new_elem(struct kc_vector_t* self, int index, void* data, size_t size
 
   // insert the value at the specified location
   memcpy(new_elem, data, size);
-  permute_to_right(self, index, self->length);
+  _permute_to_right(self, index, (int)(self->length));
   self->data[index] = new_elem;
   ++self->length;
 
@@ -502,7 +502,7 @@ int resize_vector_capacity(struct kc_vector_t* self, size_t new_capacity)
     return KC_NULL_REFERENCE;
   }
 
-  resize_vector(self, new_capacity);
+  _resize_vector(self, new_capacity);
 
   return KC_SUCCESS;
 }
@@ -537,7 +537,7 @@ int search_elem(struct kc_vector_t* self, void* value,
 
 //---------------------------------------------------------------------------//
 
-void permute_to_left(struct kc_vector_t* vector, int start, int end)
+void _permute_to_left(struct kc_vector_t* vector, int start, int end)
 {
   for (int i = start; i < end && i < vector->length; ++i)
   {
@@ -547,7 +547,7 @@ void permute_to_left(struct kc_vector_t* vector, int start, int end)
 
 //---------------------------------------------------------------------------//
 
-void permute_to_right(struct kc_vector_t* vector, int start, int end)
+void _permute_to_right(struct kc_vector_t* vector, int start, int end)
 {
   for (int i = end; i >= start && i > 0; --i)
   {
@@ -557,7 +557,7 @@ void permute_to_right(struct kc_vector_t* vector, int start, int end)
 
 //---------------------------------------------------------------------------//
 
-void resize_vector(struct kc_vector_t* vector, size_t new_capacity)
+void _resize_vector(struct kc_vector_t* vector, size_t new_capacity)
 {
   // make sure the user specific a valid capacity size
   if (new_capacity < 1)

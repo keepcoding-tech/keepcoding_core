@@ -8,12 +8,11 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "../../hdrs/security/sysdep.h"
-#include "../../hdrs/security/md5.h"
+#include "../hdrs/security/md5.h"
+#include "../hdrs/sysdep.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 

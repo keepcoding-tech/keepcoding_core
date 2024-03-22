@@ -30,9 +30,9 @@ static int search_node           (struct kc_list_t* self, void* value, int (*com
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static struct kc_node_t* iterate_ll          (struct kc_list_t* list, int index);
-static struct kc_node_t* iterate_forward_ll  (struct kc_node_t* head, int index);
-static struct kc_node_t* iterate_reverse_ll  (struct kc_node_t* tail, int index);
+static struct kc_node_t* _iterate_ll          (struct kc_list_t* list, int index);
+static struct kc_node_t* _iterate_forward_ll  (struct kc_node_t* head, int index);
+static struct kc_node_t* _iterate_reverse_ll  (struct kc_node_t* tail, int index);
 
 //---------------------------------------------------------------------------//
 
@@ -224,7 +224,7 @@ int erase_node(struct kc_list_t* self, int index)
   }
 
   // find the node in the list before the one that is going to be removed
-  struct kc_node_t* current = iterate_ll(self, index - 1);
+  struct kc_node_t* current = _iterate_ll(self, index - 1);
 
   // use the node returned to define the node to be removed
   struct kc_node_t *node_to_remove = current->next;
@@ -364,7 +364,7 @@ int get_node(struct kc_list_t* self, int index, struct kc_node_t** node)
     return KC_INDEX_OUT_OF_BOUNDS;
   }
 
-  (*node) = iterate_ll(self, index);
+  (*node) = _iterate_ll(self, index);
 
   return KC_SUCCESS;
 }
@@ -431,7 +431,7 @@ int insert_new_node(struct kc_list_t* self, int index, void* data, size_t size)
   }
 
   // find the item in the list immediately before the desired index
-  struct kc_node_t* cursor = iterate_ll(self, index - 1);
+  struct kc_node_t* cursor = _iterate_ll(self, index - 1);
 
   if (cursor == NULL)
   {
@@ -532,7 +532,7 @@ int search_node(struct kc_list_t* self, void* value,
 
 //---------------------------------------------------------------------------//
 
-struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
+struct kc_node_t* _iterate_ll(struct kc_list_t* self, int index)
 {
   // if the list reference is NULL, do nothing
   if (self == NULL || self->_head == NULL || self->_tail == NULL)
@@ -554,15 +554,15 @@ struct kc_node_t* iterate_ll(struct kc_list_t* self, int index)
   // check if the index is over the half of the list length, if the index is
   // smaller, then start from the head, otherwise start from the tail
   struct kc_node_t* node = index <= self->length / 2 ?
-      iterate_forward_ll(self->_head, index) :
-      iterate_reverse_ll(self->_tail, (int)(self->length - 1) - index);
+      _iterate_forward_ll(self->_head, index) :
+      _iterate_reverse_ll(self->_tail, (int)(self->length - 1) - index);
 
   return node;
 }
 
 //---------------------------------------------------------------------------//
 
-struct kc_node_t* iterate_forward_ll(struct kc_node_t* head, int index)
+struct kc_node_t* _iterate_forward_ll(struct kc_node_t* head, int index)
 {
   struct kc_node_t* cursor = head;
   for (int i = 0; i < index; ++i)
@@ -574,7 +574,7 @@ struct kc_node_t* iterate_forward_ll(struct kc_node_t* head, int index)
 
 //---------------------------------------------------------------------------//
 
-struct kc_node_t* iterate_reverse_ll(struct kc_node_t* tail, int index)
+struct kc_node_t* _iterate_reverse_ll(struct kc_node_t* tail, int index)
 {
   struct kc_node_t* cursor = tail;
   for (int i = 0; i < index; ++i)

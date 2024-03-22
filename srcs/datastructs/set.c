@@ -20,7 +20,7 @@ static int search_pair_set      (struct kc_set_t* self, void* key, size_t key_si
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static void recursive_set_destroy  (struct kc_node_t* node);
+static void _recursive_set_destroy  (struct kc_node_t* node);
 
 //---------------------------------------------------------------------------//
 
@@ -86,7 +86,7 @@ void destroy_set(struct kc_set_t* set)
   // free the binary tree memory
   if (set->_entries->root != NULL)
   {
-    recursive_set_destroy(set->_entries->root);
+    _recursive_set_destroy(set->_entries->root);
   }
 
   destroy_logger(set->_logger);
@@ -241,18 +241,18 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
 
 //---------------------------------------------------------------------------//
 
-void recursive_set_destroy(struct kc_node_t* node)
+void _recursive_set_destroy(struct kc_node_t* node)
 {
   // chekc the previous node
   if (node->prev != NULL)
   {
-    recursive_set_destroy(node->prev);
+    _recursive_set_destroy(node->prev);
   }
 
   // check the next node
   if (node->next != NULL)
   {
-    recursive_set_destroy(node->next);
+    _recursive_set_destroy(node->next);
   }
 
   // destroy the pair

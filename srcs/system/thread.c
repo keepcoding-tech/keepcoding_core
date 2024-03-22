@@ -6,16 +6,16 @@
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
-#include "../../hdrs/system/thread.h"
 #include "../../hdrs/common.h"
+#include "../../hdrs/system/thread.h"
 
 #include <stdlib.h>
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static int start_thread      (struct kc_thread_t* self, void* (*thread_func)(void* arg), void* arg);
-static int stop_thread       (struct kc_thread_t* self);
-static int join_thread       (struct kc_thread_t* self, void** value_ptr);
+static int start_thread  (struct kc_thread_t* self, void* (*thread_func)(void* arg), void* arg);
+static int stop_thread   (struct kc_thread_t* self);
+static int join_thread   (struct kc_thread_t* self, void** value_ptr);
 
 //---------------------------------------------------------------------------//
 

@@ -18,9 +18,9 @@ void check_skip(bool condition);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-int passed;
-int failed;
-int skiped;
+extern int passed;
+extern int failed;
+extern int skiped;
 
 bool skiping;
 
@@ -68,34 +68,6 @@ bool skiping;
   {                                                                           \
     exit(1);                                                                  \
   }
-
-//---------------------------------------------------------------------------//
-
-bool check_ok(bool condition)
-{
-  if (condition == false)
-  {
-    // increment the number of failed tests
-    ++failed;
-    return false;
-  }
-
-  // increment the number of passed tests
-  ++passed;
-  return true;
-}
-
-//---------------------------------------------------------------------------//
-
-void check_skip(bool condition)
-{
-  if (condition == true)
-  {
-    // increment the number of skiped tests
-    ++skiped;
-    skiping = true;
-  }
-}
 
 //---------------------------------------------------------------------------//
 

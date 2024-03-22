@@ -21,9 +21,9 @@ static int search_node_btree      (struct kc_tree_t* self, void* data, struct kc
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static struct kc_node_t* insert_node_btree       (struct kc_tree_t* self, struct kc_node_t* node, void* data, size_t size);
-static void              recursive_destroy_tree  (struct kc_node_t* node);
-static struct kc_node_t* recursive_remove_node   (struct kc_tree_t* self, struct kc_node_t* root, void* data, size_t size);
+static struct kc_node_t* _insert_node_btree       (struct kc_tree_t* self, struct kc_node_t* node, void* data, size_t size);
+static void              _recursive_destroy_tree  (struct kc_node_t* node);
+static struct kc_node_t* _recursive_remove_node   (struct kc_tree_t* self, struct kc_node_t* root, void* data, size_t size);
 
 //---------------------------------------------------------------------------//
 
@@ -77,7 +77,7 @@ void destroy_tree(struct kc_tree_t* tree)
 
   if (tree->root != NULL)
   {
-    recursive_destroy_tree(tree->root);
+    _recursive_destroy_tree(tree->root);
   }
 
   destroy_logger(tree->_logger);
@@ -97,7 +97,7 @@ int insert_new_node_btree(struct kc_tree_t* self, void* data, size_t size)
     return KC_NULL_REFERENCE;
   }
 
-  self->root = insert_node_btree(self, self->root, data, size);
+  self->root = _insert_node_btree(self, self->root, data, size);
 
   return KC_SUCCESS;
 }
@@ -113,7 +113,7 @@ int remove_node_btree(struct kc_tree_t* self, void* data, size_t size)
     return KC_NULL_REFERENCE;
   }
 
-  self->root = recursive_remove_node(self, self->root, data, size);
+  self->root = _recursive_remove_node(self, self->root, data, size);
 
   return KC_SUCCESS;
 }
@@ -163,7 +163,7 @@ int search_node_btree(struct kc_tree_t* self, void* data, struct kc_node_t** nod
 
 //---------------------------------------------------------------------------//
 
-struct kc_node_t* insert_node_btree(struct kc_tree_t* self,
+struct kc_node_t* _insert_node_btree(struct kc_tree_t* self,
     struct kc_node_t* node, void* data, size_t size)
 {
   // check if this is the first node in the tree
@@ -174,12 +174,12 @@ struct kc_node_t* insert_node_btree(struct kc_tree_t* self,
   } // check if the current node's data is smaller (move to left)
   else if (self->compare(data, node->data) < 0)
   {
-    node->prev = insert_node_btree(self, node->prev, data, size);
+    node->prev = _insert_node_btree(self, node->prev, data, size);
 
   } // check if the current node's data is greater (move to right)
   else if (self->compare(data, node->data) > 0)
   {
-    node->next = insert_node_btree(self, node->next, data, size);
+    node->next = _insert_node_btree(self, node->next, data, size);
   }
 
   return node;
@@ -187,18 +187,18 @@ struct kc_node_t* insert_node_btree(struct kc_tree_t* self,
 
 //---------------------------------------------------------------------------//
 
-void recursive_destroy_tree(struct kc_node_t* node)
+void _recursive_destroy_tree(struct kc_node_t* node)
 {
   // chekc the previous node
   if (node->prev != NULL)
   {
-    recursive_destroy_tree(node->prev);
+    _recursive_destroy_tree(node->prev);
   }
 
   // check the next node
   if (node->next != NULL)
   {
-    recursive_destroy_tree(node->next);
+    _recursive_destroy_tree(node->next);
   }
 
   // destroy the node
@@ -207,7 +207,7 @@ void recursive_destroy_tree(struct kc_node_t* node)
 
 //---------------------------------------------------------------------------//
 
-struct kc_node_t* recursive_remove_node(struct kc_tree_t* self, struct kc_node_t* root, void* data, size_t size)
+struct kc_node_t* _recursive_remove_node(struct kc_tree_t* self, struct kc_node_t* root, void* data, size_t size)
 {
   // base case
   if (root == NULL)
@@ -218,13 +218,13 @@ struct kc_node_t* recursive_remove_node(struct kc_tree_t* self, struct kc_node_t
   // recursive calls for ancestors of node to be removed
   if (self->compare(data, root->data) < 0)
   {
-    root->prev = recursive_remove_node(self, root->prev, data, size);
+    root->prev = _recursive_remove_node(self, root->prev, data, size);
     return root;
   }
 
   if (self->compare(data, root->data) > 0)
   {
-    root->next = recursive_remove_node(self, root->next, data, size);
+    root->next = _recursive_remove_node(self, root->next, data, size);
     return root;
   }
 

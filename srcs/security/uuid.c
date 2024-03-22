@@ -516,7 +516,7 @@ int _get_current_time(kc_uuid_time_t* timestamp)
 
   static int inited = 0;
   static kc_uuid_time_t time_last;
-  static unsigned16 uuids_this_tick;
+  static unsigned short uuids_this_tick;
   kc_uuid_time_t time_now;
 
   if (!inited)
@@ -557,7 +557,7 @@ int _get_current_time(kc_uuid_time_t* timestamp)
 
 // true_random -- generate a crypto-quality random number.
 //**This sample doesn't do that.**
-static unsigned16 true_random(void)
+static unsigned short true_random(void)
 {
   static int inited = 0;
   kc_uuid_time_t time_now;

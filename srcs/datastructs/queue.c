@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 
-//--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
+//--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
 static int get_list_length_queue   (struct kc_queue_t* self, size_t* length);
 static int get_next_item_queue     (struct kc_queue_t* self, void** peek);

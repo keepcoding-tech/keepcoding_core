@@ -16,15 +16,13 @@
 
 //--- MARK: PRIVATE MEMBER METHODS PROTOTYPES -------------------------------//
 
-static int save_log  (struct kc_logger_t* self, const char* level, const int error_code, const char* file, const int line, const char* func);
-
-//--- MARK: PUBLIC MEMBER METHODS PROTOTYPES --------------------------------//
-
 void console_log_debug    (const char* description, const char* file, const int line, const char* func);
 void console_log_error    (const char* description, const char* file, const int line, const char* func);
 void console_log_fatal    (const char* description, const char* file, const int line, const char* func);
 void console_log_info     (const char* description, const char* file, const int line, const char* func);
 void console_log_warning  (const char* description, const char* file, const int line, const char* func);
+
+static int save_log  (struct kc_logger_t* self, const char* level, const int error_code, const char* file, const int line, const char* func);
 
 int  log_to_file  (const char* filename, const char* level, const char* message, const char* file, const int line, const char* func);
 

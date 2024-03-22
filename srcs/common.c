@@ -6,45 +6,63 @@
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
+#include "../hdrs/common.h"
+
 const char* kc_error_msg[] =
 {
-    "Invalid state, the process cannot proceed.",
-    "Successful completion of the process.",
-    "Operation in peding by the user.",
-    "Operation aborted by the user.",
-    "The structure was not initialized.",
-    "The reference was not initialized.",
-    "Insufficient memory in the heap.",
-    "Below minimum value.",
-    "Exceeds maximum value.",
-    "Attempted division by zero.",
-    "Access of an invalid index.",
-    "Does not meet the constraints.",
-    "Failed to open the specified directory.",
-    "The specified file was not found.",
-    "Failed to open the specified file.",
-    "Input/output operation failed.",
-    "Input does not conform to the expected format.",
-    "Error encountered while parsing.",
-    "Operation interrupted by an internal/external signal.",
-    "Exceeded the specified time limit.",
-    "Invalid operation in the current context.",
-    "Data integrity is compromised or corrupted.",
-    "Feature was not implemented yet.",
-    "Resource is not available.",
-    "A deadlock situation was encountered.",
-    "Connection was lost with a resource or service.",
-    "Network communication or connectivity error.",
-    "Error in protocol adherence or communication.",
-    "Security-related error or violation.",
-    "Error encountered during code compilation.",
-    "Error occurred in configuration or settings.",
-    "Unexpected or system-level error occurred.",
-    "Related to thread management or execution.",
-    "Recoverable error occurred.",
-    "Unrecoverable error occurred.",
-    "Fatal error occurred.",
-    "Unknown error occurred."
+  KC_INVALID_LOG,
+  KC_SUCCESS_LOG,
+
+  KC_PENDING_LOG,
+  KC_ABORT_LOG,
+
+  KC_EMPTY_STRUCTURE_LOG,
+  KC_NULL_REFERENCE_LOG,
+
+  KC_OUT_OF_MEMORY_LOG,
+  KC_UNDERFLOW_LOG,
+  KC_OVERFLOW_LOG,
+  KC_DIVISION_BY_ZERO_LOG,
+  KC_INDEX_OUT_OF_BOUNDS_LOG,
+
+  KC_INVALID_ARGUMENT_LOG,
+
+  KC_CANT_OPEN_DIR_LOG,
+  KC_FILE_NOT_FOUND_LOG,
+  KC_CANNOT_OPEN_FILE_LOG,
+  KC_IO_ERROR_LOG,
+  KC_FORMAT_ERROR_LOG,
+  KC_PARSE_ERROR_LOG,
+
+  KC_INTERRUPTED_OPERATION_LOG,
+  KC_TIMEOUT_LOG,
+
+  KC_INVALID_OPERATION_LOG,
+
+  KC_DATA_CORRUPTION_LOG,
+
+  KC_UNSUPPORTED_FEATURE_LOG,
+
+  KC_RESOURCE_UNAVAILABLE_LOG,
+  KC_DEADLOCK_LOG,
+  KC_LOST_CONNECTION_LOG,
+
+  KC_NETWORK_ERROR_LOG,
+  KC_PROTOCOL_ERROR_LOG,
+
+  KC_SECURITY_ERROR_LOG,
+
+  KC_COMPILATION_ERROR_LOG,
+  KC_CONFIGURATION_ERROR_LOG,
+
+  KC_SYSTEM_ERROR_LOG,
+  KC_THREAD_ERROR_LOG,
+
+  KC_RECOVERABLE_ERROR_LOG,
+  KC_UNRECOVERABLE_ERROR_LOG,
+  KC_FATAL_LOG_ERROR_LOG,
+
+  KC_UNKNOWN_ERROR_LOG
 };
 
 //---------------------------------------------------------------------------//
