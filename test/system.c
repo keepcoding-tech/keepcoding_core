@@ -63,7 +63,7 @@ int main()
       struct kc_file_t* file = new_file();
 
       ok(file != NULL);
-      ok(file->_log != NULL);
+      ok(file->_logger != NULL);
       ok(file->file == NULL);
       ok(file->name == NULL);
       ok(file->mode == KC_FILE_NOT_FOUND);
@@ -346,7 +346,7 @@ int main()
       struct kc_logger_t* logger = new_logger(filename);
 
       // write the log to the file
-      logger->log(logger, " [TEST] ", "This is a test description! XD",
+      logger->log(logger, " [TEST] ", 0,
         __FILE__, __LINE__, __func__); // DO NOT MOVE THIS LINE!!!
 
       // check if the log was printed correctely
@@ -364,7 +364,7 @@ int main()
       }
 
       fgets(read_line, sizeof(read_line), read_file);
-      test = __FILE__ ":350 -> This is a test description! XD";
+      test = __FILE__ ":350 -> Successful completion of the process.";
       for (int i = 0; i < strlen(test) - 1; ++i)
       {
         ok(read_line[i] == test[i]);

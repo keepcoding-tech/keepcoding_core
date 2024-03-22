@@ -8,6 +8,8 @@
 
 const char* kc_error_msg[] =
 {
+    "Invalid state, the process cannot proceed.",
+    "Successful completion of the process.",
     "Operation in peding by the user.",
     "Operation aborted by the user.",
     "The structure was not initialized.",

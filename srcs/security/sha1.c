@@ -11,6 +11,7 @@
 #include "../../hdrs/security/sha1.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
@@ -213,12 +214,6 @@ int sha1_final(struct kc_sha1_t* sha1, uint8_t msg_digest[KC_SHA1_LENGTH])
 
 int sha1_to_string(uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[(KC_SHA1_LENGTH * 2) + 1])
 {
-  if (strlen(digest) <= 0)
-  {
-    log_error(KC_INVALID_ARGUMENT_LOG);
-    return KC_INVALID_ARGUMENT;
-  }
-
   int ret = KC_SUCCESS;
 
   ret = sprintf(

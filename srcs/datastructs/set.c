@@ -126,7 +126,7 @@ int insert_new_pair_set(struct kc_set_t* self, void* key, size_t key_size, void*
   struct kc_pair_t* pair = pair_constructor(key, key_size, value, value_size);
 
   // insert that pair into the tree
-  int ret = self->_entries->insert(self->_entries, pair, sizeof(struct kc_pair_t));
+  ret = self->_entries->insert(self->_entries, pair, sizeof(struct kc_pair_t));
 
   if (ret != KC_SUCCESS)
   {
@@ -183,7 +183,6 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
   if (self == NULL)
   {
     log_error(KC_NULL_REFERENCE_LOG);
-
     return KC_NULL_REFERENCE;
   }
 
@@ -197,7 +196,7 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
     self->_logger->log(self->_logger, KC_WARNING_LOG, KC_OUT_OF_MEMORY,
       __FILE__, __LINE__, __func__);
 
-    return KC_INVALID;
+    return KC_OUT_OF_MEMORY;
   }
 
   // use the search function of the kc_tree_t to find the desired node
@@ -220,16 +219,24 @@ int search_pair_set(struct kc_set_t* self, void* key, size_t key_size, void** va
     // get the pair from the node
     struct kc_pair_t* result_pair = (struct kc_pair_t*)result_node->data;
 
-    // return either the value for that key or NULL if not found
+    // return either the value for that key
     if (result_pair != NULL && result_pair->value != NULL)
     {
       (*value) = result_pair->value;
-
-      return KC_SUCCESS;
+    }
+    else
+    {
+      // return NULL if not found
+      value = NULL;
     }
   }
+  else
+  {
+    // return NULL if not found
+    value = NULL;
+  }
 
-  return KC_INVALID;
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//

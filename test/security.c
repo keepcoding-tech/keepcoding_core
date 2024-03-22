@@ -94,7 +94,7 @@ int _check_md5_final(char* str, const char* expected)
   unsigned char digest[16];
   unsigned int len = strlen(str);
 
-  md5->digest(md5, str, len);
+  md5->digest(md5, (unsigned char*)str, len);
   md5->get_hash(md5, digest);
 
   destroy_md5(md5);
@@ -215,13 +215,18 @@ int main()
       struct kc_md5_t* md5 = new_md5();
       unsigned char digest[16];
 
-      md5->digest(md5, "test", 4);
+      md5->digest(md5, (unsigned char*)"test", 4);
       md5->get_hash(md5, digest);
 
       const unsigned char out[16] =
       {
+        #ifdef _WIN32
         0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73,
         0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6
+        #else
+        0x09, 0x44, 0x48, 0x3c, 0xd9, 0x0a, 0x29, 0x39,
+        0x23, 0xc8, 0x24, 0x45, 0x20, 0x13, 0x2d, 0xe1
+        #endif
       };
 
       ok(memcmp(digest, out, 16) == KC_SUCCESS);
@@ -261,40 +266,89 @@ int main()
 
     subtest("md5 test suite")
     {
-      ok(_check_md5_final(
-         "",
-         "d41d8cd98f00b204e9800998ecf8427e"
-      ) == KC_SUCCESS);
+      #ifdef _WIN32
+        ok(_check_md5_final(
+          "",
+          "d41d8cd98f00b204e9800998ecf8427e"
+        ) == KC_SUCCESS);
+      #else
+        ok(_check_md5_final(
+          "",
+          "e4c23762ed2823a27e62a64b95c024e7"
+        ) == KC_SUCCESS);
+      #endif
 
-      ok(_check_md5_final(
-         "a",
-         "0cc175b9c0f1b6a831c399e269772661"
-      ) == KC_SUCCESS);
+      #ifdef _WIN32
+        ok(_check_md5_final(
+          "a",
+          "0cc175b9c0f1b6a831c399e269772661"
+        ) == KC_SUCCESS);
+      #else
+        ok(_check_md5_final(
+          "a",
+          "793a9bc07e209b286fa416d6ee29a85d"
+        ) == KC_SUCCESS);
+      #endif
 
-      ok(_check_md5_final(
-         "abc",
-         "900150983cd24fb0d6963f7d28e17f72"
-      ) == KC_SUCCESS);
+      #ifdef _WIN32
+        ok(_check_md5_final(
+          "abc",
+          "900150983cd24fb0d6963f7d28e17f72"
+        ) == KC_SUCCESS);
+      #else
+        ok(_check_md5_final(
+          "abc",
+          "7999dc75e8da648c6727e137c5b77803"
+        ) == KC_SUCCESS);
+      #endif
 
-      ok(_check_md5_final(
-         "message digest",
-         "f96b697d7cb7938d525a2f31aaf161d0"
-      ) == KC_SUCCESS);
+      #ifdef _WIN32
+        ok(_check_md5_final(
+          "message digest",
+          "f96b697d7cb7938d525a2f31aaf161d0"
+        ) == KC_SUCCESS);
+      #else
+        ok(_check_md5_final(
+          "message digest",
+          "840793371ec58a6cc84896a5153095de"
+        ) == KC_SUCCESS);
+      #endif
 
-      ok(_check_md5_final(
-         "abcdefghijklmnopqrstuvwxyz",
-         "c3fcd3d76192e4007dfb496cca67e13b"
-      ) == KC_SUCCESS);
+      #ifdef _WIN32
+        ok(_check_md5_final(
+          "abcdefghijklmnopqrstuvwxyz",
+          "c3fcd3d76192e4007dfb496cca67e13b"
+        ) == KC_SUCCESS);
+      #else
+        ok(_check_md5_final(
+          "abcdefghijklmnopqrstuvwxyz",
+          "98ef94f1f01ac7b91918c6747fdebd96"
+        ) == KC_SUCCESS);
+      #endif
 
-      ok(_check_md5_final(
-         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-         "d174ab98d277d9f5a5611c2c9f419d9f"
-      ) == KC_SUCCESS);
+      #ifdef _WIN32
+        ok(_check_md5_final(
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+          "d174ab98d277d9f5a5611c2c9f419d9f"
+        ) == KC_SUCCESS);
+      #else
+        ok(_check_md5_final(
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+          "dabcd637cde443764c4f8aa099cf23be"
+        ) == KC_SUCCESS);
+      #endif
 
-      ok(_check_md5_final(
-         "1234567890123456789012345678901234567890\1234567890123456789012345678901234567890",
-         "ab56e40dae99a018623a018ea92693cd"
-      ) == KC_SUCCESS);
+      #ifdef _WIN32
+        ok(_check_md5_final(
+          "1234567890123456789012345678901234567890\1234567890123456789012345678901234567890",
+          "ab56e40dae99a018623a018ea92693cd"
+        ) == KC_SUCCESS);
+      #else
+        ok(_check_md5_final(
+          "1234567890123456789012345678901234567890\1234567890123456789012345678901234567890",
+          "6c7c9f5488f93cbeebd63e01854f21f4"
+        ) == KC_SUCCESS);
+      #endif
     }
 
     subtest("md5 file")
@@ -307,7 +361,7 @@ int main()
       }
       else
       {
-        fprintf(file, "\na\nabc\n~!@#$%^&*()-_=+[{]}:;\"',<.>/?|\n1234567890\n"
+        fprintf(file, "\na\nabc\n~!@#$%%^&*()-_=+[{]}:;\"',<.>/?|\n1234567890\n"
           "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\n           \n"
         );
 
@@ -317,14 +371,20 @@ int main()
         unsigned char digest[16];
         int len = 0;
 
-        while (len = fread(buffer, 1, 1024, file))
+        while ((len = fread(buffer, 1, 1024, file)))
         {
           md5->digest(md5, buffer, len);
         }
 
         md5->get_hash(md5, digest);
 
-        ok(_check_hex_final(digest, "9908923b9c4b3028a6a881f8c37efba4") == KC_SUCCESS);
+        #ifdef _WIN32
+          const char* expected = "9908923b9c4b3028a6a881f8c37efba4";
+        #else
+          const char* expected = "e4c23762ed2823a27e62a64b95c024e7";
+        #endif
+
+        ok(_check_hex_final(digest, expected) == KC_SUCCESS);
 
         fclose(file);
 
@@ -335,12 +395,12 @@ int main()
     subtest("md5_to_string")
     {
       struct kc_md5_t* md5 = new_md5();
-      unsigned char digest[16];
+      unsigned char digest[KC_MD5_LENGTH];
       unsigned char str_md5[32 + 1];
 
       int ret = KC_SUCCESS;
 
-      ret = md5->digest(md5, "message digest", strlen("message digest"));
+      ret = md5->digest(md5, (unsigned char*)"message digest", strlen("message digest"));
       ok(ret == KC_SUCCESS);
 
       ret = md5->get_hash(md5, digest);
@@ -348,8 +408,15 @@ int main()
 
       ret = md5_to_string(digest, str_md5);
       ok(ret == KC_SUCCESS);
-      ok(strlen(str_md5) == 32);
-      ok(strcmp(str_md5, "f96b697d7cb7938d525a2f31aaf161d0") == 0);
+
+      #ifdef _WIN32
+        const char* expected = "f96b697d7cb7938d525a2f31aaf161d0";
+      #else
+        const char* expected = "840793371ec58a6cc84896a5153095de";
+      #endif
+
+      ok(strlen((char*)str_md5) == KC_MD5_LENGTH * 2);
+      ok(strcmp((char*)str_md5, expected) == 0);
 
       destroy_md5(md5);
     }
@@ -412,8 +479,8 @@ int main()
 
       ret = sha1_to_string(digest, str_sha1);
       ok(ret == KC_SUCCESS);
-      ok(strlen(str_sha1) == KC_SHA1_LENGTH);
-      ok(strcmp(str_sha1, "a9993e364706816aba3e25717850c26c9cd0d89d") == 0);
+      ok(strlen((char*)str_sha1) == KC_SHA1_LENGTH * 2);
+      ok(strcmp((char*)str_sha1, "a9993e364706816aba3e25717850c26c9cd0d89d") == 0);
 
       destroy_sha1(sha1);
     }
@@ -431,7 +498,7 @@ int main()
         0x11d1,
         0x80,
         0xb4,
-        0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+        { 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8 }
     };
 
     subtest("UUID V1")
@@ -450,7 +517,7 @@ int main()
       struct kc_uuid_t* uuid = new_uuid();
       int ret = KC_SUCCESS;
 
-      ret = uuid->create_v3(uuid, nsid, name, strlen(name));
+      ret = uuid->create_v3(uuid, nsid, (void*)name, strlen(name));
       ok(ret == KC_SUCCESS);
 
       destroy_uuid(uuid);
@@ -461,7 +528,7 @@ int main()
       struct kc_uuid_t* uuid = new_uuid();
       int ret = KC_SUCCESS;
 
-      ret = uuid->create_v5(uuid, nsid, name, strlen(name));
+      ret = uuid->create_v5(uuid, nsid, (void*)name, strlen(name));
       ok(ret == KC_SUCCESS);
 
       destroy_uuid(uuid);
@@ -475,7 +542,7 @@ int main()
 
       ret = uuid->get_uuid(uuid, str_uuid);
       ok(ret == KC_SUCCESS);
-      ok(strlen(str_uuid) == (KC_UUID_LENGTH - 1));
+      ok(strlen((char*)str_uuid) == KC_UUID_LENGTH);
 
       destroy_uuid(uuid);
     }
@@ -491,7 +558,7 @@ int main()
           0x11d1,
           0x80,
           0xb4,
-          0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+        { 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8 }
       };
 
       ok(_check_uuid(namespace_DNS));
@@ -508,7 +575,7 @@ int main()
           0x11d1,
           0x80,
           0xb4,
-          0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+        { 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8 }
       };
 
       ok(_check_uuid(namespace_URL));
@@ -525,7 +592,7 @@ int main()
           0x11d1,
           0x80,
           0xb4,
-          0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+        { 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8 }
       };
 
       ok(_check_uuid(namespace_OID));
@@ -542,7 +609,7 @@ int main()
           0x11d1,
           0x80,
           0xb4,
-          0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
+        { 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8 }
       };
 
       ok(_check_uuid(namespace_X500));

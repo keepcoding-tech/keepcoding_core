@@ -12,6 +12,8 @@
 #include "../../hdrs/security/md5.h"
 
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
@@ -31,10 +33,8 @@ int get_ieee_node_identifier(struct kc_uuid_node_t* node)
     return KC_NULL_REFERENCE;
   }
 
-  int ret = KC_SUCCESS;
-
   static struct kc_uuid_node_t saved_node;
-  static inited = 0;
+  static int inited = 0;
 
   if (!inited)
   {
@@ -101,8 +101,8 @@ void get_system_time(kc_uuid_time_t* uuid_time)
   // Offset between UUID formatted times and Unix formatted times.
   // UUID UTC base time is October 15, 1582.
   // Unix base time is January 1, 1970
-  *uuid_time = ((unsigned64)tp.tv_sec * 10000000)
-    + ((unsigned64)tp.tv_usec * 10)
+  *uuid_time = ((unsigned64_t)tp.tv_sec * 10000000)
+    + ((unsigned64_t)tp.tv_usec * 10)
     + I64(0x01B21DD213814000);
 #endif
 }

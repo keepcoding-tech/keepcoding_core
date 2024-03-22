@@ -82,8 +82,9 @@ int save_log(struct kc_logger_t* self, const char* level, const int error_code, 
     return KC_NULL_REFERENCE;
   }
 
-  if (error_code < 0 || error_code >= get_kc_error_count())
+  if (error_code < -1 || error_code >= get_kc_error_count())
   {
+    printf("%d", error_code);
     log_error(KC_INVALID_ARGUMENT_LOG);
     return KC_INVALID_ARGUMENT;
   }
@@ -94,8 +95,8 @@ int save_log(struct kc_logger_t* self, const char* level, const int error_code, 
     return KC_INVALID_ARGUMENT;
   }
 
-  return log_to_file(self->_log_file, level, 
-    kc_error_msg[error_code], file, line, func);
+  return log_to_file(self->_log_file, level,
+    kc_error_msg[error_code + 1], file, line, func);
 }
 
 //---------------------------------------------------------------------------//

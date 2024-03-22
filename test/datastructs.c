@@ -1170,6 +1170,7 @@ int main() {
 
       int ret = KC_INVALID;
 
+
       // insert ten new entries
       for (int i = 0; i < 10; ++i)
       {
@@ -1177,7 +1178,6 @@ int main() {
 
         // use the "i" variable as the "key" and the "val" variable as the value
         ret = set->insert(set, &i, sizeof(int), &val, sizeof(int));
-
         ok(ret == KC_SUCCESS);
       }
 

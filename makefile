@@ -16,7 +16,7 @@
 
 # Specify the compiler and compiler flags
 CC     := gcc
-STD    := -std=c99
+STD    := -std=c99 -std=gnu99
 CFLAGS := -Wall -Werror -Wpedantic -g -pthread
 
 # Specify the sources and the headers directory
@@ -24,6 +24,7 @@ BLD_DIR  := build
 HDR_DIR  := hdrs
 SRC_DIR  := srcs
 TST_DIR  := test
+LOG_DIR  := $(BLD_DIR)/log
 OBJ_DIR  := $(BLD_DIR)/obj
 LIB_DIR  := $(BLD_DIR)/lib
 BIN_DIR  := $(BLD_DIR)/bin
@@ -68,6 +69,7 @@ $(BIN_TST_DIR)/%: $(TST_DIR)/%.c $(LIB_DIR)/libkeepcoding.a
 	$(CC) $(STD) $(CFLAGS) $< -o $@ -L$(LIB_DIR) -lkeepcoding
 
 run_tests: $(TEST_EXECUTABLES)
+	@mkdir -p $(LOG_DIR)
 	@$(foreach test_executable, $(TEST_EXECUTABLES), $(test_executable);)
 
 #################################### CLEAN #####################################

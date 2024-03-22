@@ -36,12 +36,12 @@ static unsigned short true_random(void);
 
 //---------------------------------------------------------------------------//
 
-// data type for UUID generator persistent state 
+// data type for UUID generator persistent state
 struct _uuid_state
 {
-  kc_uuid_time_t        ts;       // saved timestamp 
-  struct kc_uuid_node_t node;     // saved node ID 
-  unsigned short        cs;       // saved clock sequence 
+  kc_uuid_time_t        ts;       // saved timestamp
+  struct kc_uuid_node_t node;     // saved node ID
+  unsigned short        cs;       // saved clock sequence
 };
 
 //---------------------------------------------------------------------------//
@@ -72,12 +72,12 @@ struct kc_uuid_t* new_uuid()
   new_uuid->clock_seq_hi_and_reserved = 0x56;
   new_uuid->clock_seq_low             = 0x78;
 
-  new_uuid->node[0] = 0xC3;
-  new_uuid->node[1] = 0xB1;
-  new_uuid->node[2] = 0x29;
-  new_uuid->node[3] = 0xF5;
-  new_uuid->node[4] = 0xE8;
-  new_uuid->node[5] = 0xFA;
+  new_uuid->node[0] = 0x61;
+  new_uuid->node[1] = 0x79;
+  new_uuid->node[2] = 0x11;
+  new_uuid->node[3] = 0x24;
+  new_uuid->node[4] = 0x06;
+  new_uuid->node[5] = 0x14;
 
 
   // assigns the public member methods
@@ -97,7 +97,7 @@ void destroy_uuid(struct kc_uuid_t* uuid)
   if (uuid == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
-    return NULL;
+    return;
   }
 
   free(uuid);
@@ -196,7 +196,7 @@ int uuid_create_ver_3(struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name,
   int ret = KC_SUCCESS;
 
   // put name space ID in network byte order so it hashes the same
-  // no matter what endian machine we're on 
+  // no matter what endian machine we're on
   net_nsid = nsid;
   net_nsid.time_low = htonl(net_nsid.time_low);
   net_nsid.time_mid = htons(net_nsid.time_mid);
@@ -234,7 +234,7 @@ int uuid_create_ver_3(struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name,
     return ret;
   }
 
-  // the hash is in network byte order at this point 
+  // the hash is in network byte order at this point
   ret = _format_uuid_v3or5(self, hash, 3);
   if (ret != KC_SUCCESS)
   {
@@ -263,7 +263,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
   int ret = KC_SUCCESS;
 
   // put name space ID in network byte order so it hashes the same
-  // no matter what endian machine we're on 
+  // no matter what endian machine we're on
   net_nsid = nsid;
   net_nsid.time_low = htonl(net_nsid.time_low);
   net_nsid.time_mid = htons(net_nsid.time_mid);
@@ -277,7 +277,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
     return ret;
   }
 
-  ret = sha1_update(&context, &net_nsid, sizeof net_nsid);
+  ret = sha1_update(&context, (void*)&net_nsid, sizeof net_nsid);
   if (ret != KC_SUCCESS)
   {
     self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
@@ -301,7 +301,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
     return ret;
   }
 
-  // the hash is in network byte order at this point 
+  // the hash is in network byte order at this point
   ret = _format_uuid_v3or5(self, hash, 5);
   if (ret != KC_SUCCESS)
   {
@@ -326,12 +326,12 @@ int uuid_get_hash(struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH]
   int ret = KC_SUCCESS;
 
   ret = sprintf(
-    (char*)str_uuid, 
-    "%8.8x-%4.4x-%4.4x-%2.2x%2.2x-%02x%02x%02x%02x%02x%02x", 
-    self->time_low, 
-    self->time_mid, 
+    (char*)str_uuid,
+    "%8.8lx-%4.4x-%4.4x-%2.2x%2.2x-%02x%02x%02x%02x%02x%02x",
+    self->time_low,
+    self->time_mid,
     self->time_hi_and_version,
-    self->clock_seq_hi_and_reserved, 
+    self->clock_seq_hi_and_reserved,
     self->clock_seq_low,
     (unsigned char)self->node[0],
     (unsigned char)self->node[1],
@@ -351,7 +351,7 @@ int uuid_get_hash(struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH]
 
 //---------------------------------------------------------------------------//
 
-// compare two UUID's "lexically" and return 
+// compare two UUID's "lexically" and return
 #define CHECK(f1, f2) if (f1 != f2) return f1 < f2 ? -1 : 1;
 
 int uuid_compare(struct kc_uuid_t* u1, struct kc_uuid_t* u2)
@@ -395,7 +395,7 @@ int _read_state(unsigned short* clockseq, kc_uuid_time_t* timestamp, struct kc_u
   static int inited = 0;
   FILE* fp;
 
-  // only need to read state once per boot 
+  // only need to read state once per boot
   if (!inited)
   {
     fp = fopen("state", "rb");
@@ -431,7 +431,7 @@ int _write_state(unsigned short clockseq, kc_uuid_time_t timestamp, struct kc_uu
     inited = 1;
   }
 
-  // always save state to volatile shared state 
+  // always save state to volatile shared state
   st.cs = clockseq;
   st.ts = timestamp;
   st.node = node;
@@ -442,7 +442,7 @@ int _write_state(unsigned short clockseq, kc_uuid_time_t timestamp, struct kc_uu
     fwrite(&st, sizeof st, 1, fp);
     fclose(fp);
 
-    // schedule next save for 10 seconds from now 
+    // schedule next save for 10 seconds from now
     next_save = timestamp + (10 * 10 * 1000 * 1000);
   }
 
@@ -458,7 +458,7 @@ int _format_uuid_v1(struct kc_uuid_t* uuid, unsigned short clock_seq, kc_uuid_ti
     return KC_NULL_REFERENCE;
   }
 
-  // construct a version 1 uuid with the information 
+  // construct a version 1 uuid with the information
   // we've gathered plus a few constants
   uuid->time_low = (unsigned long)(timestamp & 0xFFFFFFFF);
   uuid->time_mid = (unsigned short)((timestamp >> 32) & 0xFFFF);
@@ -487,7 +487,7 @@ int _format_uuid_v3or5(struct kc_uuid_t* uuid, unsigned char hash[16], int v)
     return KC_NULL_REFERENCE;
   }
 
-  // convert UUID to local byte order 
+  // convert UUID to local byte order
   void* ret = memcpy(uuid, hash, sizeof * uuid);
   if (ret == NULL)
   {
@@ -498,7 +498,7 @@ int _format_uuid_v3or5(struct kc_uuid_t* uuid, unsigned char hash[16], int v)
   uuid->time_mid = ntohs(uuid->time_mid);
   uuid->time_hi_and_version = ntohs(uuid->time_hi_and_version);
 
-  // put in the variant and version bits 
+  // put in the variant and version bits
   uuid->time_hi_and_version &= 0x0FFF;
   uuid->time_hi_and_version |= (v << 12);
   uuid->clock_seq_hi_and_reserved &= 0x3F;
@@ -511,7 +511,7 @@ int _format_uuid_v3or5(struct kc_uuid_t* uuid, unsigned char hash[16], int v)
 
 int _get_current_time(kc_uuid_time_t* timestamp)
 {
-  // get time as 60-bit 100ns ticks since UUID epoch compensate 
+  // get time as 60-bit 100ns ticks since UUID epoch compensate
   // for the fact that real clock resolution is less than 100ns
 
   static int inited = 0;
@@ -530,10 +530,10 @@ int _get_current_time(kc_uuid_time_t* timestamp)
   {
     get_system_time(&time_now);
 
-    // if clock reading changed since last UUID generated, 
+    // if clock reading changed since last UUID generated,
     if (time_last != time_now)
     {
-      // reset count of uuids gen'd with this clock reading 
+      // reset count of uuids gen'd with this clock reading
       uuids_this_tick = 0;
       time_last = time_now;
       break;
@@ -544,10 +544,10 @@ int _get_current_time(kc_uuid_time_t* timestamp)
       uuids_this_tick++;
       break;
     }
-    // going too fast for our clock; spin 
+    // going too fast for our clock; spin
   }
 
-  // add the count of uuids to low order bits of the clock reading 
+  // add the count of uuids to low order bits of the clock reading
   *timestamp = time_now + uuids_this_tick;
 
   return KC_SUCCESS;
@@ -556,7 +556,7 @@ int _get_current_time(kc_uuid_time_t* timestamp)
 //---------------------------------------------------------------------------//
 
 // true_random -- generate a crypto-quality random number.
-//**This sample doesn't do that.** 
+//**This sample doesn't do that.**
 static unsigned16 true_random(void)
 {
   static int inited = 0;

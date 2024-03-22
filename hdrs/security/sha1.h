@@ -39,8 +39,8 @@
 
 enum
 {
-  KC_SHA1_STATE_ERROR    = 0xF0000001,
-  KC_SHA1_INPUT_TOO_LONG = 0xF0000002
+  KC_SHA1_STATE_ERROR    = 0x0000F001,
+  KC_SHA1_INPUT_TOO_LONG = 0x0000F002
 };
 
 #endif
@@ -91,8 +91,8 @@ int sha1_to_string  (uint8_t digest[KC_SHA1_LENGTH], unsigned char str_hash[(KC_
 //---------------------------------------------------------------------------//
 
 // SHA1 circular left shift macro
-#define SHA1_CIRCULAR_SHIFT(bits, 32)           \
-  (((32) << (bits)) | ((32) >> (32-(bits))))
+#define SHA1_CIRCULAR_SHIFT(bits, word)           \
+  (((word) << (bits)) | ((word) >> (32-(bits))))
 
 //---------------------------------------------------------------------------//
 

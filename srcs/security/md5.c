@@ -58,7 +58,16 @@ struct kc_md5_t* new_md5()
   int ret = md5_init(new_md5);
   if (ret != KC_SUCCESS)
   {
-    return ret;
+    if (ret == KC_NULL_REFERENCE)
+    {
+      log_error(KC_NULL_REFERENCE_LOG);
+    }
+    else if (ret == KC_OUT_OF_MEMORY)
+    {
+      log_error(KC_OUT_OF_MEMORY_LOG);
+    }
+
+    return NULL;
   }
 
   // assigns the public member methods
@@ -256,12 +265,6 @@ int md5_final(struct kc_md5_t* md5, unsigned char digest[(KC_MD5_LENGTH * 2) + 1
 
 int md5_to_string(unsigned char digest[KC_MD5_LENGTH], unsigned char str_hash[(KC_MD5_LENGTH * 2) + 1])
 {
-  if (strlen(digest) <= 0)
-  {
-    log_error(KC_INVALID_ARGUMENT_LOG);
-    return KC_INVALID_ARGUMENT;
-  }
-
   int ret = KC_SUCCESS;
 
   ret = sprintf(

@@ -23,10 +23,8 @@
 
 //---------------------------------------------------------------------------//
 
-#define KC_INVALID                                                   -1
-#define KC_SUCCESS                                                    0
-
-//---------------------------------------------------------------------------//
+#define KC_INVALID_LOG                 "Invalid state, the process cannot proceed."
+#define KC_SUCCESS_LOG                 "Successful completion of the process."
 
 #define KC_PENDING_LOG                 "Operation in pending by the user."
 #define KC_ABORT_LOG                   "Operation aborted by the user."
@@ -81,7 +79,10 @@
 
 enum
 {
-  KC_PENDING = 0,           // Pending: operation in progress
+  KC_INVALID = -1,          // Invalid: invalid state, the process cannot proceed
+  KC_SUCCESS,               // Success: successful completion of the process
+
+  KC_PENDING,               // Pending: operation in progress
   KC_ABORT,                 // Abort: operation aborted by the user
 
   KC_EMPTY_STRUCTURE,       // Empty structure: the structure was not initialized

@@ -57,7 +57,7 @@ struct kc_uuid_t
   unsigned short time_hi_and_version;
   unsigned char  clock_seq_hi_and_reserved;
   unsigned char  clock_seq_low;
-  char           node[6];
+  unsigned char  node[6];
 
   struct kc_logger_t* _logger;
 
