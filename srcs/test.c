@@ -15,6 +15,12 @@
 bool check_ok    (bool condition);
 void check_skip  (bool condition);
 
+//--- MARK: GLOBAL VARIABLES ------------------------------------------------//
+
+int passed = 0;
+int failed = 0;
+int skiped = 0;
+
 //---------------------------------------------------------------------------//
 
 bool check_ok(bool condition)

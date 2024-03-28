@@ -17,9 +17,6 @@
 #ifndef KC_FILE_H
 #define KC_FILE_H
 
-#include "../../hdrs/sysdep.h"
-
-#include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
 

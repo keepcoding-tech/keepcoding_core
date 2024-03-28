@@ -146,4 +146,11 @@ int get_kc_error_count();
 
 //---------------------------------------------------------------------------//
 
+// set the following to a calls
+// to get and release a global lock
+#define LOCK
+#define UNLOCK
+
+//---------------------------------------------------------------------------//
+
 #endif /* KC_COMMON_H */

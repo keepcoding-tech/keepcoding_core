@@ -28,8 +28,6 @@
 #ifndef KC_UUID_T_H
 #define KC_UUID_T_H
 
-
-#include "../sysdep.h"
 #include "../common.h"
 #include "md5.h"
 #include "sha1.h"
@@ -45,6 +43,17 @@
 // set the following to the number of 100ns ticks
 // of the actual resolution of your system's clock
 #define UUIDS_PER_TICK 1024
+
+#define I64(C) C##LL
+
+//---------------------------------------------------------------------------//
+
+typedef unsigned long long kc_uuid_time_t;
+
+struct kc_uuid_node_t
+{
+  char node_id[6];
+};
 
 //---------------------------------------------------------------------------//
 

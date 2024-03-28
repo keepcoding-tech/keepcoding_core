@@ -14,11 +14,11 @@
 #define KC_THREAD_T_H
 
 #include "../common.h"
-#include "../sysdep.h"
 #include "../system/logger.h"
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 //---------------------------------------------------------------------------//
 
