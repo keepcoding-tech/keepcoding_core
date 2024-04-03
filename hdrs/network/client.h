@@ -16,16 +16,24 @@
 #include "../system/logger.h"
 
 #include <stdio.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 //---------------------------------------------------------------------------//
 
 struct kc_client_t
 {
+  // the file descriptor
+  int fd;
+
+  // socket address
+  struct sockaddr_in* addr;
+
   int (*start)  (struct kc_client_t* self);
   int (*stop)   (struct kc_client_t* self);
 };
 
-struct kc_client_t* new_client      ();
+struct kc_client_t* new_client      (const char* IP, const int PORT);
 void                destroy_client  (struct kc_client_t* client);
 
 //---------------------------------------------------------------------------//

@@ -12,6 +12,7 @@
 #include "../hdrs/security/md5.h"
 #include "../hdrs/security/sha1.h"
 #include "../hdrs/security/uuid.h"
+#include "../hdrs/system/file.h"
 #include "../hdrs/common.h"
 #include "../hdrs/test.h"
 
@@ -614,6 +615,17 @@ int main()
 
       ok(_check_uuid(namespace_X500));
     }
+
+    // delete the files used to generate the UUID
+    struct kc_file_t* file = new_file();
+
+    file->open(file, "nodeid", KC_FILE_OPEN_EXISTING);
+    file->delete(file);
+
+    file->open(file, "state", KC_FILE_OPEN_EXISTING);
+    file->delete(file);
+
+    destroy_file(file);
 
     done_testing();
   }
