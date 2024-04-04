@@ -21,21 +21,41 @@
 
 //---------------------------------------------------------------------------//
 
+#define KC_SERVER_LOG_PATH "build/log/server.log"
+
+#define PORT_WELL_KNOWN_SERVICE 1024
+#define PORT_AVAILABLE_FOR_USER 49151
+#define PORT_DYNAMIC_OR_PRIVATE 65535
+
+#define IP_INVALID_NETWORK_ADDRESS  0
+#define IP_INVALID_FAMILY_ADDRESS  -1
+
+#define KC_IPv4 AF_INET
+#define KC_IPv6 AF_INET6
+
+//---------------------------------------------------------------------------//
+
 struct kc_server_t
 {
+  struct kc_logger_t* _logger; // private member for logging
+
   int fd;                      // the file descriptor
   struct sockaddr_in* addr;    // socket address
+
   char* ip;                    // server IP address
+  unsigned int port;           // server PORT
 
   int (*start)   (struct kc_server_t* self);
-  int (*stop)    (struct kc_server_t* self);
-  int (*listen)  (int server_fd);
-
-  void* (*dispatch)  (void* socket_fd);
 };
 
-struct kc_server_t* new_server      (const char* IP, const int PORT);
-void                destroy_server  (struct kc_server_t* server);
+struct kc_server_t* new_server_IPv4  (const char* IP, const unsigned int PORT);
+struct kc_server_t* new_server_IPv6  (const char* IP, const unsigned int PORT);
+struct kc_server_t* new_server       (const int AF, const char* IP, const unsigned int PORT);
+void                destroy_server   (struct kc_server_t* server);
+
+//---------------------------------------------------------------------------//
+
+void* dispatch  (void* socket_fd);
 
 //---------------------------------------------------------------------------//
 

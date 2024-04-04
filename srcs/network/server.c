@@ -9,8 +9,6 @@
 #include "../../hdrs/network/server.h"
 #include "../../hdrs/common.h"
 
-#include <errno.h>
-
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
@@ -21,64 +19,93 @@
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
+struct kc_server_t* new_server  (const int AF, const char* IP, const unsigned int PORT);
+
 int start_server   (struct kc_server_t* self);
-int stop_server    (struct kc_server_t* self);
-int listen_server  (int server_fd);
 
 void* dispatch_server  (void* socket_fd);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
 static int _accept_connection  (int server_fd, struct kc_socket_t* socket);
+static int _validate_port      (const unsigned int port);
+static int _validate_ip        (const int AF, const char* ip);
 
-static void _send_message  (char* buffer, int socket_fd);
-struct kc_socket_t socket_list[10];
-int socket_list_count = 0;
+
+static struct kc_socket_t* connections[10]; // keeps track of all the connections
+static int conn_count;                      // counts the length of the connection list
 
 //---------------------------------------------------------------------------//
 
-struct kc_server_t* new_server(const char* IP, const int PORT)
+struct kc_server_t* new_server_IPv4(const char* IP, const unsigned int PORT)
 {
+  return new_server(AF_INET, IP, PORT);
+}
+
+//---------------------------------------------------------------------------//
+
+struct kc_server_t* new_server_IPv6(const char* IP, const unsigned int PORT)
+{
+  return new_server(AF_INET6, IP, PORT);
+}
+
+//---------------------------------------------------------------------------//
+
+struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int PORT)
+{
+  // before anything, validate the IP and PORT
+  if (_validate_port(PORT) != KC_SUCCESS || _validate_ip(AF, IP) != KC_SUCCESS)
+  {
+    return NULL;
+  }
+
   // create a server instance to be returned
   struct kc_server_t* new_server = malloc(sizeof(struct kc_server_t));
-
-  // confirm that there is memory to allocate
   if (new_server == NULL)
   {
-    log_error(KC_NULL_REFERENCE_LOG);
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return NULL;
+  }
+
+  // allocate memory for the socket
+  new_server->addr = malloc(sizeof(struct sockaddr_in));
+  if (new_server->addr == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // free the server
+    free(new_server);
+
+    return NULL;
+  }
+
+  // allocate memory for the logger
+  new_server->_logger = new_logger(KC_SERVER_LOG_PATH);
+  if (new_server->_logger == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // free the server and socket
+    free(new_server->addr);
+    free(new_server);
+
     return NULL;
   }
 
   // create socket
-  new_server->fd = socket(AF_INET, SOCK_STREAM, 0);
+  new_server->fd = socket(AF, SOCK_STREAM, 0);
 
-  // bind to open port
-  new_server->addr = malloc(sizeof(struct sockaddr_in));
-  if (new_server->addr == NULL)
-  {
-    log_error(KC_NULL_REFERENCE_LOG);
-    return NULL;
-  }
-
-  new_server->addr->sin_family = AF_INET;
+  // assign IP and PORT
+  inet_pton(AF, IP, &new_server->addr->sin_addr.s_addr);
+  new_server->addr->sin_family = AF;
   new_server->addr->sin_port = htons(PORT);
 
-  // asign a default IP address
-  if (strlen(IP) <= 0 || IP == NULL)
-  {
-    new_server->addr->sin_addr.s_addr = INADDR_ANY;
-  }
-  else
-  {
-    inet_pton(AF_INET, IP, &new_server->addr->sin_addr.s_addr);
-  }
-
+  // save the ip and port for easy access
   new_server->ip = inet_ntoa(new_server->addr->sin_addr);
+  new_server->port = PORT;
 
-  new_server->start    = start_server;
-  new_server->stop     = stop_server;
-  new_server->dispatch = dispatch_server;
-  new_server->listen   = listen_server;
+  // asign public member functions
+  new_server->start = start_server;
 
   return new_server;
 }
@@ -93,15 +120,23 @@ void destroy_server(struct kc_server_t* server)
     return;
   }
 
-  for (int i = 0; i < socket_list_count; ++i)
+  for (int i = 0; i < conn_count; ++i)
   {
-    destroy_socket(&socket_list[i]);
+    destroy_socket(connections[i]);
   }
 
+  free(server->addr);
   free(server);
 }
 
 //---------------------------------------------------------------------------//
+
+struct send_pack
+{
+  unsigned int fd;
+  struct kc_socket_t* connects[10];
+  int conn_count;
+};
 
 int start_server(struct kc_server_t* self)
 {
@@ -115,69 +150,39 @@ int start_server(struct kc_server_t* self)
   int ret = bind(self->fd, (struct sockaddr*)self->addr, sizeof(*self->addr));
   if (ret != KC_SUCCESS)
   {
-    printf("\n%s\n", strerror(errno));
-    return KC_LOST_CONNECTION;
+    self->_logger->log(self->_logger, KC_FATAL_LOG,
+      KC_NETWORK_ERROR, __FILE__, __LINE__, __func__);
+    return KC_NETWORK_ERROR;
   }
 
   // start listening for connection
   ret = listen(self->fd, 10);
   if (ret != KC_SUCCESS)
   {
+    self->_logger->log(self->_logger, KC_FATAL_LOG,
+      KC_LOST_CONNECTION, __FILE__, __LINE__, __func__);
     return KC_LOST_CONNECTION;
   }
 
-  printf("Application listening on %s ... \n", self->ip);
+  printf("Application listening on http://%s:%d ... \n", self->ip, self->port);
 
   // separate the connections on different threads
-  ret = self->listen(self->fd);
-  if (ret != KC_SUCCESS)
-  {
-    return ret;
-  }
-
-  // first shutdown the connections
-  // then return the error, if any
-  shutdown(self->fd, SHUT_RDWR);
-
-  if (ret != KC_SUCCESS)
-  {
-    return ret;
-  }
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int stop_server(struct kc_server_t* self)
-{
-  if (self == NULL)
-  {
-    log_error(KC_NULL_REFERENCE_LOG);
-    return KC_NULL_REFERENCE;
-  }
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int listen_server(int server_fd)
-{
   while (1)
   {
     // create a new socket for new connections
     struct kc_socket_t* socket = new_socket();
 
     // accept the connection for the new socket
-    int ret = _accept_connection(server_fd, socket);
+    int ret = _accept_connection(self->fd, socket);
     if (ret != KC_SUCCESS)
     {
-      break;
+      self->_logger->log(self->_logger, KC_FATAL_LOG,
+        ret, __FILE__, __LINE__, __func__);
+      return ret;
     }
 
     // add the socket to the client list
-    socket_list[socket_list_count++] = *socket;
+    connections[conn_count++] = socket;
 
     void* fd = &socket->fd;
     pthread_t id;
@@ -185,6 +190,10 @@ int listen_server(int server_fd)
     // create a new thread to process the new connection
     pthread_create(&id, NULL, &dispatch_server, fd);
   }
+
+  // first shutdown the connections
+  // then return the error, if any
+  shutdown(self->fd, SHUT_RDWR);
 
   return KC_SUCCESS;
 }
@@ -202,6 +211,7 @@ void* dispatch_server(void* socket_fd)
     ssize_t recv_ret = recv(*(int*)socket_fd, recv_buffer, 1024, 0);
     if (recv_ret <= KC_SUCCESS)
     {
+      // TODO: delete the connection from the list
       break;
     }
 
@@ -210,7 +220,13 @@ void* dispatch_server(void* socket_fd)
     printf("received: %s", recv_buffer);
 
     // send message to the other clients
-    _send_message(recv_buffer, *(int*)socket_fd);
+    for (int i = 0; i < conn_count; ++i)
+    {
+      if (connections[i]->fd != *(int*)socket_fd)
+      {
+        send(connections[i]->fd, recv_buffer, strlen(recv_buffer), 0);
+      }
+    }
   }
 
   close(*(int*)socket_fd);
@@ -222,10 +238,13 @@ void* dispatch_server(void* socket_fd)
 
 int _accept_connection(int server_fd, struct kc_socket_t* socket)
 {
-  // accept the connection
+  // create a new socket for the client
   struct sockaddr_in client_addr;
   int client_addr_size = sizeof(struct sockaddr_in);
-  int client_fd = accept(server_fd, (struct sockaddr*)&client_addr, (socklen_t * restrict)&client_addr_size);
+
+  // accept the connection
+  int client_fd = accept(server_fd, (struct sockaddr*)&client_addr,
+    (socklen_t * restrict)&client_addr_size);
 
   // serialize the data
   socket->addr = &client_addr;
@@ -244,16 +263,71 @@ int _accept_connection(int server_fd, struct kc_socket_t* socket)
 }
 
 //---------------------------------------------------------------------------//
+//---------------------------------------------------------------------------//
 
-void _send_message(char* buffer, int socket_fd)
+static int _validate_port(const unsigned int port)
 {
-  for (int i = 0; i < socket_list_count; ++i)
+  // if below 0, is invalid
+  if (port < 0)
   {
-    if (socket_list[i].fd != socket_fd)
-    {
-      send(socket_list[i].fd, buffer, strlen(buffer), 0);
-    }
+    log_error("Port number cannot be negative.");
+    return KC_INVALID;
   }
+
+  // if the specified port is below the
+  // well known service rage, return warning
+  if (port < PORT_WELL_KNOWN_SERVICE)
+  {
+    log_error("Port number below 1024: privileged range.");
+    return KC_INVALID;
+  }
+
+  // if the specified port between the available
+  // and dynamic or private rage, return warning
+  if (PORT_AVAILABLE_FOR_USER < port && port < PORT_DYNAMIC_OR_PRIVATE)
+  {
+    log_error("Port number in dynamic/private range (49152-65535).");
+    return KC_INVALID;
+  }
+
+  // if above 65535, is invalid
+  if (port > PORT_DYNAMIC_OR_PRIVATE)
+  {
+    log_error("Port number exceeds maximum allowed (65535).");
+    return KC_INVALID;
+  }
+
+  return KC_SUCCESS;
+}
+
+//---------------------------------------------------------------------------//
+
+static int _validate_ip(int AF, const char* ip)
+{
+  if (AF != KC_IPv4 && AF != KC_IPv6)
+  {
+    log_error(KC_INVALID_ARGUMENT_LOG);
+    return KC_INVALID;
+  }
+
+  unsigned char ip_address[sizeof(struct in6_addr)];
+  int ret = inet_pton(AF, ip, ip_address);
+
+  // if the specified ip has an invalid format, is invalid
+  if (ret == IP_INVALID_NETWORK_ADDRESS)
+  {
+    log_error("Invalid network IP address format.");
+    return KC_INVALID;
+  }
+
+  // if the specified ip is not IPv4 or IPv6, is invalid
+  if (ret == IP_INVALID_FAMILY_ADDRESS)
+  {
+    log_error("Invalid family address: must be IPv4 or IPv6.");
+    return KC_INVALID;
+  }
+
+  return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
