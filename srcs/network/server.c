@@ -31,14 +31,20 @@ static int _accept_connection  (int server_fd, struct kc_socket_t* socket);
 static int _validate_port      (const unsigned int port);
 static int _validate_ip        (const int AF, const char* ip);
 
+//--- MARK: PRIVATE MEMBERS -------------------------------------------------//
 
-static struct kc_socket_t* connections[10]; // keeps track of all the connections
-static int conn_count;                      // counts the length of the connection list
+// private member for logging
+static struct kc_logger_t* logger;
+
+// keeps track of all the connections
+static struct kc_socket_t* connections[KC_SERVER_MAX_CONNECTIONS];
+static int conn_count;
 
 //---------------------------------------------------------------------------//
 
 struct kc_server_t* new_server_IPv4(const char* IP, const unsigned int PORT)
 {
+  // initialize the server for IPv4
   return new_server(AF_INET, IP, PORT);
 }
 
@@ -46,6 +52,7 @@ struct kc_server_t* new_server_IPv4(const char* IP, const unsigned int PORT)
 
 struct kc_server_t* new_server_IPv6(const char* IP, const unsigned int PORT)
 {
+  // initialize the server for IPv6
   return new_server(AF_INET6, IP, PORT);
 }
 
@@ -80,8 +87,8 @@ struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int 
   }
 
   // allocate memory for the logger
-  new_server->_logger = new_logger(KC_SERVER_LOG_PATH);
-  if (new_server->_logger == NULL)
+  logger = new_logger(KC_SERVER_LOG_PATH);
+  if (logger == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
 
@@ -93,7 +100,7 @@ struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int 
   }
 
   // create socket
-  new_server->fd = socket(AF, SOCK_STREAM, 0);
+  new_server->file_descriptor = socket(AF, SOCK_STREAM, 0);
 
   // assign IP and PORT
   inet_pton(AF, IP, &new_server->addr->sin_addr.s_addr);
@@ -131,13 +138,6 @@ void destroy_server(struct kc_server_t* server)
 
 //---------------------------------------------------------------------------//
 
-struct send_pack
-{
-  unsigned int fd;
-  struct kc_socket_t* connects[10];
-  int conn_count;
-};
-
 int start_server(struct kc_server_t* self)
 {
   if (self == NULL)
@@ -147,24 +147,24 @@ int start_server(struct kc_server_t* self)
   }
 
   // bind the server socket to the IP address
-  int ret = bind(self->fd, (struct sockaddr*)self->addr, sizeof(*self->addr));
+  int ret = bind(self->file_descriptor, (struct sockaddr*)self->addr, sizeof(*self->addr));
   if (ret != KC_SUCCESS)
   {
-    self->_logger->log(self->_logger, KC_FATAL_LOG,
+    logger->log(logger, KC_FATAL_LOG,
       KC_NETWORK_ERROR, __FILE__, __LINE__, __func__);
     return KC_NETWORK_ERROR;
   }
 
-  // start listening for connection
-  ret = listen(self->fd, 10);
+  // start listening for connections
+  ret = listen(self->file_descriptor, KC_SERVER_MAX_CONNECTIONS);
   if (ret != KC_SUCCESS)
   {
-    self->_logger->log(self->_logger, KC_FATAL_LOG,
+    logger->log(logger, KC_FATAL_LOG,
       KC_LOST_CONNECTION, __FILE__, __LINE__, __func__);
     return KC_LOST_CONNECTION;
   }
 
-  printf("Application listening on http://%s:%d ... \n", self->ip, self->port);
+  printf("\nApplication listening on http://%s:%d ... \n", self->ip, self->port);
 
   // separate the connections on different threads
   while (1)
@@ -173,10 +173,10 @@ int start_server(struct kc_server_t* self)
     struct kc_socket_t* socket = new_socket();
 
     // accept the connection for the new socket
-    int ret = _accept_connection(self->fd, socket);
+    int ret = _accept_connection(self->file_descriptor, socket);
     if (ret != KC_SUCCESS)
     {
-      self->_logger->log(self->_logger, KC_FATAL_LOG,
+      logger->log(logger, KC_FATAL_LOG,
         ret, __FILE__, __LINE__, __func__);
       return ret;
     }
@@ -193,7 +193,7 @@ int start_server(struct kc_server_t* self)
 
   // first shutdown the connections
   // then return the error, if any
-  shutdown(self->fd, SHUT_RDWR);
+  shutdown(self->file_descriptor, SHUT_RDWR);
 
   return KC_SUCCESS;
 }
@@ -304,12 +304,6 @@ static int _validate_port(const unsigned int port)
 
 static int _validate_ip(int AF, const char* ip)
 {
-  if (AF != KC_IPv4 && AF != KC_IPv6)
-  {
-    log_error(KC_INVALID_ARGUMENT_LOG);
-    return KC_INVALID;
-  }
-
   unsigned char ip_address[sizeof(struct in6_addr)];
   int ret = inet_pton(AF, ip, ip_address);
 

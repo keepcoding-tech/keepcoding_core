@@ -37,8 +37,35 @@ void test_client()
   destroy_client(client);
 }
 
+struct kc_route_t
+{
+  int (*get)     (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+  int (*post)    (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+  int (*put)     (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+  int (*delete)  (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+};
+
+void* controller(void* arg)
+{
+  if (*(int*)arg == 0)
+  {
+    return (void*)KC_SUCCESS;
+  }
+
+  return (void*)KC_INVALID;
+}
+
 int main(int argc, char **argv)
 {
+
+  struct kc_route_t* route;
+
+  int val = 100;
+  void* arg = &val;
+
+  route->get("/hello", &controller, arg);
+
+
   if (argv[1] != NULL)
   {
     if (strcmp(argv[1], "s") == 0)
@@ -93,6 +120,17 @@ int main(int argc, char **argv)
 
       note("IPv4 or IPv6 as string");
       ok(new_server_IPv4("just.a::string", 8000) == NULL);
+    }
+
+    subtest("start()")
+    {
+      struct kc_server_t* server = new_server_IPv4("0.0.0.0", 8000);
+      int ret = KC_SUCCESS;
+
+      ret = server->start(server);
+      ok(ret == KC_SUCCESS);
+
+      destroy_server(server);
     }
 
     done_testing();

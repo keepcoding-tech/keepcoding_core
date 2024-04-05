@@ -30,28 +30,40 @@
 #define IP_INVALID_NETWORK_ADDRESS  0
 #define IP_INVALID_FAMILY_ADDRESS  -1
 
-#define KC_IPv4 AF_INET
-#define KC_IPv6 AF_INET6
+#define KC_SERVER_MAX_CONNECTIONS 1024
+
+//---------------------------------------------------------------------------//
+
 
 //---------------------------------------------------------------------------//
 
 struct kc_server_t
 {
-  struct kc_logger_t* _logger; // private member for logging
-
-  int fd;                      // the file descriptor
+  int file_descriptor;         // the file descriptor
   struct sockaddr_in* addr;    // socket address
 
   char* ip;                    // server IP address
   unsigned int port;           // server PORT
 
   int (*start)   (struct kc_server_t* self);
+  int (*routes)  (struct kc_server_t* self);
 };
 
 struct kc_server_t* new_server_IPv4  (const char* IP, const unsigned int PORT);
 struct kc_server_t* new_server_IPv6  (const char* IP, const unsigned int PORT);
 struct kc_server_t* new_server       (const int AF, const char* IP, const unsigned int PORT);
 void                destroy_server   (struct kc_server_t* server);
+
+//---------------------------------------------------------------------------//
+
+struct kc_connection_t*
+{
+  int fd; // the connection file descriptor
+
+  // list of all open connections
+  static struct kc_socket_t* connections[KC_SERVER_MAX_CONNECTIONS];
+  int length;
+};
 
 //---------------------------------------------------------------------------//
 
