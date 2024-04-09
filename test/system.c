@@ -43,7 +43,7 @@ void* test_thread_func(void* arg)
 int race_counter = 0;
 pthread_mutex_t mutex;
 
-void* test_race_condition()
+void* test_race_condition(void* arg)
 {
   for (int i = 0; i < 1000000; ++i)
   {
@@ -54,7 +54,7 @@ void* test_race_condition()
   return NULL;
 }
 
-int main()
+int main(void)
 {
   testgroup("kc_file_t")
   {

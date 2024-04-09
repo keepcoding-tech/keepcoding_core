@@ -16,9 +16,12 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/sysinfo.h>
 #include <netinet/in.h>
 #include <unistd.h>
+
+#ifdef __linux__
+#include <sys/sysinfo.h>
+#endif
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
@@ -54,7 +57,7 @@ struct _uuid_state
 
 //---------------------------------------------------------------------------//
 
-struct kc_uuid_t* new_uuid()
+struct kc_uuid_t* new_uuid(void)
 {
   // create a UUID instance to be returned
   struct kc_uuid_t* new_uuid = malloc(sizeof(struct kc_uuid_t));
@@ -218,7 +221,7 @@ int uuid_create_ver_3(struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name,
     return ret;
   }
 
-  ret = md5_update(&context, &net_nsid, sizeof(net_nsid));
+  ret = md5_update(&context, (unsigned char*)&net_nsid, sizeof(net_nsid));
   if (ret != KC_SUCCESS)
   {
     self->_logger->log(self->_logger, KC_WARNING_LOG, ret,
@@ -672,32 +675,8 @@ void _get_system_time(kc_uuid_time_t* uuid_time)
 /* !! Sample code, not for use in production; see RFC 1750 !! */
 void _get_random_info(char seed[16])
 {
-#ifdef _WIN32
-  struct kc_md5_t c;
-
-  struct {
-    MEMORYSTATUS m;
-    SYSTEM_INFO s;
-    FILETIME t;
-    LARGE_INTEGER pc;
-    DWORD tc;
-    DWORD l;
-    char hostname[MAX_COMPUTERNAME_LENGTH + 1];
-  } r;
-
-  md5_init(&c);
-  GlobalMemoryStatusEx(&r.m);
-  GetSystemInfo(&r.s);
-  GetSystemTimeAsFileTime(&r.t);
-  QueryPerformanceCounter(&r.pc);
-
-  r.tc = GetTickCount64();
-  r.l = MAX_COMPUTERNAME_LENGTH + 1;
-  GetComputerNameA(r.hostname, &r.l);
-
-  md5_update(&c, &r, sizeof r);
-  md5_final(&c, seed);
-
+#ifdef __APPLE__
+  arc4random_buf(seed, 16);
 #else
 
   struct kc_md5_t c;

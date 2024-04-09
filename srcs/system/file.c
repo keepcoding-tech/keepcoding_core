@@ -35,7 +35,7 @@ static int write_file     (struct kc_file_t* self, char* buffer);
 
 //---------------------------------------------------------------------------//
 
-struct kc_file_t* new_file()
+struct kc_file_t* new_file(void)
 {
   // create a file instance to be returned
   struct kc_file_t* new_file = malloc(sizeof(struct kc_file_t));

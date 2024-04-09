@@ -34,6 +34,13 @@
 
 //---------------------------------------------------------------------------//
 
+struct kc_route_t
+{
+  int (*get)     (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+  int (*post)    (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+  int (*put)     (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+  int (*delete)  (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+};
 
 //---------------------------------------------------------------------------//
 
@@ -53,21 +60,6 @@ struct kc_server_t* new_server_IPv4  (const char* IP, const unsigned int PORT);
 struct kc_server_t* new_server_IPv6  (const char* IP, const unsigned int PORT);
 struct kc_server_t* new_server       (const int AF, const char* IP, const unsigned int PORT);
 void                destroy_server   (struct kc_server_t* server);
-
-//---------------------------------------------------------------------------//
-
-struct kc_connection_t*
-{
-  int fd; // the connection file descriptor
-
-  // list of all open connections
-  static struct kc_socket_t* connections[KC_SERVER_MAX_CONNECTIONS];
-  int length;
-};
-
-//---------------------------------------------------------------------------//
-
-void* dispatch  (void* socket_fd);
 
 //---------------------------------------------------------------------------//
 

@@ -39,7 +39,7 @@ struct kc_thread_t
 
 //---------------------------------------------------------------------------//
 
-struct kc_thread_t* new_thread      ();
+struct kc_thread_t* new_thread      (void);
 void                destroy_thread  (struct kc_thread_t* thread);
 
 //---------------------------------------------------------------------------//

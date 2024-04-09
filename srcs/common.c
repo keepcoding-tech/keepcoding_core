@@ -67,7 +67,7 @@ const char* kc_error_msg[] =
 
 //---------------------------------------------------------------------------//
 
-int get_kc_error_count()
+int get_kc_error_count(void)
 {
   return (sizeof(kc_error_msg) / sizeof(kc_error_msg[0]));
 }

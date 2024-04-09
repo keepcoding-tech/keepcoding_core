@@ -19,7 +19,7 @@ static int join_thread   (struct kc_thread_t* self, void** value_ptr);
 
 //---------------------------------------------------------------------------//
 
-struct kc_thread_t* new_thread()
+struct kc_thread_t* new_thread(void)
 {
   // create a thread instance to be returned
   struct kc_thread_t* new_thread = malloc(sizeof(struct kc_thread_t));

@@ -65,7 +65,7 @@ struct kc_file_t
   int (*write)        (struct kc_file_t* self, char* buffer);
 };
 
-struct kc_file_t* new_file      ();
+struct kc_file_t* new_file      (void);
 void              destroy_file  (struct kc_file_t* file);
 
 //---------------------------------------------------------------------------//

@@ -19,9 +19,10 @@
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-struct kc_server_t* new_server  (const int AF, const char* IP, const unsigned int PORT);
-
-int start_server   (struct kc_server_t* self);
+struct kc_server_t* new_server_IPv4  (const char* IP, const unsigned int PORT);
+struct kc_server_t* new_server_IPv6  (const char* IP, const unsigned int PORT);
+struct kc_server_t* new_server       (const int AF, const char* IP, const unsigned int PORT);
+int                 start_server     (struct kc_server_t* self);
 
 void* dispatch_server  (void* socket_fd);
 
@@ -164,7 +165,7 @@ int start_server(struct kc_server_t* self)
     return KC_LOST_CONNECTION;
   }
 
-  printf("\nApplication listening on http://%s:%d ... \n", self->ip, self->port);
+  printf("\nApplication listening on %s:%d ... \n\n", self->ip, self->port);
 
   // separate the connections on different threads
   while (1)
@@ -204,31 +205,27 @@ void* dispatch_server(void* socket_fd)
 {
   char recv_buffer[1024];
 
-  while (1)
+  // receive the message from the connection
+  ssize_t recv_ret = recv(*(int*)socket_fd, recv_buffer, 1024, 0);
+  if (recv_ret <= KC_SUCCESS)
   {
-
-    // receive the message from the connection
-    ssize_t recv_ret = recv(*(int*)socket_fd, recv_buffer, 1024, 0);
-    if (recv_ret <= KC_SUCCESS)
-    {
-      // TODO: delete the connection from the list
-      break;
-    }
-
-    // print the message
-    recv_buffer[recv_ret] = '\0';
-    printf("received: %s", recv_buffer);
-
-    // send message to the other clients
-    for (int i = 0; i < conn_count; ++i)
-    {
-      if (connections[i]->fd != *(int*)socket_fd)
-      {
-        send(connections[i]->fd, recv_buffer, strlen(recv_buffer), 0);
-      }
-    }
+    return (void*)KC_INVALID;
   }
 
+  // print the message
+  recv_buffer[recv_ret] = '\0';
+  printf("%s \n", recv_buffer);
+
+  char* response = 
+    "HTTP/1.1 200 OK\n"
+    "Content-Type: text/plain\n"
+    "\n"
+    "Hello, world!\n";
+
+  // send a HTTP response
+  send(*(int*)socket_fd, response, strlen(response), 0);
+
+  // close the socket
   close(*(int*)socket_fd);
 
   return (void*)KC_SUCCESS;
@@ -262,7 +259,6 @@ int _accept_connection(int server_fd, struct kc_socket_t* socket)
   return KC_SUCCESS;
 }
 
-//---------------------------------------------------------------------------//
 //---------------------------------------------------------------------------//
 
 static int _validate_port(const unsigned int port)

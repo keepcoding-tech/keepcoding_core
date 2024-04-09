@@ -51,18 +51,6 @@ typedef unsigned short int UINT2;
 // UINT4 defines a four byte 32
 typedef unsigned long int UINT4;
 
-/*
- * PROTO_LIST is defined depending on how PROTOTYPES is defined above.
- * If using PROTOTYPES, then PROTO_LIST returns the list, otherwise it
- * returns an empty list.
- */
-
-#if KC_MD5_PROTOTYPES
-#define PROTO_LIST(list) list
-#else
-#define PROTO_LIST(list) ()
-#endif
-
 //---------------------------------------------------------------------------//
 
 #define KC_MD5_LOG_PATH  "build/log/md5.log"
@@ -83,14 +71,14 @@ struct kc_md5_t
   int (*get_hash)  (struct kc_md5_t* self, unsigned char digest[16]);
 };
 
-struct kc_md5_t* new_md5      ();
+struct kc_md5_t* new_md5      (void);
 void             destroy_md5  (struct kc_md5_t* md5);
 
 //---------------------------------------------------------------------------//
 
-int md5_init   PROTO_LIST((struct kc_md5_t* context));
-int md5_update PROTO_LIST((struct kc_md5_t* context, unsigned char* input, unsigned int in_len));
-int md5_final  PROTO_LIST((struct kc_md5_t* context, unsigned char digest[KC_MD5_LENGTH]));
+int md5_init   (struct kc_md5_t* context);
+int md5_update (struct kc_md5_t* context, unsigned char* input, unsigned int in_len);
+int md5_final  (struct kc_md5_t* context, unsigned char digest[KC_MD5_LENGTH]);
 
 int md5_to_string  (unsigned char digest[KC_MD5_LENGTH], unsigned char str_hash[(KC_MD5_LENGTH * 2) + 1]);
 

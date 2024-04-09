@@ -180,7 +180,7 @@ int _check_uuid(struct kc_uuid_t namespace_uuid)
   return KC_SUCCESS;
 }
 
-int main()
+int main(void)
 {
   testgroup("B64")
   {

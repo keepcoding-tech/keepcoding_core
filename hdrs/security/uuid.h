@@ -75,7 +75,7 @@ struct kc_uuid_t
   int (*compare)    (struct kc_uuid_t* self, struct kc_uuid_t* uuid);
 };
 
-struct kc_uuid_t* new_uuid      ();
+struct kc_uuid_t* new_uuid      (void);
 void              destroy_uuid  (struct kc_uuid_t* uuid);
 
 //---------------------------------------------------------------------------//

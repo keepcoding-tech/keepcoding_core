@@ -13,10 +13,10 @@
 #include <stdio.h>
 #include <string.h>
 
-void test_server()
+void test_server(void)
 {
   // create a server instance
-  struct kc_server_t* server = new_server_IPv4("", 8000);
+  struct kc_server_t* server = new_server_IPv4("0.0.0.0", 8000);
 
   // start the server
   server->start(server);
@@ -25,7 +25,7 @@ void test_server()
   destroy_server(server);
 }
 
-void test_client()
+void test_client(void)
 {
   // create a client instance
   struct kc_client_t* client = new_client("127.0.0.1", 8000);
@@ -37,35 +37,8 @@ void test_client()
   destroy_client(client);
 }
 
-struct kc_route_t
-{
-  int (*get)     (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
-  int (*post)    (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
-  int (*put)     (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
-  int (*delete)  (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
-};
-
-void* controller(void* arg)
-{
-  if (*(int*)arg == 0)
-  {
-    return (void*)KC_SUCCESS;
-  }
-
-  return (void*)KC_INVALID;
-}
-
 int main(int argc, char **argv)
 {
-
-  struct kc_route_t* route;
-
-  int val = 100;
-  void* arg = &val;
-
-  route->get("/hello", &controller, arg);
-
-
   if (argv[1] != NULL)
   {
     if (strcmp(argv[1], "s") == 0)
@@ -88,8 +61,6 @@ int main(int argc, char **argv)
 
       note("PORT < 0");
       ok(new_server_IPv4("0.0.0.0", -1) == NULL);
-      struct kc_server_t* server = new_server_IPv4("192.168.0.243", 8000);
-      server->start(server);
 
       note("0 < PORT < 1024");
       ok(new_server_IPv4("0.0.0.0", 512) == NULL);

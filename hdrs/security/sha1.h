@@ -77,7 +77,7 @@ struct kc_sha1_t
   int (*get_hash)  (struct kc_sha1_t* context, uint8_t msg_digest[KC_SHA1_LENGTH]);
 };
 
-struct kc_sha1_t* new_sha1      ();
+struct kc_sha1_t* new_sha1      (void);
 void              destroy_sha1  (struct kc_sha1_t* sha1);
 
 //---------------------------------------------------------------------------//

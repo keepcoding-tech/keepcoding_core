@@ -28,7 +28,7 @@ int _sha1_pad_message            (struct kc_sha1_t* sha1);
 
 //---------------------------------------------------------------------------//
 
-struct kc_sha1_t* new_sha1()
+struct kc_sha1_t* new_sha1(void)
 {
   // create a SHA1 instance to be returned
   struct kc_sha1_t* new_sha1 = malloc(sizeof(struct kc_sha1_t));

@@ -17,19 +17,19 @@
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-int md5_init   PROTO_LIST((struct kc_md5_t* md5));
-int md5_update PROTO_LIST((struct kc_md5_t* md5, unsigned char* input, unsigned int in_len));
-int md5_final  PROTO_LIST((struct kc_md5_t* md5, unsigned char digest[KC_MD5_LENGTH]));
+int md5_init   (struct kc_md5_t* md5);
+int md5_update (struct kc_md5_t* md5, unsigned char* input, unsigned int in_len);
+int md5_final  (struct kc_md5_t* md5, unsigned char digest[KC_MD5_LENGTH]);
 
 int md5_to_string(unsigned char digest[KC_MD5_LENGTH], unsigned char str_hash[(KC_MD5_LENGTH * 2) + 1]);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
 
-static int _md5_transform PROTO_LIST((UINT4[4], unsigned char[64]));
-static int _encode        PROTO_LIST((unsigned char*, UINT4*, unsigned int));
-static int _decode        PROTO_LIST((UINT4*, unsigned char*, unsigned int));
-static int _md5_memcpy    PROTO_LIST((POINTER, POINTER, unsigned int));
-static int _md5_memset    PROTO_LIST((POINTER, int, unsigned int));
+static int _md5_transform (UINT4[4], unsigned char[64]);
+static int _encode        (unsigned char*, UINT4*, unsigned int);
+static int _decode        (UINT4*, unsigned char*, unsigned int);
+static int _md5_memcpy    (POINTER, POINTER, unsigned int);
+static int _md5_memset    (POINTER, int, unsigned int);
 
 //---------------------------------------------------------------------------//
 
@@ -42,7 +42,7 @@ static unsigned char PADDING[64] =
 
 //---------------------------------------------------------------------------//
 
-struct kc_md5_t* new_md5()
+struct kc_md5_t* new_md5(void)
 {
   // create a MD5 instance to be returned
   struct kc_md5_t* new_md5 = malloc(sizeof(struct kc_md5_t));
