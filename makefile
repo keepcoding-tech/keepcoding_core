@@ -66,7 +66,7 @@ test: $(TEST_EXECUTABLES)
 
 $(BIN_TST_DIR)/%: $(TST_DIR)/%.c $(LIB_DIR)/libkeepcoding.a
 	@mkdir -p $(dir $@)
-	$(CC) $(STD) $(CFLAGS) $< -lcurl -o $@ -L$(LIB_DIR) -lkeepcoding
+	$(CC) $(STD) $(CFLAGS) $< -lcurl -lmicrohttpd -o $@ -L$(LIB_DIR) -lkeepcoding
 
 run_tests: $(TEST_EXECUTABLES)
 	@mkdir -p $(LOG_DIR)
@@ -78,8 +78,8 @@ TEST_MAIN := test/main.c
 
 main: $(TEST_MAIN)
 	@mkdir -p $(BIN_TST_DIR)
-	$(CC) $(STD) $(CFLAGS) test/main.c -lcurl -o build/bin/test/main -L$(LIB_DIR) -lkeepcoding
-	./build/bin/test/main
+	$(CC) $(STD) $(CFLAGS) test/main.c -lcurl -lmicrohttpd -o build/bin/test/main -L$(LIB_DIR) -lkeepcoding
+	./build/bin/test/main $(FLAG)
 
 #################################### CLEAN #####################################
 

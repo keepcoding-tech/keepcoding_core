@@ -14,17 +14,37 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-int start_client  (struct kc_client_t* self);
-int stop_client   (struct kc_client_t* self);
+struct kc_client_t* new_client_IPv4  (const char* IP, const int PORT);
+struct kc_client_t* new_client_IPv6  (const char* IP, const int PORT);
+struct kc_client_t* new_client       (const int AF, const char* IP, const int PORT);
+int                 start_client     (struct kc_client_t* self);
 
 void* listen_client  (void* fd);
 
 //---------------------------------------------------------------------------//
 
-struct kc_client_t* new_client(const char* IP, const int PORT)
+struct kc_client_t* new_client_IPv4(const char* IP, const int PORT)
+{
+  // initialize the client for IPv4
+  return new_client(AF_INET, IP, PORT);
+}
+
+//---------------------------------------------------------------------------//
+
+struct kc_client_t* new_client_IPv6(const char* IP, const int PORT)
+{
+  // initialize the client for IPv6
+  return new_client(AF_INET6, IP, PORT);
+}
+
+//---------------------------------------------------------------------------//
+
+struct kc_client_t* new_client(const int AF, const char* IP, const int PORT)
 {
   // create a client instance to be returned
   struct kc_client_t* new_client = malloc(sizeof(struct kc_client_t));
@@ -32,27 +52,24 @@ struct kc_client_t* new_client(const char* IP, const int PORT)
   // confirm that there is memory to allocate
   if (new_client == NULL)
   {
-    log_error(KC_NULL_REFERENCE_LOG);
+    log_error(KC_OUT_OF_MEMORY_LOG);
     return NULL;
   }
-
-  // create socket
-  new_client->fd = socket(AF_INET, SOCK_STREAM, 0);
 
   // bind to open port
-  new_client->addr = malloc(sizeof(struct sockaddr_in));
-  if (new_client->addr == NULL)
+  new_client->socket = new_socket(AF, IP, PORT);
+  if (new_client->socket == NULL)
   {
-    log_error(KC_NULL_REFERENCE_LOG);
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // free the instance first
+    free(new_client);
+
     return NULL;
   }
 
-  new_client->addr->sin_family = AF_INET;
-  new_client->addr->sin_port = htons(PORT);
-  inet_pton(AF_INET, IP, &new_client->addr->sin_addr.s_addr);
-
+  // asign public member functions
   new_client->start = start_client;
-  new_client->stop  = stop_client;
 
   return new_client;
 }
@@ -67,7 +84,7 @@ void destroy_client(struct kc_client_t* client)
     return;
   }
 
-  free(client->addr);
+  destroy_socket(client->socket);
   free(client);
 }
 
@@ -81,7 +98,7 @@ int start_client(struct kc_client_t* self)
     return KC_NULL_REFERENCE;
   }
 
-  int ret = connect(self->fd, (struct sockaddr*)self->addr, sizeof(*self->addr));
+  int ret = connect(self->socket->fd, (struct sockaddr*)self->socket->addr, sizeof(*self->socket->addr));
   if (ret != KC_SUCCESS)
   {
     return KC_LOST_CONNECTION;
@@ -91,7 +108,7 @@ int start_client(struct kc_client_t* self)
 
   // create a new thread to listen for incoming messages
   pthread_t id;
-  void* fd = &self->fd;
+  void* fd = &self->socket->fd;
   pthread_create(&id, NULL, &listen_client, fd);
 
   char* send_buffer = NULL;
@@ -100,7 +117,7 @@ int start_client(struct kc_client_t* self)
   while (1)
   {
     ssize_t len = getline(&send_buffer, &buff_len, stdin);
-    ssize_t send_ret = send(self->fd, send_buffer, len, 0);
+    ssize_t send_ret = send(self->socket->fd, send_buffer, len, 0);
     if (send_ret <= KC_INVALID)
     {
       return (int)send_ret;
@@ -112,28 +129,7 @@ int start_client(struct kc_client_t* self)
     }
   }
 
-  close(self->fd);
-
-  // char* send_buffer = "GET \\ HTTP/1.1\r\nHost:google.com\r\n\r\n";
-  // send(self->fd, send_buffer, strlen(send_buffer), 0);
-
-  // char recv_buffer[1024];
-  // recv(self->fd, recv_buffer, 1024, 0);
-
-  // printf("received: %s \n", recv_buffer);
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int stop_client(struct kc_client_t* self)
-{
-  if (self == NULL)
-  {
-    log_error(KC_NULL_REFERENCE_LOG);
-    return KC_NULL_REFERENCE;
-  }
+  close(self->socket->fd);
 
   return KC_SUCCESS;
 }

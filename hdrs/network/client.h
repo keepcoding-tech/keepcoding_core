@@ -14,27 +14,24 @@
 #define KC_CLIENT_T_H
 
 #include "../system/logger.h"
+#include "socket.h"
 
 #include <stdio.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
+#include <stdbool.h>
 
 //---------------------------------------------------------------------------//
 
 struct kc_client_t
 {
-  // the file descriptor
-  int fd;
-
-  // socket address
-  struct sockaddr_in* addr;
+  struct kc_socket_t* socket;
 
   int (*start)  (struct kc_client_t* self);
-  int (*stop)   (struct kc_client_t* self);
 };
 
-struct kc_client_t* new_client      (const char* IP, const int PORT);
-void                destroy_client  (struct kc_client_t* client);
+struct kc_client_t* new_client_IPv4  (const char* IP, const int PORT);
+struct kc_client_t* new_client_IPv6  (const char* IP, const int PORT);
+struct kc_client_t* new_client       (const int AF, const char* IP, const int PORT);
+void                destroy_client   (struct kc_client_t* client);
 
 //---------------------------------------------------------------------------//
 

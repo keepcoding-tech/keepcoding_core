@@ -46,11 +46,7 @@ struct kc_route_t
 
 struct kc_server_t
 {
-  int file_descriptor;         // the file descriptor
-  struct sockaddr_in* addr;    // socket address
-
-  char* ip;                    // server IP address
-  unsigned int port;           // server PORT
+  struct kc_socket_t* socket;
 
   int (*start)   (struct kc_server_t* self);
   int (*routes)  (struct kc_server_t* self);

@@ -29,8 +29,6 @@ void* dispatch_server  (void* socket_fd);
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
 static int _accept_connection  (int server_fd, struct kc_socket_t* socket);
-static int _validate_port      (const unsigned int port);
-static int _validate_ip        (const int AF, const char* ip);
 
 //--- MARK: PRIVATE MEMBERS -------------------------------------------------//
 
@@ -61,12 +59,6 @@ struct kc_server_t* new_server_IPv6(const char* IP, const unsigned int PORT)
 
 struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int PORT)
 {
-  // before anything, validate the IP and PORT
-  if (_validate_port(PORT) != KC_SUCCESS || _validate_ip(AF, IP) != KC_SUCCESS)
-  {
-    return NULL;
-  }
-
   // create a server instance to be returned
   struct kc_server_t* new_server = malloc(sizeof(struct kc_server_t));
   if (new_server == NULL)
@@ -75,13 +67,13 @@ struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int 
     return NULL;
   }
 
-  // allocate memory for the socket
-  new_server->addr = malloc(sizeof(struct sockaddr_in));
-  if (new_server->addr == NULL)
+  // create a new socket
+  new_server->socket = new_socket(AF, IP, PORT);
+  if (new_server->socket == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
 
-    // free the server
+    // free the server first
     free(new_server);
 
     return NULL;
@@ -94,23 +86,11 @@ struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int 
     log_error(KC_OUT_OF_MEMORY_LOG);
 
     // free the server and socket
-    free(new_server->addr);
+    destroy_socket(new_server->socket);
     free(new_server);
 
     return NULL;
   }
-
-  // create socket
-  new_server->file_descriptor = socket(AF, SOCK_STREAM, 0);
-
-  // assign IP and PORT
-  inet_pton(AF, IP, &new_server->addr->sin_addr.s_addr);
-  new_server->addr->sin_family = AF;
-  new_server->addr->sin_port = htons(PORT);
-
-  // save the ip and port for easy access
-  new_server->ip = inet_ntoa(new_server->addr->sin_addr);
-  new_server->port = PORT;
 
   // asign public member functions
   new_server->start = start_server;
@@ -133,7 +113,8 @@ void destroy_server(struct kc_server_t* server)
     destroy_socket(connections[i]);
   }
 
-  free(server->addr);
+  destroy_logger(logger);
+  destroy_socket(server->socket);
   free(server);
 }
 
@@ -148,7 +129,7 @@ int start_server(struct kc_server_t* self)
   }
 
   // bind the server socket to the IP address
-  int ret = bind(self->file_descriptor, (struct sockaddr*)self->addr, sizeof(*self->addr));
+  int ret = bind(self->socket->fd, (struct sockaddr*)self->socket->addr, sizeof(*self->socket->addr));
   if (ret != KC_SUCCESS)
   {
     logger->log(logger, KC_FATAL_LOG,
@@ -157,7 +138,7 @@ int start_server(struct kc_server_t* self)
   }
 
   // start listening for connections
-  ret = listen(self->file_descriptor, KC_SERVER_MAX_CONNECTIONS);
+  ret = listen(self->socket->fd, KC_SERVER_MAX_CONNECTIONS);
   if (ret != KC_SUCCESS)
   {
     logger->log(logger, KC_FATAL_LOG,
@@ -165,16 +146,16 @@ int start_server(struct kc_server_t* self)
     return KC_LOST_CONNECTION;
   }
 
-  printf("\nApplication listening on %s:%d ... \n\n", self->ip, self->port);
+  printf("\nApplication listening on %s:%d ... \n\n", self->socket->ip, self->socket->port);
 
   // separate the connections on different threads
   while (1)
   {
     // create a new socket for new connections
-    struct kc_socket_t* socket = new_socket();
+    struct kc_socket_t socket;
 
     // accept the connection for the new socket
-    int ret = _accept_connection(self->file_descriptor, socket);
+    int ret = _accept_connection(self->socket->fd, &socket);
     if (ret != KC_SUCCESS)
     {
       logger->log(logger, KC_FATAL_LOG,
@@ -183,9 +164,9 @@ int start_server(struct kc_server_t* self)
     }
 
     // add the socket to the client list
-    connections[conn_count++] = socket;
+    connections[conn_count++] = &socket;
 
-    void* fd = &socket->fd;
+    void* fd = &socket.fd;
     pthread_t id;
 
     // create a new thread to process the new connection
@@ -194,7 +175,7 @@ int start_server(struct kc_server_t* self)
 
   // first shutdown the connections
   // then return the error, if any
-  shutdown(self->file_descriptor, SHUT_RDWR);
+  shutdown(self->socket->fd, SHUT_RDWR);
 
   return KC_SUCCESS;
 }
@@ -216,7 +197,7 @@ void* dispatch_server(void* socket_fd)
   recv_buffer[recv_ret] = '\0';
   printf("%s \n", recv_buffer);
 
-  char* response = 
+  char* response =
     "HTTP/1.1 200 OK\n"
     "Content-Type: text/plain\n"
     "\n"
@@ -246,74 +227,10 @@ int _accept_connection(int server_fd, struct kc_socket_t* socket)
   // serialize the data
   socket->addr = &client_addr;
   socket->fd = client_fd;
-  socket->success = (bool)(client_fd > 0);
-  socket->error = KC_SUCCESS;
 
   // make sure the connection was made succesfully
-  if (socket->success == false)
+  if (client_fd <= 0)
   {
-    socket->error = client_fd;
-    return KC_INVALID;
-  }
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-static int _validate_port(const unsigned int port)
-{
-  // if below 0, is invalid
-  if (port < 0)
-  {
-    log_error("Port number cannot be negative.");
-    return KC_INVALID;
-  }
-
-  // if the specified port is below the
-  // well known service rage, return warning
-  if (port < PORT_WELL_KNOWN_SERVICE)
-  {
-    log_error("Port number below 1024: privileged range.");
-    return KC_INVALID;
-  }
-
-  // if the specified port between the available
-  // and dynamic or private rage, return warning
-  if (PORT_AVAILABLE_FOR_USER < port && port < PORT_DYNAMIC_OR_PRIVATE)
-  {
-    log_error("Port number in dynamic/private range (49152-65535).");
-    return KC_INVALID;
-  }
-
-  // if above 65535, is invalid
-  if (port > PORT_DYNAMIC_OR_PRIVATE)
-  {
-    log_error("Port number exceeds maximum allowed (65535).");
-    return KC_INVALID;
-  }
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-static int _validate_ip(int AF, const char* ip)
-{
-  unsigned char ip_address[sizeof(struct in6_addr)];
-  int ret = inet_pton(AF, ip, ip_address);
-
-  // if the specified ip has an invalid format, is invalid
-  if (ret == IP_INVALID_NETWORK_ADDRESS)
-  {
-    log_error("Invalid network IP address format.");
-    return KC_INVALID;
-  }
-
-  // if the specified ip is not IPv4 or IPv6, is invalid
-  if (ret == IP_INVALID_FAMILY_ADDRESS)
-  {
-    log_error("Invalid family address: must be IPv4 or IPv6.");
     return KC_INVALID;
   }
 

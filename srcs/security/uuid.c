@@ -41,7 +41,7 @@ static int _get_current_time   (kc_uuid_time_t* timestamp);
 
 static int  _get_ieee_node_identifier  (struct kc_uuid_node_t* node);
 static void _get_system_time           (kc_uuid_time_t* uuid_time);
-static void _get_random_info           (char seed[16]);
+static void _get_random_info           (unsigned char seed[KC_MD5_LENGTH]);
 
 static unsigned short true_random(void);
 
@@ -611,7 +611,7 @@ int _get_ieee_node_identifier(struct kc_uuid_node_t* node)
     }
     else
     {
-      char seed[16];
+      unsigned char seed[KC_MD5_LENGTH];
       _get_random_info(seed);
       seed[0] |= 0x01;
       memcpy(&saved_node, seed, sizeof saved_node);
@@ -673,7 +673,7 @@ void _get_system_time(kc_uuid_time_t* uuid_time)
 //---------------------------------------------------------------------------//
 
 /* !! Sample code, not for use in production; see RFC 1750 !! */
-void _get_random_info(char seed[16])
+void _get_random_info(unsigned char seed[KC_MD5_LENGTH])
 {
 #ifdef __APPLE__
   arc4random_buf(seed, 16);
@@ -692,7 +692,7 @@ void _get_random_info(char seed[16])
   gettimeofday(&r.t, (struct timezone*)0);
   gethostname(r.hostname, 256);
 
-  md5_update(&c, &r, sizeof r);
+  md5_update(&c, (unsigned char*)&r, sizeof r);
   md5_final(&c, seed);
 #endif
 }
