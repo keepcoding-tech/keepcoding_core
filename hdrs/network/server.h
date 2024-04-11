@@ -23,33 +23,79 @@
 
 #define KC_SERVER_LOG_PATH "build/log/server.log"
 
-#define PORT_WELL_KNOWN_SERVICE 1024
-#define PORT_AVAILABLE_FOR_USER 49151
-#define PORT_DYNAMIC_OR_PRIVATE 65535
-
-#define IP_INVALID_NETWORK_ADDRESS  0
-#define IP_INVALID_FAMILY_ADDRESS  -1
-
 #define KC_SERVER_MAX_CONNECTIONS 1024
+
+#define KC_GET_METHOD    "GET"
+#define KC_POST_METHOD   "POST"
+#define KC_PUT_METHOD    "PUT"
+#define KC_DELETE_METHOD "DELETE"
+
+//---------------------------------------------------------------------------//
+
+struct kc_header_t
+{
+  char* key;    // the key of the header (ex: Content-Type)
+  char* val;    // the value of the header (ex: text/html)
+  size_t size;  // the size of the value
+};
+
+struct kc_header_t* new_header     (char* key, char* val);
+void                destroy_header (struct kc_header_t* header);
+
+//---------------------------------------------------------------------------//
+
+struct kc_request_t
+{
+  char* method;    // the method to be used (ex: GET, POST, PUT, etc;)
+  char* url;       // the endpoint URL (ex: /home/user)
+  char* tcp_vers;  // the TCP version (ex: HTTP/1.1)
+
+  // the list of headers (ex: Content-Type: text/plain)
+  struct kc_header_t* headers[1024];
+  int headers_len;
+
+  int (*add_header)  (struct kc_request_t* self, char* key, char* val);
+};
+
+struct kc_request_t* new_request     (char* method, char* url, char* tcp_vers);
+void                 destroy_request (struct kc_request_t* req);
+
+//---------------------------------------------------------------------------//
+
+struct kc_response_t
+{
+  char* tcp_vers;       // the TCP version (ex: HTTP/1.1)
+  char* status_code;    // the status code (ex: 200 OK)
+  unsigned char* body;  // the content of the page
+
+  // the list of headers (ex: Content-Type: text/plain)
+  struct kc_header_t* headers[1024];
+  int headers_len;
+
+  int (*add_header)  (struct kc_response_t* self, char* key, char* val);
+};
+
+struct kc_response_t* new_response     (char* tcp_vers, char* status_code, unsigned char* body);
+void                  destroy_response (struct kc_response_t* res);
 
 //---------------------------------------------------------------------------//
 
 struct kc_route_t
 {
-  int (*get)     (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
-  int (*post)    (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
-  int (*put)     (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
-  int (*delete)  (unsigned char* endpoint, void* (*controller)(void* arg), void* args);
+  int (*get)     (unsigned char* endpoint, int (*callback)(struct kc_request_t* req, struct kc_response_t* res));
+  int (*post)    (unsigned char* endpoint, int (*callback)(struct kc_request_t* req, struct kc_response_t* res));
+  int (*put)     (unsigned char* endpoint, int (*callback)(struct kc_request_t* req, struct kc_response_t* res));
+  int (*delete)  (unsigned char* endpoint, int (*callback)(struct kc_request_t* req, struct kc_response_t* res));
 };
 
 //---------------------------------------------------------------------------//
 
 struct kc_server_t
 {
-  struct kc_socket_t* socket;
+  struct kc_socket_t* socket;  // server' socket
+  struct kc_route_t*  routes;  // server' endpoints
 
   int (*start)   (struct kc_server_t* self);
-  int (*routes)  (struct kc_server_t* self);
 };
 
 struct kc_server_t* new_server_IPv4  (const char* IP, const unsigned int PORT);

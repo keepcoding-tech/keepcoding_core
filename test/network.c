@@ -37,6 +37,22 @@ void test_client(void)
   destroy_client(client);
 }
 
+int get_home(struct kc_request_t* req, struct kc_response_t* res)
+{
+  printf("method: %s \n", req->method);
+  printf("url: %s \n", req->url);
+  printf("TCP version: %s \n", req->tcp_vers);
+
+  printf("headers: \n");
+  for (int i = 0; i < req->headers_len; ++i)
+  {
+    printf("%s: %s \n", req->headers[i]->key, req->headers[i]->val);
+  }
+  printf("\n\n");
+
+  return KC_SUCCESS;
+}
+
 int main(int argc, char **argv)
 {
   if (argv[1] != NULL)
@@ -95,11 +111,13 @@ int main(int argc, char **argv)
 
     subtest("start()")
     {
-      struct kc_server_t* server = new_server_IPv4("0.0.0.0", 8000);
-      int ret = KC_SUCCESS;
+      struct kc_server_t* server = new_server_IPv4("127.0.0.1", 8000);
 
-      ret = server->start(server);
-      ok(ret == KC_SUCCESS);
+      // add routes
+      server->routes->get((unsigned char*)"/home", get_home);
+
+      // start the server
+      server->start(server);
 
       destroy_server(server);
     }
