@@ -37,11 +37,11 @@ void test_client(void)
   destroy_client(client);
 }
 
-int get_home(struct kc_request_t* req, struct kc_response_t* res)
+int get_home(struct kc_http_request_t* req, struct kc_http_response_t* res)
 {
   printf("method: %s \n", req->method);
   printf("url: %s \n", req->url);
-  printf("TCP version: %s \n", req->tcp_vers);
+  printf("HTTP version: %s \n", req->http_ver);
 
   printf("headers: \n");
   for (int i = 0; i < req->headers_len; ++i)
