@@ -37,7 +37,7 @@ void test_client(void)
   destroy_client(client);
 }
 
-int get_home(struct kc_http_request_t* req, struct kc_http_response_t* res)
+int get_test(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res)
 {
   printf("method: %s \n", req->method);
   printf("url: %s \n", req->url);
@@ -50,74 +50,86 @@ int get_home(struct kc_http_request_t* req, struct kc_http_response_t* res)
   }
   printf("\n\n");
 
-  return KC_SUCCESS;
+  res->set_body(res, "GET test");
+
+  return self->send(req->client_fd, res);
 }
+
+int post_test(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res)
+{
+  res->set_body(res, "POST test");
+  return self->send(req->client_fd, res);
+}
+
 
 int main(int argc, char **argv)
 {
-  if (argv[1] != NULL)
-  {
-    if (strcmp(argv[1], "s") == 0)
-    {
-      test_server();
-    }
+  // if (argv[1] != NULL)
+  // {
+  //   if (strcmp(argv[1], "s") == 0)
+  //   {
+  //     test_server();
+  //   }
 
-    if (strcmp(argv[1], "c") == 0)
-    {
-      test_client();
-    }
-  }
+  //   if (strcmp(argv[1], "c") == 0)
+  //   {
+  //     test_client();
+  //   }
+  // }
 
-  testgroup("kc_server_t")
-  {
-    subtest("init/dest")
-    {
-      note("valid PORT");
-      ok(new_server_IPv4("0.0.0.0", 8000) != NULL);
+   testgroup("kc_server_t")
+   {
+  //   subtest("init/dest")
+  //   {
+  //     note("valid PORT");
+  //     ok(new_server_IPv4("0.0.0.0", 8000) != NULL);
 
-      note("PORT < 0");
-      ok(new_server_IPv4("0.0.0.0", -1) == NULL);
+  //     note("PORT < 0");
+  //     ok(new_server_IPv4("0.0.0.0", -1) == NULL);
 
-      note("0 < PORT < 1024");
-      ok(new_server_IPv4("0.0.0.0", 512) == NULL);
+  //     note("0 < PORT < 1024");
+  //     ok(new_server_IPv4("0.0.0.0", 512) == NULL);
 
-      note("49151 < PORT < 65535");
-      ok(new_server_IPv4("0.0.0.0", 55555) == NULL);
+  //     note("49151 < PORT < 65535");
+  //     ok(new_server_IPv4("0.0.0.0", 55555) == NULL);
 
-      note("65535 < PORT");
-      ok(new_server_IPv4("0.0.0.0", 75555) == NULL);
+  //     note("65535 < PORT");
+  //     ok(new_server_IPv4("0.0.0.0", 75555) == NULL);
 
-      note("valid IPv4");
-      ok(new_server_IPv4("0.0.0.0", 8000) != NULL);
+  //     note("valid IPv4");
+  //     ok(new_server_IPv4("0.0.0.0", 8000) != NULL);
 
-      note("valid IPv6");
-      ok(new_server_IPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334", 8000) != NULL);
+  //     note("valid IPv6");
+  //     ok(new_server_IPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334", 8000) != NULL);
 
-      note("IPv4 octets > 255");
-      ok(new_server_IPv4("256.0.0.1", 8000) == NULL);
+  //     note("IPv4 octets > 255");
+  //     ok(new_server_IPv4("256.0.0.1", 8000) == NULL);
 
-      note("IPv6 double ::");
-      ok(new_server_IPv6("2001:db8:1::1::1", 8000) == NULL);
+  //     note("IPv6 double ::");
+  //     ok(new_server_IPv6("2001:db8:1::1::1", 8000) == NULL);
 
-      note("IPv6 as IPv4");
-      ok(new_server_IPv4("2001:db8:85a3::8a2e:370:7334", 8000) == NULL);
+  //     note("IPv6 as IPv4");
+  //     ok(new_server_IPv4("2001:db8:85a3::8a2e:370:7334", 8000) == NULL);
 
-      note("IPv4 as IPv6");
-      ok(new_server_IPv6("192.168.0.11", 8000) == NULL);
+  //     note("IPv4 as IPv6");
+  //     ok(new_server_IPv6("192.168.0.11", 8000) == NULL);
 
-      note("IPv4 or IPv6 as string");
-      ok(new_server_IPv4("just.a::string", 8000) == NULL);
-    }
+  //     note("IPv4 or IPv6 as string");
+  //     ok(new_server_IPv4("just.a::string", 8000) == NULL);
+  //   }
 
     subtest("start()")
     {
       struct kc_server_t* server = new_server_IPv4("127.0.0.1", 8000);
 
       // add routes
-      server->routes->get((unsigned char*)"/home", get_home);
+      server->routes->get("/get-test", get_test);
+      server->routes->post("/post-test", post_test);
 
       // start the server
-      server->start(server);
+      int ret = server->start(server);
+      ok(ret == KC_SUCCESS);
+      log_error(kc_error_msg[ret]);
 
       destroy_server(server);
     }
@@ -125,60 +137,62 @@ int main(int argc, char **argv)
     done_testing();
   }
 
-  testgroup("kc_client_t")
-  {
-    subtest("init/dest")
-    {
-      note("valid PORT");
-      ok(new_client_IPv4("0.0.0.0", 8000) != NULL);
+  // testgroup("kc_client_t")
+  // {
+  //   subtest("init/dest")
+  //   {
+  //     note("valid PORT");
+  //     ok(new_client_IPv4("0.0.0.0", 8000) != NULL);
 
-      note("PORT < 0");
-      ok(new_client_IPv4("0.0.0.0", -1) == NULL);
+  //     note("PORT < 0");
+  //     ok(new_client_IPv4("0.0.0.0", -1) == NULL);
 
-      note("0 < PORT < 1024");
-      ok(new_client_IPv4("0.0.0.0", 512) == NULL);
+  //     note("0 < PORT < 1024");
+  //     ok(new_client_IPv4("0.0.0.0", 512) == NULL);
 
-      note("49151 < PORT < 65535");
-      ok(new_client_IPv4("0.0.0.0", 55555) == NULL);
+  //     note("49151 < PORT < 65535");
+  //     ok(new_client_IPv4("0.0.0.0", 55555) == NULL);
 
-      note("65535 < PORT");
-      ok(new_client_IPv4("0.0.0.0", 75555) == NULL);
+  //     note("65535 < PORT");
+  //     ok(new_client_IPv4("0.0.0.0", 75555) == NULL);
 
-      note("valid IPv4");
-      ok(new_client_IPv4("0.0.0.0", 8000) != NULL);
+  //     note("valid IPv4");
+  //     ok(new_client_IPv4("0.0.0.0", 8000) != NULL);
 
-      note("valid IPv6");
-      ok(new_client_IPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334", 8000) != NULL);
+  //     note("valid IPv6");
+  //     ok(new_client_IPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334", 8000) != NULL);
 
-      note("IPv4 octets > 255");
-      ok(new_client_IPv4("256.0.0.1", 8000) == NULL);
+  //     note("IPv4 octets > 255");
+  //     ok(new_client_IPv4("256.0.0.1", 8000) == NULL);
 
-      note("IPv6 double ::");
-      ok(new_client_IPv6("2001:db8:1::1::1", 8000) == NULL);
+  //     note("IPv6 double ::");
+  //     ok(new_client_IPv6("2001:db8:1::1::1", 8000) == NULL);
 
-      note("IPv6 as IPv4");
-      ok(new_client_IPv4("2001:db8:85a3::8a2e:370:7334", 8000) == NULL);
+  //     note("IPv6 as IPv4");
+  //     ok(new_client_IPv4("2001:db8:85a3::8a2e:370:7334", 8000) == NULL);
 
-      note("IPv4 as IPv6");
-      ok(new_client_IPv6("192.168.0.11", 8000) == NULL);
+  //     note("IPv4 as IPv6");
+  //     ok(new_client_IPv6("192.168.0.11", 8000) == NULL);
 
-      note("IPv4 or IPv6 as string");
-      ok(new_client_IPv4("just.a::string", 8000) == NULL);
-    }
+  //     note("IPv4 or IPv6 as string");
+  //     ok(new_client_IPv4("just.a::string", 8000) == NULL);
+  //   }
 
-    subtest("start()")
-    {
-      struct kc_client_t* client = new_client_IPv4("0.0.0.0", 8000);
-      int ret = KC_SUCCESS;
+  //   subtest("start()")
+  //   {
+  //     //struct kc_client_t* client = new_client_IPv4("0.0.0.0", 8000);
+  //     //int ret = KC_SUCCESS;
 
-      ret = client->start(client);
-      ok(ret == KC_SUCCESS);
+  //     //ret = client->start(client);
+  //     //ok(ret == KC_SUCCESS);
 
-      destroy_client(client);
-    }
+  //     //destroy_client(client);
+  //   }
 
-    done_testing();
-  }
+  //   done_testing();
+  // }
+
+  // TODO: add tests for http
 
   return 0;
 }

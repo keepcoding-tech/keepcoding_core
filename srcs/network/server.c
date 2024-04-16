@@ -18,6 +18,73 @@
 #include <unistd.h>
 #include <pthread.h>
 
+//--- MARK: PUBLIC ENDPOINT FUNCTION PROTOTYPES -----------------------------//
+
+//---------------------------------------------------------------------------//
+
+struct kc_endpoint_t* new_endpoint(char* method, char* url)
+{
+  // create a new instance to be returned
+  struct kc_endpoint_t* new_endpoint = malloc(sizeof(struct kc_endpoint_t));
+
+  // check the allocation of memory
+  if (new_endpoint == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return NULL;
+  }
+
+  new_endpoint->method = (char*)malloc(sizeof(char) * strlen(method) + 1);
+  if (new_endpoint->method == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // first free the memory
+    free(new_endpoint);
+
+    return NULL;
+  }
+
+  new_endpoint->url = (char*)malloc(sizeof(char) * strlen(url) + 1);
+  if (new_endpoint->url == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // first free the memory
+    free(new_endpoint->method);
+
+    return NULL;
+  }
+
+  // asign the values
+  strcpy(new_endpoint->method, method);
+  strcpy(new_endpoint->url, url);
+
+  return new_endpoint;
+}
+
+//---------------------------------------------------------------------------//
+
+void destroy_endpoint  (struct kc_endpoint_t* endpoint)
+{
+  if (endpoint == NULL)
+  {
+    return;
+  }
+
+  if (endpoint->method != NULL)
+  {
+    free(endpoint->method);
+  }
+
+  if (endpoint->url != NULL)
+  {
+    free(endpoint->url);
+  }
+
+  free(endpoint);
+}
+
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
 struct kc_server_t* new_server_IPv4  (const char* IP, const unsigned int PORT);
@@ -25,31 +92,34 @@ struct kc_server_t* new_server_IPv6  (const char* IP, const unsigned int PORT);
 struct kc_server_t* new_server       (const int AF, const char* IP, const unsigned int PORT);
 void                destroy_server   (struct kc_server_t* server);
 int                 start_server     (struct kc_server_t* self);
+int                 send_msg_server  (int client_fd, struct kc_http_response_t* res);
 
-int add_get_endpoint     (unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res));
-int add_post_endpoint    (unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res));
-int add_put_endpoint     (unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res));
-int add_delete_endpoint  (unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res));
-int add_endpoint         (char* method, unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res));
-
-static void* dispatch_server  (void* socket_fd);
+static void* dispatch  (void* dispatch_information);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
-static int _accept_connection  (int server_fd, struct kc_socket_t* socket);
-static int _parse_request      (struct kc_http_request_t** req, char recv_buffer[KC_REQUEST_MAX_SIZE]);
+static int _accept_connection      (int server_fd, struct kc_socket_t* socket);
+static void _add_options_endpoint  (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static void _add_get_endpoint      (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static void _add_head_endpoint     (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static void _add_post_endpoint     (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static void _add_put_endpoint      (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static void _add_delete_endpoint   (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static void _add_trace_endpoint    (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static void _add_connect_endpoint  (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static void _add_endpoint          (char* method, char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
+static int _parse_request          (struct kc_http_request_t* req, char recv_buffer[KC_REQUEST_MAX_SIZE]);
 
 //---------------------------------------------------------------------------//
 
 //--- MARK: PRIVATE MEMBERS -------------------------------------------------//
 
-struct kc_endpoint_t
+struct kc_dispatch_info_t
 {
-  unsigned char* endpoint;  // and route endpoint URL
-
-  // the callback function to get called
-  int (*callback)  (struct kc_http_request_t* req, struct kc_http_response_t* res);
+  struct kc_server_t* server;
+  int client_fd;
 };
+
 
 // the list of endpoints has to be private
 static struct kc_endpoint_t* endpoints[1024];
@@ -111,12 +181,6 @@ struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int 
     return NULL;
   }
 
-  // asign public member functions for server' routes
-  new_server->routes->get    = add_get_endpoint;
-  new_server->routes->post   = add_post_endpoint;
-  new_server->routes->put    = add_put_endpoint;
-  new_server->routes->delete = add_delete_endpoint;
-
   // allocate memory for the logger
   logger = new_logger(KC_SERVER_LOG_PATH);
   if (logger == NULL)
@@ -131,8 +195,19 @@ struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int 
     return NULL;
   }
 
+  // asign public member functions for server' routes
+  new_server->routes->options = _add_options_endpoint;
+  new_server->routes->get     = _add_get_endpoint;
+  new_server->routes->head    = _add_head_endpoint;
+  new_server->routes->post    = _add_post_endpoint;
+  new_server->routes->put     = _add_put_endpoint;
+  new_server->routes->delete  = _add_delete_endpoint;
+  new_server->routes->trace   = _add_trace_endpoint;
+  new_server->routes->connect = _add_connect_endpoint;
+
   // asign public member functions
   new_server->start = start_server;
+  new_server->send  = send_msg_server;
 
   return new_server;
 }
@@ -202,11 +277,14 @@ int start_server(struct kc_server_t* self)
       return ret;
     }
 
-    void* fd = &socket.fd;
+    struct kc_dispatch_info_t* info = malloc(sizeof(struct kc_dispatch_info_t));
+    info->server = self;
+    info->client_fd = socket.fd;
+
     pthread_t id;
 
     // create a new thread to process the new connection
-    pthread_create(&id, NULL, &dispatch_server, fd);
+    pthread_create(&id, NULL, &dispatch, (void*)info);
   }
 
   // first shutdown the connections
@@ -218,101 +296,122 @@ int start_server(struct kc_server_t* self)
 
 //---------------------------------------------------------------------------//
 
-void* dispatch_server(void* socket_fd)
+int send_msg_server(int client_fd, struct kc_http_response_t* res)
+{
+  // the file descriptor must be greater then 1
+  if (client_fd <= 0)
+  {
+    return KC_INVALID_ARGUMENT;
+  }
+
+  // check if the response was generated
+  if (res == NULL)
+  {
+    return KC_NULL_REFERENCE;
+  }
+
+  char* response = (char*)malloc(sizeof(char) * KC_RESPONSE_MAX_SIZE);
+
+  sprintf(response, "%s %s\r\n", res->http_ver, res->status_code);
+  for (int i = 0; i < res->headers_len; ++i)
+  {
+    char* header = (char*)malloc(sizeof(char) * KC_MAX_HEADER_LENGTH);
+    sprintf(header, "%s: %s\r\n", res->headers[i]->key, res->headers[i]->val);
+    strcat(response, header);
+  }
+
+  strcat(response, "\r\n");
+  strcat(response, res->body);
+  strcat(response, "\r\n");
+
+  // send a HTTP response
+  send(client_fd, response, strlen(response), 0);
+
+  return KC_SERVER_SEND_MSG;
+}
+
+//---------------------------------------------------------------------------//
+
+void* dispatch(void* dispatch_information)
 {
   char recv_buffer[KC_REQUEST_MAX_SIZE];
+  struct kc_dispatch_info_t* dispatch_info = (struct kc_dispatch_info_t*)dispatch_information;
 
   // receive the message from the connection
-  ssize_t recv_ret = recv(*(int*)socket_fd, recv_buffer, KC_REQUEST_MAX_SIZE, 0);
+  ssize_t recv_ret = recv(dispatch_info->client_fd, recv_buffer, KC_REQUEST_MAX_SIZE, 0);
   if (recv_ret <= KC_SUCCESS)
   {
-    return (void*)KC_INVALID;
+    close(dispatch_info->client_fd);
+    pthread_exit((void*)KC_INVALID);
   }
 
   // null terminate the request data
   recv_buffer[recv_ret] = '\0';
 
-  struct kc_http_request_t* req = NULL;
-  int ret = _parse_request(&req, recv_buffer);
+  // parse the request buffer and generate the 
+  // a new request structure to be used later
+  struct kc_http_request_t* req = new_request();
+  int ret = _parse_request(req, recv_buffer);
   if (ret != KC_SUCCESS)
   {
-    // TODO: return KC_INTERNAL_SERVER_ERROR to the client
-    close(*(int*)socket_fd);
-
-    logger->log(logger, KC_ERROR_LOG, ret, __FILE__, __LINE__, __func__);
-
-    void* return_code = &ret;
-    return return_code;
+    log_error(kc_error_msg[ret + 1]);
+    close(dispatch_info->client_fd);
+    pthread_exit((void*)KC_INVALID);
   }
 
-  char* body = "Hello, World!\r\n";
+  // set the file descriptor of the client
+  req->set_client_fd(req, dispatch_info->client_fd);
 
-  struct kc_http_response_t* res = new_response("HTTP/1.1", "200 OK", body);
-  res->add_header(res, "Content-Type", "text/html");
+  // create the response structure with all 
+  // the general headers to be used later
+  struct kc_http_response_t* res = new_response();
+  res->set_http_ver(res, KC_HTTP_1);
+  res->set_status_code(res, KC_HTTP_STATUS_200);
 
-  // make the call back
-  endpoints[0]->callback(req, res);
+  // TODO: add general headers
+  res->add_header(res, "Content-Type", "text/plain");
 
-  char* response =
-    "HTTP/1.1 200 OK\r\n"
-    "Content-Type: text/plain\r\n"
-    "\r\n"
-    "Hello, World!\r\n";
+  // search the callback
+  struct kc_endpoint_t* endpoint = NULL;
+  for (int i = 0; i < endpoints_len; ++i)
+  {
+    if (strcmp(endpoints[i]->url, req->url) == 0)
+    {
+      // save the endpoint
+      endpoint = endpoints[i];
+      break;
+    }
+  }
 
-  // send a HTTP response
-  send(*(int*)socket_fd, response, strlen(response), 0);
+  // page not found, return 404
+  if (endpoint == NULL)
+  {
+    res->set_status_code(res, KC_HTTP_STATUS_404);
+    res->add_header(res, "Content-Type", "text/html");
+    res->set_body(res, "<h1>404 Page Not Found</h1>\r\n");
+    send_msg_server(dispatch_info->client_fd, res);
+  }
+  else if (strcmp(endpoint->method, req->method) != 0)
+  {
+    res->set_status_code(res, KC_HTTP_STATUS_400);
+    res->add_header(res, "Content-Type", "text/html");
+    res->set_body(res, "<h1>400 Bad Request</h1>\r\n");
+    send_msg_server(dispatch_info->client_fd, res);
+  }
+  else
+  {
+    endpoint->callback(dispatch_info->server, req, res);
+  }
+
 
   // close the socket
-  close(*(int*)socket_fd);
+  close(dispatch_info->client_fd);
 
   // free the request and response
   destroy_request(req);
   destroy_response(res);
 
-  return (void*)KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int add_get_endpoint(unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res))
-{
-  return add_endpoint(KC_GET_METHOD, endpoint, callback);
-}
-
-//---------------------------------------------------------------------------//
-
-int add_post_endpoint(unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res))
-{
-  return add_endpoint(KC_POST_METHOD, endpoint, callback);
-}
-
-//---------------------------------------------------------------------------//
-
-int add_put_endpoint(unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res))
-{
-  return add_endpoint(KC_PUT_METHOD, endpoint, callback);
-}
-
-//---------------------------------------------------------------------------//
-
-int add_delete_endpoint(unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res))
-{
-  return add_endpoint(KC_DELETE_METHOD, endpoint, callback);
-}
-
-//---------------------------------------------------------------------------//
-
-int add_endpoint(char* method, unsigned char* endpoint, int (*callback)(struct kc_http_request_t* req, struct kc_http_response_t* res))
-{
-  // init the endpoint structure
-  endpoints[endpoints_len] = malloc(sizeof(struct kc_endpoint_t));
-  endpoints[endpoints_len]->endpoint = endpoint;
-  endpoints[endpoints_len]->callback = callback;
-
-  // increment the list size
-  ++endpoints_len;
-
-  return KC_SUCCESS;
+  pthread_exit((void*)KC_SUCCESS);
 }
 
 //---------------------------------------------------------------------------//
@@ -342,7 +441,83 @@ static int _accept_connection(int server_fd, struct kc_socket_t* socket)
 
 //---------------------------------------------------------------------------//
 
-static int _parse_request(struct kc_http_request_t** req, char recv_buffer[KC_REQUEST_MAX_SIZE])
+static void _add_options_endpoint(char* endpoint, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  _add_endpoint(KC_HTTP_METHOD_OPTIONS, endpoint, callback);
+}
+
+//---------------------------------------------------------------------------//
+
+static void _add_get_endpoint(char* endpoint, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  _add_endpoint(KC_HTTP_METHOD_GET, endpoint, callback);
+}
+
+//---------------------------------------------------------------------------//
+
+static void _add_head_endpoint(char* endpoint, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  _add_endpoint(KC_HTTP_METHOD_HEAD, endpoint, callback);
+}
+
+//---------------------------------------------------------------------------//
+
+static void _add_post_endpoint(char* endpoint, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  _add_endpoint(KC_HTTP_METHOD_POST, endpoint, callback);
+}
+
+//---------------------------------------------------------------------------//
+
+static void _add_put_endpoint(char* endpoint, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  _add_endpoint(KC_HTTP_METHOD_PUT, endpoint, callback);
+}
+
+//---------------------------------------------------------------------------//
+
+static void _add_delete_endpoint(char* endpoint, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  _add_endpoint(KC_HTTP_METHOD_DELETE, endpoint, callback);
+}
+
+//---------------------------------------------------------------------------//
+
+static void _add_trace_endpoint(char* endpoint, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  _add_endpoint(KC_HTTP_METHOD_TRACE, endpoint, callback);
+}
+
+//---------------------------------------------------------------------------//
+
+static void _add_connect_endpoint(char* endpoint, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  _add_endpoint(KC_HTTP_METHOD_CONNECT, endpoint, callback);
+}
+
+//---------------------------------------------------------------------------//
+
+static void _add_endpoint(char* method, char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res))
+{
+  if (url == NULL || callback == NULL)
+  {
+    log_fatal(KC_INVALID_ARGUMENT_LOG);
+    return;
+  }
+
+  // create a new endpoint
+  endpoints[endpoints_len] = new_endpoint(method, url);
+
+  // init the endpoint' callback function
+  endpoints[endpoints_len]->callback = callback;
+
+  // increment the list size
+  ++endpoints_len;
+}
+
+//---------------------------------------------------------------------------//
+
+static int _parse_request(struct kc_http_request_t* req, char recv_buffer[KC_REQUEST_MAX_SIZE])
 {
   // mark the end of the header section and the body section
   int buffer_len = strlen(recv_buffer);
@@ -355,72 +530,41 @@ static int _parse_request(struct kc_http_request_t** req, char recv_buffer[KC_RE
   }
 
   // separate the request data
-  char* request  = strtok(recv_buffer, "\r\n");
-  char* headers  = strtok(NULL, "|");
-  //char* body     = strtok(NULL, "|");
+  char* request_line     = strtok(recv_buffer, "\r\n");
+  char* request_headers  = strtok(NULL, "|");
+  char* request_body     = strtok(NULL, "|");
 
-  if (request == NULL || headers == NULL)
-  {
-    return KC_FORMAT_ERROR;
-  }
+  int ret = KC_SUCCESS;
 
   // parse the request line
-  char* tmp_method   = strtok(request, " ");
-  char* tmp_url      = strtok(NULL, " ");
-  char* tmp_http_ver = strtok(NULL, "\r\n");
-
-  if (tmp_method == NULL || tmp_url == NULL || tmp_http_ver == NULL)
+  ret = http_parse_request_line(request_line, req);
+  if (ret != KC_SUCCESS)
   {
-    return KC_FORMAT_ERROR;
-  }
-
-  // create the request structure
-  (*req) = new_request(tmp_method, tmp_url, tmp_http_ver);
-  if ((*req) == NULL)
-  {
-    return KC_OUT_OF_MEMORY;
+    return ret;
   }
 
   // parse the headers
-  char* tmp_header = strtok(headers, "\r\n");
-  while (tmp_header != NULL)
+  ret = http_parse_request_headers(request_headers, req);
+  if (ret != KC_SUCCESS)
   {
-    int i = 0, j = 0;
+    return ret;
+  }
 
-    // parse the key
-    char key[1024];
-    while (tmp_header[i] != ':')
-    {
-      key[i] = tmp_header[i];
-      ++i;
-    }
-    key[i + 1] = '\0';
+  // parse the body only if the method has a body
+  if (strcmp(req->method, KC_HTTP_METHOD_GET) == 0)
+  {
+    return KC_SUCCESS;
+  }
 
-    // skip the space
-    if (tmp_header[++i] == ' ')
-    {
-      ++i;
-    }
-
-    // parse the value
-    char val[1024];
-    while (tmp_header[i] != '\r')
-    {
-      val[j++] = tmp_header[i];
-      ++i;
-    }
-    val[j + 1] = '\0';
-
-    // create the header
-    if (key[0] != '\0' && val[0] != '\0')
-    {
-      (*req)->add_header((*req), key, val);
-    }
-
-    tmp_header = strtok(NULL, "\r\n");
+  // TODO: get the Content-Type from the headers and pass it to the parse fun
+  ret = http_parse_request_body(request_body, req);
+  if (ret != KC_SUCCESS)
+  {
+    return ret;
   }
 
   return KC_SUCCESS;
 }
 
 //---------------------------------------------------------------------------//
+
