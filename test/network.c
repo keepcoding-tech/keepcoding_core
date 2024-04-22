@@ -6,6 +6,7 @@
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
+#include "../hdrs/datastructs/map.h"
 #include "../hdrs/network/server.h"
 #include "../hdrs/network/client.h"
 #include "../hdrs/test.h"
@@ -41,14 +42,40 @@ int get_test(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_
 {
   printf("method: %s \n", req->method);
   printf("url: %s \n", req->url);
-  printf("HTTP version: %s \n", req->http_ver);
+  printf("HTTP version: %s \n\n", req->http_ver);
 
-  printf("headers: \n");
-  for (int i = 0; i < req->headers_len; ++i)
+  for (int i = 0; i < KC_MAP_MAX_SIZE; ++i)
   {
-    printf("%s: %s \n", req->headers[i]->key, req->headers[i]->val);
+    struct kc_entry_t* entry = req->headers->entries[i];
+
+    if (entry == NULL)
+    {
+      continue;
+    }
+
+    for (;;)
+    {
+      printf("%s: %s \n", (char*)(entry->key), (char*)(entry->val));
+
+      if (entry->next == NULL)
+      {
+        break;
+      }
+
+      entry = entry->next;
+    }
   }
+
   printf("\n\n");
+
+  char* header_val = NULL;
+  int ret = req->headers->get(req->headers, "Host", (void*)&header_val);
+  if (ret != KC_SUCCESS)
+  {
+    printf("%d", ret);
+  }
+
+  printf("\n\n%s\n\n", header_val);
 
   res->set_body(res, "GET test");
 

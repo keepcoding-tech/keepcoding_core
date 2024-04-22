@@ -246,8 +246,17 @@ struct kc_http_request_t* new_request(void)
   new_req->set_url       = NULL;
   new_req->set_http_ver  = NULL;
   new_req->set_body      = NULL;
-  new_req->headers[0]    = NULL;
-  new_req->headers_len   = 0;
+
+  new_req->headers = new_map();
+  if (new_req->headers == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // free the memory first
+    free(new_req);
+
+    return NULL;
+  }
 
   // asign the methods
   new_req->add_header    = add_req_header;
@@ -289,10 +298,7 @@ void destroy_request(struct kc_http_request_t* req)
     free(req->body);
   }
 
-  for (int i = 0; i < req->headers_len; ++i)
-  {
-    destroy_header(req->headers[i]);
-  }
+  destroy_map(req->headers);
 
   free(req);
 }
@@ -306,21 +312,14 @@ int add_req_header(struct kc_http_request_t* self, char* key, char* val)
     return KC_NULL_REFERENCE;
   }
 
-  if (self->headers_len + 1 > KC_MAX_HEADERS_LIST_SIZE)
-  {
-    return KC_INDEX_OUT_OF_BOUNDS;
-  }
+  // the map will handle dublicates and everything else
+  int ret = self->headers->set(self->headers, key, val, (sizeof(char) * strlen(val) + 1));
 
-  // create a new header to be asign
-  struct kc_http_header_t* header = new_header(key, val);
-  if (header == NULL)
+  // make sure the insertion was made
+  if (ret != KC_SUCCESS)
   {
-    return KC_OUT_OF_MEMORY;
+    return ret;
   }
-
-  // asign the header
-  self->headers[self->headers_len] = header;
-  self->headers_len++;
 
   return KC_SUCCESS;
 }

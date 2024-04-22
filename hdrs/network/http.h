@@ -13,7 +13,7 @@
 #ifndef KC_HTTP_H
 #define KC_HTTP_H
 
-#include "../datastructs/vector.h"
+#include "../datastructs/map.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -132,8 +132,7 @@ struct kc_http_request_t
   // TODO: add 'param' member to access the parameters
 
   // the list of headers (ex: Content-Type: text/plain)
-  struct kc_http_header_t* headers[KC_MAX_HEADERS_LIST_SIZE];
-  int headers_len;
+  struct kc_map_t* headers;
 
   int client_fd;  // the client file descriptor
 

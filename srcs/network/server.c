@@ -6,6 +6,7 @@
 // Copyright (c) 2024 Daniel Tanase
 // SPDX-License-Identifier: MIT License
 
+#include "../../hdrs/datastructs/map.h"
 #include "../../hdrs/system/logger.h"
 #include "../../hdrs/network/server.h"
 #include "../../hdrs/common.h"
@@ -120,10 +121,8 @@ struct kc_dispatch_info_t
   int client_fd;
 };
 
-
 // the list of endpoints has to be private
-static struct kc_endpoint_t* endpoints[1024];
-static unsigned int endpoints_len;
+static struct kc_map_t* endpoints;
 
 // private member for logging
 static struct kc_logger_t* logger;
@@ -195,6 +194,20 @@ struct kc_server_t* new_server(const int AF, const char* IP, const unsigned int 
     return NULL;
   }
 
+  endpoints = new_map();
+  if (endpoints == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // free the server and socket
+    destroy_socket(new_server->socket);
+    destroy_logger(logger);
+    free(new_server->routes);
+    free(new_server);
+
+    return NULL;
+  }
+
   // asign public member functions for server' routes
   new_server->routes->options = _add_options_endpoint;
   new_server->routes->get     = _add_get_endpoint;
@@ -222,13 +235,9 @@ void destroy_server(struct kc_server_t* server)
     return;
   }
 
-  for (int i = 0; i < endpoints_len; ++i)
-  {
-    free(endpoints[i]);
-  }
-
-  destroy_logger(logger);
   destroy_socket(server->socket);
+  destroy_logger(logger);
+  destroy_map(endpoints);
   free(server);
 }
 
@@ -373,24 +382,25 @@ void* dispatch(void* dispatch_information)
 
   // search the callback
   struct kc_endpoint_t* endpoint = NULL;
-  for (int i = 0; i < endpoints_len; ++i)
-  {
-    if (strcmp(endpoints[i]->url, req->url) == 0)
-    {
-      // save the endpoint
-      endpoint = endpoints[i];
-      break;
-    }
-  }
+  ret = endpoints->get(endpoints, req->url, (void*)&endpoint);
 
+  // internal server error, return 500
+  if (ret != KC_SUCCESS && ret != KC_INVALID) // TODO: change KC_INVALID with KC_NOT_FOUND
+  {
+    res->set_status_code(res, KC_HTTP_STATUS_500);
+    res->add_header(res, "Content-Type", "text/html");
+    res->set_body(res, "<h1>500 Internal server error</h1>\r\n");
+    send_msg_server(dispatch_info->client_fd, res);
+  }
   // page not found, return 404
-  if (endpoint == NULL)
+  else if (endpoint == NULL)
   {
     res->set_status_code(res, KC_HTTP_STATUS_404);
     res->add_header(res, "Content-Type", "text/html");
     res->set_body(res, "<h1>404 Page Not Found</h1>\r\n");
     send_msg_server(dispatch_info->client_fd, res);
   }
+  // bad request, return 400
   else if (strcmp(endpoint->method, req->method) != 0)
   {
     res->set_status_code(res, KC_HTTP_STATUS_400);
@@ -506,13 +516,18 @@ static void _add_endpoint(char* method, char* url, int (*callback)(struct kc_ser
   }
 
   // create a new endpoint
-  endpoints[endpoints_len] = new_endpoint(method, url);
+  //endpoints[endpoints_len] = new_endpoint(method, url);
+  struct kc_endpoint_t* endpoint = new_endpoint(method, url);
+  endpoint->callback = callback;
+
+  // map the endpoint
+  endpoints->set(endpoints, url, endpoint, sizeof(struct kc_endpoint_t));
 
   // init the endpoint' callback function
-  endpoints[endpoints_len]->callback = callback;
+  //endpoints[endpoints_len]->callback = callback;
 
   // increment the list size
-  ++endpoints_len;
+  //++endpoints_len;
 }
 
 //---------------------------------------------------------------------------//
