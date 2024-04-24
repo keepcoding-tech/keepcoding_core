@@ -19,7 +19,7 @@
 
 int md5_init   (struct kc_md5_t* md5);
 int md5_update (struct kc_md5_t* md5, unsigned char* input, unsigned int in_len);
-int md5_final  (struct kc_md5_t* md5, unsigned char digest[KC_MD5_LENGTH]);
+int md5_final  (struct kc_md5_t* md5, unsigned char digest[(KC_MD5_LENGTH * 2) + 1]);
 
 int md5_to_string(unsigned char digest[KC_MD5_LENGTH], unsigned char str_hash[(KC_MD5_LENGTH * 2) + 1]);
 

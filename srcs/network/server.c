@@ -19,72 +19,19 @@
 #include <unistd.h>
 #include <pthread.h>
 
-//--- MARK: PUBLIC ENDPOINT FUNCTION PROTOTYPES -----------------------------//
+//--- MARK: ENDPOINT STRUCT -------------------------------------------------//
 
-//---------------------------------------------------------------------------//
-
-struct kc_endpoint_t* new_endpoint(char* method, char* url)
+struct kc_endpoint_t
 {
-  // create a new instance to be returned
-  struct kc_endpoint_t* new_endpoint = malloc(sizeof(struct kc_endpoint_t));
+  char* method;    // the method to be used (ex: GET, POST, PUT, etc;)
+  char* url;       // the endpoint URL (ex: /home/user)
 
-  // check the allocation of memory
-  if (new_endpoint == NULL)
-  {
-    log_error(KC_OUT_OF_MEMORY_LOG);
-    return NULL;
-  }
+  // the callback function to get called
+  int (*callback)  (struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res);
+};
 
-  new_endpoint->method = (char*)malloc(sizeof(char) * strlen(method) + 1);
-  if (new_endpoint->method == NULL)
-  {
-    log_error(KC_OUT_OF_MEMORY_LOG);
-
-    // first free the memory
-    free(new_endpoint);
-
-    return NULL;
-  }
-
-  new_endpoint->url = (char*)malloc(sizeof(char) * strlen(url) + 1);
-  if (new_endpoint->url == NULL)
-  {
-    log_error(KC_OUT_OF_MEMORY_LOG);
-
-    // first free the memory
-    free(new_endpoint->method);
-
-    return NULL;
-  }
-
-  // asign the values
-  strcpy(new_endpoint->method, method);
-  strcpy(new_endpoint->url, url);
-
-  return new_endpoint;
-}
-
-//---------------------------------------------------------------------------//
-
-void destroy_endpoint  (struct kc_endpoint_t* endpoint)
-{
-  if (endpoint == NULL)
-  {
-    return;
-  }
-
-  if (endpoint->method != NULL)
-  {
-    free(endpoint->method);
-  }
-
-  if (endpoint->url != NULL)
-  {
-    free(endpoint->url);
-  }
-
-  free(endpoint);
-}
+static struct kc_endpoint_t* new_endpoint      (char* method, char* url);
+static void                  destroy_endpoint  (struct kc_endpoint_t* endpoint);
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
@@ -109,7 +56,7 @@ static void _add_delete_endpoint   (char* url, int (*callback)(struct kc_server_
 static void _add_trace_endpoint    (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
 static void _add_connect_endpoint  (char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
 static void _add_endpoint          (char* method, char* url, int (*callback)(struct kc_server_t* self, struct kc_http_request_t* req, struct kc_http_response_t* res));
-static int _parse_request          (struct kc_http_request_t* req, char recv_buffer[KC_REQUEST_MAX_SIZE]);
+static int _parse_request          (struct kc_http_request_t* req, char recv_buffer[KC_HTTP_REQUEST_MAX_SIZE]);
 
 //---------------------------------------------------------------------------//
 
@@ -235,6 +182,9 @@ void destroy_server(struct kc_server_t* server)
     return;
   }
 
+  // TODO: destroy all endpoints
+  destroy_endpoint(endpoints->entries[0]->val);
+
   destroy_socket(server->socket);
   destroy_logger(logger);
   destroy_map(endpoints);
@@ -319,7 +269,7 @@ int send_msg_server(int client_fd, struct kc_http_response_t* res)
     return KC_NULL_REFERENCE;
   }
 
-  char* response = (char*)malloc(sizeof(char) * KC_RESPONSE_MAX_SIZE);
+  char* response = (char*)malloc(sizeof(char) * KC_HTTP_RESPONSE_MAX_SIZE);
 
   sprintf(response, "%s %s\r\n", res->http_ver, res->status_code);
   for (int i = 0; i < res->headers_len; ++i)
@@ -343,11 +293,11 @@ int send_msg_server(int client_fd, struct kc_http_response_t* res)
 
 void* dispatch(void* dispatch_information)
 {
-  char recv_buffer[KC_REQUEST_MAX_SIZE];
+  char recv_buffer[KC_HTTP_REQUEST_MAX_SIZE];
   struct kc_dispatch_info_t* dispatch_info = (struct kc_dispatch_info_t*)dispatch_information;
 
   // receive the message from the connection
-  ssize_t recv_ret = recv(dispatch_info->client_fd, recv_buffer, KC_REQUEST_MAX_SIZE, 0);
+  ssize_t recv_ret = recv(dispatch_info->client_fd, recv_buffer, KC_HTTP_REQUEST_MAX_SIZE, 0);
   if (recv_ret <= KC_SUCCESS)
   {
     close(dispatch_info->client_fd);
@@ -532,7 +482,7 @@ static void _add_endpoint(char* method, char* url, int (*callback)(struct kc_ser
 
 //---------------------------------------------------------------------------//
 
-static int _parse_request(struct kc_http_request_t* req, char recv_buffer[KC_REQUEST_MAX_SIZE])
+static int _parse_request(struct kc_http_request_t* req, char recv_buffer[KC_HTTP_REQUEST_MAX_SIZE])
 {
   // mark the end of the header section and the body section
   int buffer_len = strlen(recv_buffer);
@@ -579,6 +529,71 @@ static int _parse_request(struct kc_http_request_t* req, char recv_buffer[KC_REQ
   }
 
   return KC_SUCCESS;
+}
+
+//---------------------------------------------------------------------------//
+
+static struct kc_endpoint_t* new_endpoint(char* method, char* url)
+{
+  // create a new instance to be returned
+  struct kc_endpoint_t* new_endpoint = malloc(sizeof(struct kc_endpoint_t));
+
+  // check the allocation of memory
+  if (new_endpoint == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+    return NULL;
+  }
+
+  new_endpoint->method = (char*)malloc(sizeof(char) * strlen(method) + 1);
+  if (new_endpoint->method == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // first free the memory
+    free(new_endpoint);
+
+    return NULL;
+  }
+
+  new_endpoint->url = (char*)malloc(sizeof(char) * strlen(url) + 1);
+  if (new_endpoint->url == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // first free the memory
+    free(new_endpoint->method);
+
+    return NULL;
+  }
+
+  // asign the values
+  strcpy(new_endpoint->method, method);
+  strcpy(new_endpoint->url, url);
+
+  return new_endpoint;
+}
+
+//---------------------------------------------------------------------------//
+
+static void destroy_endpoint(struct kc_endpoint_t* endpoint)
+{
+  if (endpoint == NULL)
+  {
+    return;
+  }
+
+  if (endpoint->method != NULL)
+  {
+    free(endpoint->method);
+  }
+
+  if (endpoint->url != NULL)
+  {
+    free(endpoint->url);
+  }
+
+  free(endpoint);
 }
 
 //---------------------------------------------------------------------------//

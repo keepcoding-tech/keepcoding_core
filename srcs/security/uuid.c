@@ -28,7 +28,7 @@
 int uuid_create_ver_1  (struct kc_uuid_t* self);
 int uuid_create_ver_3  (struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name, int name_len);
 int uuid_create_ver_5  (struct kc_uuid_t* self, struct kc_uuid_t nsid, void* name, int name_len);
-int uuid_get_hash      (struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH]);
+int uuid_get_hash      (struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH + 1]);
 int uuid_compare       (struct kc_uuid_t* self, struct kc_uuid_t* uuid);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES --------------------------------------//
@@ -326,7 +326,7 @@ int uuid_create_ver_5(struct kc_uuid_t * self, struct kc_uuid_t nsid, void* name
 
 //---------------------------------------------------------------------------//
 
-int uuid_get_hash(struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH])
+int uuid_get_hash(struct kc_uuid_t* self, unsigned char str_uuid[KC_UUID_LENGTH + 1])
 {
   if (self == NULL)
   {

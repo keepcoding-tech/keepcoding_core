@@ -131,6 +131,8 @@ void destroy_map(struct kc_map_t* map)
     return;
   }
 
+  // TODO: erase all elements
+
   free(map);
 }
 

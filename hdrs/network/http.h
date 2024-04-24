@@ -102,6 +102,9 @@
 #define KC_BODY_CONTENT_TYPE_HTML  0xF0000020
 #define KC_BODY_CONTENT_TYPE_TEXT  0xF0000040
 
+#define KC_HTTP_REQUEST_MAX_SIZE                                     0x00002048
+#define KC_HTTP_RESPONSE_MAX_SIZE                                    0x00002048
+
 //---------------------------------------------------------------------------//
 
 #define KC_MAX_HEADER_LENGTH     2048
