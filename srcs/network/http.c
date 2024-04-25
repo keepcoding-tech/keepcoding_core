@@ -13,141 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-//--- MARK: PUBLIC GLOBAL FUNCTION PROTOTYPES -------------------------------//
-
-int http_parse_request_line     (char* request_line, struct kc_http_request_t* req);
-int http_parse_request_headers  (char* request_headers, struct kc_http_request_t* req);
-int http_parse_request_body     (char* request_body, struct kc_http_request_t* req);
-
-//---------------------------------------------------------------------------//
-
-int http_parse_request_line(char* request_line, struct kc_http_request_t* req)
-{
-  // make sure the request_line exists
-  if (request_line == NULL)
-  {
-    return KC_FORMAT_ERROR;
-  }
-
-  if (req == NULL)
-  {
-    return KC_NULL_REFERENCE;
-  }
-
-  // parse the request line
-  char* tmp_method   = strtok(request_line, " ");
-  char* tmp_url      = strtok(NULL, " ");
-  char* tmp_http_ver = strtok(NULL, "\r\n");
-
-  int ret = KC_SUCCESS;
-
-  if (tmp_method == NULL || tmp_url == NULL || tmp_http_ver == NULL)
-  {
-    return KC_FORMAT_ERROR;
-  }
-
-  ret = req->set_method(req, tmp_method);
-  if (ret != KC_SUCCESS)
-  {
-    return ret;
-  }
-
-  ret = req->set_url(req, tmp_url);
-  if (ret != KC_SUCCESS)
-  {
-    return ret;
-  }
-
-  ret = req->set_http_ver(req, tmp_http_ver);
-  if (ret != KC_SUCCESS)
-  {
-    return ret;
-  }
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int http_parse_request_headers(char* request_headers, struct kc_http_request_t* req)
-{
-  // make sure the request_headers exists
-  if (request_headers == NULL)
-  {
-    return KC_FORMAT_ERROR;
-  }
-
-  if (req == NULL)
-  {
-    return KC_NULL_REFERENCE;
-  }
-
-  // parse the headers
-  char* tmp_header = strtok(request_headers, "\r\n");
-  while (tmp_header != NULL)
-  {
-    int i = 0, j = 0;
-
-    // parse the key
-    char key[1024];
-    while (tmp_header[i] != ':')
-    {
-      key[i] = tmp_header[i];
-      ++i;
-    }
-    key[i + 1] = '\0';
-
-    // skip the space
-    if (tmp_header[++i] == ' ')
-    {
-      ++i;
-    }
-
-    // parse the value
-    char val[1024];
-    while (tmp_header[i] != '\r')
-    {
-      val[j++] = tmp_header[i];
-      ++i;
-    }
-    val[j + 1] = '\0';
-
-    // create the header
-    if (key[0] != '\0' && val[0] != '\0')
-    {
-      int ret = req->add_header(req, key, val);
-      if (ret != KC_SUCCESS)
-      {
-        return ret;
-      }
-    }
-
-    tmp_header = strtok(NULL, "\r\n");
-  }
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int http_parse_request_body(char* request_body, struct kc_http_request_t* req)
-{
-  // make sure the request_body exists
-  if (request_body == NULL)
-  {
-    return KC_FORMAT_ERROR;
-  }
-
-  if (req == NULL)
-  {
-    return KC_NULL_REFERENCE;
-  }
-
-  req->set_body(req, request_body);
-
-  return KC_SUCCESS;
-}
-
 //--- MARK: PUBLIC HEADER FUNCTION PROTOTYPES -------------------------------//
 
 //---------------------------------------------------------------------------//
@@ -221,12 +86,18 @@ void destroy_header(struct kc_http_header_t* header)
 
 //--- MARK: PUBLIC REQUEST FUNCTION PROTOTYPES ------------------------------//
 
-int add_req_header     (struct kc_http_request_t* self, char* key, char* val);
-int set_req_method     (struct kc_http_request_t* self, char* method);
-int set_req_url        (struct kc_http_request_t* self, char* url);
-int set_req_http_ver   (struct kc_http_request_t* self, char* http_ver);
-int set_req_body       (struct kc_http_request_t* self, char* body);
-int set_req_client_fd  (struct kc_http_request_t* self, int fd);
+struct kc_http_request_t* new_request      (void);
+void                      destroy_request  (struct kc_http_request_t* req);
+
+char* get_req_header     (struct kc_http_request_t* self, char* key);
+char* get_req_param      (struct kc_http_request_t* self, char* key);
+
+//--- MARK: PRIVATE REQUEST FUNCTION PROTOTYPES -----------------------------//
+
+int _set_req_method     (struct kc_http_request_t* self, char* method);
+int _set_req_url        (struct kc_http_request_t* self, char* url);
+int _set_req_http_ver   (struct kc_http_request_t* self, char* http_ver);
+int _set_req_body       (struct kc_http_request_t* self, char* body);
 
 //---------------------------------------------------------------------------//
 
@@ -241,14 +112,9 @@ struct kc_http_request_t* new_request(void)
     return NULL;
   }
 
-  // asign the values
-  new_req->set_method    = NULL;
-  new_req->set_url       = NULL;
-  new_req->set_http_ver  = NULL;
-  new_req->set_body      = NULL;
-
-  new_req->headers = new_map();
-  if (new_req->headers == NULL)
+  // allocate memory for the parameters hash-map
+  new_req->params = new_map();
+  if (new_req->params == NULL)
   {
     log_error(KC_OUT_OF_MEMORY_LOG);
 
@@ -258,13 +124,29 @@ struct kc_http_request_t* new_request(void)
     return NULL;
   }
 
+  // allocate memory for the headers hash-map
+  new_req->headers = new_map();
+  if (new_req->headers == NULL)
+  {
+    log_error(KC_OUT_OF_MEMORY_LOG);
+
+    // free the memory first
+    destroy_map(new_req->params);
+    free(new_req);
+
+    return NULL;
+  }
+
+  // asign the values
+  new_req->method    = NULL;
+  new_req->url       = NULL;
+  new_req->http_ver  = NULL;
+  new_req->body      = NULL;
+  new_req->client_fd = 0;
+
   // asign the methods
-  new_req->add_header    = add_req_header;
-  new_req->set_method    = set_req_method;
-  new_req->set_url       = set_req_url;
-  new_req->set_http_ver  = set_req_http_ver;
-  new_req->set_body      = set_req_body;
-  new_req->set_client_fd = set_req_client_fd;
+  new_req->get_header = get_req_header;
+  new_req->get_param  = get_req_param;
 
   return new_req;
 }
@@ -305,32 +187,53 @@ void destroy_request(struct kc_http_request_t* req)
 
 //---------------------------------------------------------------------------//
 
-int add_req_header(struct kc_http_request_t* self, char* key, char* val)
+char* get_req_header(struct kc_http_request_t* self, char* key)
 {
   if (self == NULL)
   {
-    return KC_NULL_REFERENCE;
+    return NULL;
   }
 
-  // the map will handle dublicates and everything else
-  int ret = self->headers->set(self->headers, key, val, (sizeof(char) * strlen(val) + 1));
+  // temp variable to store the value
+  char* header_val = NULL;
 
-  // make sure the insertion was made
-  if (ret != KC_SUCCESS)
-  {
-    return ret;
-  }
+  // search for the header key
+  self->headers->get(self->headers, key, (void*)&header_val);
 
-  return KC_SUCCESS;
+  return header_val;
 }
 
 //---------------------------------------------------------------------------//
 
-int set_req_method(struct kc_http_request_t* self, char* method)
+char* get_req_param(struct kc_http_request_t* self, char* key)
+{
+  if (self == NULL)
+  {
+    return NULL;
+  }
+
+  // temp variable to store the value
+  char* param_val = NULL;
+
+  // search for the parameter key
+  self->params->get(self->params, key, (void*)&param_val);
+
+  return param_val;
+}
+
+//---------------------------------------------------------------------------//
+
+int _set_req_method(struct kc_http_request_t* self, char* method)
 {
   if (self == NULL)
   {
     return KC_NULL_REFERENCE;
+  }
+
+  // validate the method before creating the request object
+  if (validate_http_method(method) != KC_SUCCESS)
+  {
+    return KC_INVALID;
   }
 
   // if the field is being reset, free the memory first
@@ -354,11 +257,17 @@ int set_req_method(struct kc_http_request_t* self, char* method)
 
 //---------------------------------------------------------------------------//
 
-int set_req_url(struct kc_http_request_t* self, char* url)
+int _set_req_url(struct kc_http_request_t* self, char* url)
 {
   if (self == NULL)
   {
     return KC_NULL_REFERENCE;
+  }
+
+  // validate the URL before creating the request object
+  if (validate_http_url(url) != KC_SUCCESS)
+  {
+    return KC_INVALID;
   }
 
   // if the field is being reset, free the memory first
@@ -382,11 +291,17 @@ int set_req_url(struct kc_http_request_t* self, char* url)
 
 //---------------------------------------------------------------------------//
 
-int set_req_http_ver(struct kc_http_request_t* self, char* http_ver)
+int _set_req_http_ver(struct kc_http_request_t* self, char* http_ver)
 {
   if (self == NULL)
   {
     return KC_NULL_REFERENCE;
+  }
+
+  // validate the HTTP version before creating the request
+  if (validate_http_ver(http_ver) != KC_SUCCESS)
+  {
+    return KC_INVALID;
   }
 
   // if the field is being reset, free the memory first
@@ -410,11 +325,17 @@ int set_req_http_ver(struct kc_http_request_t* self, char* http_ver)
 
 //---------------------------------------------------------------------------//
 
-int set_req_body(struct kc_http_request_t* self, char* body)
+int _set_req_body(struct kc_http_request_t* self, char* body)
 {
   if (self == NULL)
   {
     return KC_NULL_REFERENCE;
+  }
+
+  // validate the body before creating the request
+  if (validate_http_body(body) != KC_SUCCESS)
+  {
+    return KC_INVALID;
   }
 
   // if the field is being reset, free the memory first
@@ -432,20 +353,6 @@ int set_req_body(struct kc_http_request_t* self, char* body)
 
   // copy the string
   strcpy(self->body, body);
-
-  return KC_SUCCESS;
-}
-
-//---------------------------------------------------------------------------//
-
-int set_req_client_fd(struct kc_http_request_t* self, int fd)
-{
-  if (self == NULL)
-  {
-    return KC_NULL_REFERENCE;
-  }
-
-  self->client_fd = fd;
 
   return KC_SUCCESS;
 }
@@ -478,7 +385,7 @@ struct kc_http_response_t* new_response(void)
   new_res->headers_len = 0;
 
   // asign the methods
-  new_res->add_header      = add_res_header;
+  new_res->set_header      = add_res_header;
   new_res->set_http_ver    = set_res_http_ver;
   new_res->set_status_code = set_res_status_code;
   new_res->set_body        = set_res_body;
@@ -645,4 +552,3 @@ int set_res_body(struct kc_http_response_t* self, char* body)
 }
 
 //---------------------------------------------------------------------------//
-

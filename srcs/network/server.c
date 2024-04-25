@@ -274,7 +274,7 @@ int send_msg_server(int client_fd, struct kc_http_response_t* res)
   sprintf(response, "%s %s\r\n", res->http_ver, res->status_code);
   for (int i = 0; i < res->headers_len; ++i)
   {
-    char* header = (char*)malloc(sizeof(char) * KC_MAX_HEADER_LENGTH);
+    char* header = (char*)malloc(sizeof(char) * KC_HTTP_HEADER_MAX_SIZE);
     sprintf(header, "%s: %s\r\n", res->headers[i]->key, res->headers[i]->val);
     strcat(response, header);
   }
@@ -307,7 +307,7 @@ void* dispatch(void* dispatch_information)
   // null terminate the request data
   recv_buffer[recv_ret] = '\0';
 
-  // parse the request buffer and generate the 
+  // parse the request buffer and generate the
   // a new request structure to be used later
   struct kc_http_request_t* req = new_request();
   int ret = _parse_request(req, recv_buffer);
@@ -319,16 +319,16 @@ void* dispatch(void* dispatch_information)
   }
 
   // set the file descriptor of the client
-  req->set_client_fd(req, dispatch_info->client_fd);
+  req->client_fd = dispatch_info->client_fd;
 
-  // create the response structure with all 
+  // create the response structure with all
   // the general headers to be used later
   struct kc_http_response_t* res = new_response();
   res->set_http_ver(res, KC_HTTP_1);
   res->set_status_code(res, KC_HTTP_STATUS_200);
 
   // TODO: add general headers
-  res->add_header(res, "Content-Type", "text/plain");
+  res->set_header(res, "Content-Type", "text/plain");
 
   // search the callback
   struct kc_endpoint_t* endpoint = NULL;
@@ -338,7 +338,7 @@ void* dispatch(void* dispatch_information)
   if (ret != KC_SUCCESS && ret != KC_INVALID) // TODO: change KC_INVALID with KC_NOT_FOUND
   {
     res->set_status_code(res, KC_HTTP_STATUS_500);
-    res->add_header(res, "Content-Type", "text/html");
+    res->set_header(res, "Content-Type", "text/html");
     res->set_body(res, "<h1>500 Internal server error</h1>\r\n");
     send_msg_server(dispatch_info->client_fd, res);
   }
@@ -346,7 +346,7 @@ void* dispatch(void* dispatch_information)
   else if (endpoint == NULL)
   {
     res->set_status_code(res, KC_HTTP_STATUS_404);
-    res->add_header(res, "Content-Type", "text/html");
+    res->set_header(res, "Content-Type", "text/html");
     res->set_body(res, "<h1>404 Page Not Found</h1>\r\n");
     send_msg_server(dispatch_info->client_fd, res);
   }
@@ -354,7 +354,7 @@ void* dispatch(void* dispatch_information)
   else if (strcmp(endpoint->method, req->method) != 0)
   {
     res->set_status_code(res, KC_HTTP_STATUS_400);
-    res->add_header(res, "Content-Type", "text/html");
+    res->set_header(res, "Content-Type", "text/html");
     res->set_body(res, "<h1>400 Bad Request</h1>\r\n");
     send_msg_server(dispatch_info->client_fd, res);
   }

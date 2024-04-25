@@ -7,9 +7,8 @@
 // SPDX-License-Identifier: MIT License
 
 #include "../../hdrs/network/socket.h"
+#include "../../hdrs/system/logger.h"
 #include "../../hdrs/common.h"
-
-#include <errno.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +19,8 @@
 
 //--- MARK: PUBLIC FUNCTION PROTOTYPES --------------------------------------//
 
-struct kc_socket_t* new_socket  (const int AF, const char* ip, const unsigned int port);
+struct kc_socket_t* new_socket      (const int AF, const char* ip, const unsigned int port);
+void                destroy_socket  (struct kc_socket_t* socket);
 
 //--- MARK: PRIVATE FUNCTION PROTOTYPES -------------------------------------//
 
@@ -29,7 +29,7 @@ static int _validate_socket_port  (const unsigned int port);
 
 //---------------------------------------------------------------------------//
 
-struct kc_socket_t* new_socket  (const int AF, const char* ip, const unsigned int port)
+struct kc_socket_t* new_socket(const int AF, const char* ip, const unsigned int port)
 {
   // first of all, validate the IP address
   if (_validate_socket_ip(AF, ip) != KC_SUCCESS)
@@ -82,7 +82,7 @@ struct kc_socket_t* new_socket  (const int AF, const char* ip, const unsigned in
 
 //---------------------------------------------------------------------------//
 
-void destroy_socket  (struct kc_socket_t* socket)
+void destroy_socket(struct kc_socket_t* socket)
 {
   if (socket == NULL)
   {
@@ -90,7 +90,11 @@ void destroy_socket  (struct kc_socket_t* socket)
     return;
   }
 
-  free(socket->addr);
+  if (socket->addr != NULL)
+  {
+    free(socket->addr);
+  }
+
   free(socket);
 }
 
@@ -101,17 +105,19 @@ static int _validate_socket_ip(int AF, const char* ip)
   unsigned char ip_address[sizeof(struct in6_addr)];
   int ret = inet_pton(AF, ip, ip_address);
 
-  // if the specified ip has an invalid format, is invalid
-  if (ret == IP_INVALID_NETWORK_ADDRESS)
+  // if the specified ip has an
+  // invalid format, is invalid
+  if (ret == 0)
   {
-    log_error("Invalid network IP address format.");
+    log_fatal("Invalid network IP address format.");
     return KC_INVALID;
   }
 
-  // if the specified ip is not IPv4 or IPv6, is invalid
-  if (ret == IP_INVALID_FAMILY_ADDRESS)
+  // if the specified ip is not
+  // IPv4 or IPv6, is invalid
+  if (ret == -1)
   {
-    log_error("Invalid family address: must be IPv4 or IPv6.");
+    log_fatal("Invalid family address: must be IPv4 or IPv6.");
     return KC_INVALID;
   }
 
@@ -125,7 +131,7 @@ static int _validate_socket_port(const unsigned int port)
   // if below 0, is invalid
   if (port < 0)
   {
-    log_error("Port number cannot be negative.");
+    log_fatal("Port number cannot be negative.");
     return KC_INVALID;
   }
 
@@ -133,7 +139,7 @@ static int _validate_socket_port(const unsigned int port)
   // well known service rage, return warning
   if (port < PORT_WELL_KNOWN_SERVICE)
   {
-    log_error("Port number below 1024: privileged range.");
+    log_fatal("Port number below 1024: privileged range.");
     return KC_INVALID;
   }
 
@@ -141,14 +147,14 @@ static int _validate_socket_port(const unsigned int port)
   // and dynamic or private rage, return warning
   if (PORT_AVAILABLE_FOR_USER < port && port < PORT_DYNAMIC_OR_PRIVATE)
   {
-    log_error("Port number in dynamic/private range (49152-65535).");
+    log_fatal("Port number in dynamic/private range (49152-65535).");
     return KC_INVALID;
   }
 
   // if above 65535, is invalid
   if (port > PORT_DYNAMIC_OR_PRIVATE)
   {
-    log_error("Port number exceeds maximum allowed (65535).");
+    log_fatal("Port number exceeds maximum allowed (65535).");
     return KC_INVALID;
   }
 

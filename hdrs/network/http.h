@@ -15,6 +15,10 @@
 
 #include "../datastructs/map.h"
 
+#ifndef KC_HTTP_PARSER_H
+#include "http_parser.h"
+#endif
+
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -98,20 +102,19 @@
 //---------------------------------------------------------------------------//
 
 // TODO: use these values to parse the request body content-type
-#define KC_BODY_CONTENT_TYPE_JSON  0xF0000010
-#define KC_BODY_CONTENT_TYPE_HTML  0xF0000020
-#define KC_BODY_CONTENT_TYPE_TEXT  0xF0000040
+#define KC_BODY_CONTENT_TYPE_JSON                                    0xF0000010
+#define KC_BODY_CONTENT_TYPE_HTML                                    0xF0000020
+#define KC_BODY_CONTENT_TYPE_TEXT                                    0xF0000040
 
-#define KC_HTTP_REQUEST_MAX_SIZE                                     0x00002048
-#define KC_HTTP_RESPONSE_MAX_SIZE                                    0x00002048
+#define KC_HTTP_REQUEST_MAX_SIZE                                           2048
+#define KC_HTTP_RESPONSE_MAX_SIZE                                          2048
+#define KC_HTTP_HEADER_MAX_SIZE                                            2048
 
-//---------------------------------------------------------------------------//
-
-#define KC_MAX_HEADER_LENGTH     2048
-#define KC_MAX_HEADERS_LIST_SIZE 20
+#define KC_HTTP_MAX_HEADERS_LIST_SIZE                                        20
 
 //---------------------------------------------------------------------------//
 
+// TODO: remove header, use map instead
 struct kc_http_header_t
 {
   char* key;    // the key of the header (ex: Content-Type)
@@ -132,23 +135,24 @@ struct kc_http_request_t
   char* http_ver;  // the HTTP version (ex: HTTP/1.1)
   char* body;      // the HTTP body (ex: JSON, TEXT, HTML, etc;)
 
-  // TODO: add 'param' member to access the parameters
+  int client_fd;   // the client file descriptor
 
-  // the list of headers (ex: Content-Type: text/plain)
-  struct kc_map_t* headers;
+  struct kc_map_t* params;   // the hash-map of parameters
+  struct kc_map_t* headers;  // the hash-map of headers
 
-  int client_fd;  // the client file descriptor
-
-  int (*add_header)     (struct kc_http_request_t* self, char* key, char* val);
-  int (*set_method)     (struct kc_http_request_t* self, char* method);
-  int (*set_url)        (struct kc_http_request_t* self, char* url);
-  int (*set_http_ver)   (struct kc_http_request_t* self, char* http_ver);
-  int (*set_body)       (struct kc_http_request_t* self, char* body);
-  int (*set_client_fd)  (struct kc_http_request_t* self, int fd);
+  // getters
+  char* (*get_header)     (struct kc_http_request_t* self, char* key);
+  char* (*get_param)      (struct kc_http_request_t* self, char* key);
 };
 
 struct kc_http_request_t* new_request      (void);
 void                      destroy_request  (struct kc_http_request_t* req);
+
+// TODO: decide if we want these public or private
+int _set_req_method     (struct kc_http_request_t* self, char* method);
+int _set_req_url        (struct kc_http_request_t* self, char* url);
+int _set_req_http_ver   (struct kc_http_request_t* self, char* http_ver);
+int _set_req_body       (struct kc_http_request_t* self, char* body);
 
 //---------------------------------------------------------------------------//
 
@@ -159,10 +163,10 @@ struct kc_http_response_t
   char* body;         // the content of the page
 
   // the list of headers (ex: Content-Type: text/html)
-  struct kc_http_header_t* headers[KC_MAX_HEADERS_LIST_SIZE];
+  struct kc_http_header_t* headers[KC_HTTP_MAX_HEADERS_LIST_SIZE];
   int headers_len;
 
-  int (*add_header)       (struct kc_http_response_t* self, char* key, char* val);
+  int (*set_header)       (struct kc_http_response_t* self, char* key, char* val);
   int (*set_http_ver)     (struct kc_http_response_t* self, char* http_ver);
   int (*set_status_code)  (struct kc_http_response_t* self, char* status_code);
   int (*set_body)         (struct kc_http_response_t* self, char* body);
@@ -170,12 +174,6 @@ struct kc_http_response_t
 
 struct kc_http_response_t* new_response      (void);
 void                       destroy_response  (struct kc_http_response_t* res);
-
-//---------------------------------------------------------------------------//
-
-int http_parse_request_line     (char* request_line, struct kc_http_request_t* req);
-int http_parse_request_headers  (char* request_headers, struct kc_http_request_t* req);
-int http_parse_request_body     (char* request_body, struct kc_http_request_t* req);
 
 //---------------------------------------------------------------------------//
 

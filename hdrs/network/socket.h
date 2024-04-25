@@ -13,7 +13,6 @@
 #ifndef KC_SOCKET_T_H
 #define KC_SOCKET_T_H
 
-#include "../system/logger.h"
 #include "server.h"
 
 #include <stdio.h>
@@ -21,12 +20,9 @@
 
 //---------------------------------------------------------------------------//
 
-#define PORT_WELL_KNOWN_SERVICE 1024
-#define PORT_AVAILABLE_FOR_USER 49151
-#define PORT_DYNAMIC_OR_PRIVATE 65535
-
-#define IP_INVALID_NETWORK_ADDRESS  0
-#define IP_INVALID_FAMILY_ADDRESS  -1
+#define PORT_WELL_KNOWN_SERVICE                                            1024
+#define PORT_AVAILABLE_FOR_USER                                           49151
+#define PORT_DYNAMIC_OR_PRIVATE                                           65535
 
 //---------------------------------------------------------------------------//
 

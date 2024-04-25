@@ -26,6 +26,10 @@ static int save_log  (struct kc_logger_t* self, const char* level, const int err
 
 int  log_to_file  (const char* filename, const char* level, const char* message, const char* file, const int line, const char* func);
 
+//--- MARK: PUBLIC MEMBERS --------------------------------------------------//
+
+bool logger_debug_mode = false;
+
 //---------------------------------------------------------------------------//
 
 struct kc_logger_t* new_logger(const char* log_file)
@@ -101,6 +105,13 @@ int save_log(struct kc_logger_t* self, const char* level, const int error_code, 
 
 void console_log_debug(const char* description, const char* file, const int line, const char* func)
 {
+  // if the debuging mode is ON,
+  // don't display message
+  if (logger_debug_mode == true)
+  {
+    return;
+  }
+
   printf("\n");
   printf("[DEBUG] %s:%d in function ‘%s’ \n", file, line, func);
   printf("  -> %s\n", description);
@@ -111,6 +122,13 @@ void console_log_debug(const char* description, const char* file, const int line
 
 void console_log_error(const char* description, const char* file, const int line, const char* func)
 {
+  // if the debuging mode is ON,
+  // don't display message
+  if (logger_debug_mode == true)
+  {
+    return;
+  }
+
   // use the \033[31m ANSI escape code for red color
   printf("\n");
   printf("\033[31m[ERROR] %s:%d in function ‘%s’ \033[0m \n", file, line, func);
@@ -122,11 +140,21 @@ void console_log_error(const char* description, const char* file, const int line
 
 void console_log_fatal(const char* description, const char* file, const int line, const char* func)
 {
+  // if the debuging mode is ON,
+  // don't display message
+  if (logger_debug_mode == true)
+  {
+    return;
+  }
+
   // use the \033[31m ANSI escape code for red color
   printf("\n");
   printf("\033[31m[FATAL] %s:%d in function ‘%s’ \033[0m \n", file, line, func);
   printf("\033[31m  -> %s \033[0m \n", description);
   printf("\n");
+
+  // exit code 1 to
+  // terminate the program
   exit(1);
 }
 
@@ -134,6 +162,13 @@ void console_log_fatal(const char* description, const char* file, const int line
 
 void console_log_info(const char* description, const char* file, const int line, const char* func)
 {
+  // if the debuging mode is ON,
+  // don't display message
+  if (logger_debug_mode == true)
+  {
+    return;
+  }
+
   printf("\n");
   printf("[INFO] %s:%d in function ‘%s’ \n", file, line, func);
   printf("  -> %s\n", description);
@@ -144,6 +179,13 @@ void console_log_info(const char* description, const char* file, const int line,
 
 void console_log_warning(const char* description, const char* file, const int line, const char* func)
 {
+  // if the debuging mode is ON,
+  // don't display message
+  if (logger_debug_mode == true)
+  {
+    return;
+  }
+
   // use the \033[33m ANSI escape code for yellow color
   printf("\n");
   printf("\033[33m[WARNING] %s:%d in function ‘%s’ \033[0m \n", file, line, func);
